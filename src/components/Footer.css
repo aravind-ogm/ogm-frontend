@@ -1,0 +1,112 @@
+/* ---------------------------------------------------
+   PREMIUM DARK FOOTER (Blue-Black Luxury)
+--------------------------------------------------- */
+
+.premium-footer {
+  margin-top: 70px;
+  padding: 70px 20px;
+  text-align: center;
+
+  /* Dark Luxury Background */
+  background: radial-gradient(circle at top, #0f172a 0%, #0a1120 70%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  color: #e2e8f0;
+  font-family: "Inter", sans-serif;
+}
+
+/* BRAND */
+.footer-brand {
+  max-width: 550px;
+  margin: 0 auto 40px;
+}
+
+.footer-logo {
+  height: 70px;
+  margin-bottom: 18px;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.4));
+}
+
+.footer-brand-text {
+  font-size: 15px;
+  color: #cbd5e1;
+  margin-bottom: 20px;
+  line-height: 1.55;
+}
+
+/* SOCIAL ICONS ULTRA PREMIUM */
+.footer-social {
+  margin-top: 18px;
+}
+
+.footer-social a i {
+  font-size: 24px;
+  margin: 0 12px;
+  cursor: pointer;
+
+  color: #94a3b8; /* soft slate */
+  transition: 0.3s ease;
+}
+
+.footer-social a i:hover {
+  color: #38bdf8; /* premium cyan-blue */
+  transform: translateY(-4px) scale(1.12);
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.65);
+}
+
+/* GLASS LINKS CARD */
+.footer-links-card {
+  max-width: 650px;
+  padding: 18px 35px;
+  margin: 40px auto;
+
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+
+  box-shadow: 0 6px 30px rgba(0,0,0,0.35);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+.footer-links-card a {
+  font-size: 15px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-weight: 500;
+  transition: 0.25s ease;
+}
+
+.footer-links-card a:hover {
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+/* DISCLAIMER */
+.footer-disclaimer {
+  font-size: 13px;
+  color: #94a3b8;
+  max-width: 620px;
+  margin: 20px auto 0;
+  line-height: 1.55;
+}
+
+/* COPYRIGHT */
+.footer-copy {
+  margin-top: 18px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .footer-logo {
+    height: 55px;
+  }
+
+  .footer-links-card {
+    padding: 14px 20px;
+  }
+}
