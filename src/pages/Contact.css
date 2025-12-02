@@ -1,15 +1,9 @@
-/* ----------------------------
-   Global Animations (Unified)
------------------------------*/
+/* ----------------------------------------------------
+   Animations
+---------------------------------------------------- */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(25px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
@@ -18,191 +12,203 @@
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* ----------------------------
-   Wrapper Layout
------------------------------*/
-.contact-wrapper {
+/* ----------------------------------------------------
+   Premium Clean White Layout
+---------------------------------------------------- */
+.contact-premium-wrapper {
   min-height: 100vh;
-  background: linear-gradient(140deg, #0a4d92 0%, #062850 100%);
+  padding: 60px 20px;
+
+  background: #f8fafc; /* soft premium white */
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 30px 20px;
+  align-items: flex-start;
 }
 
-/* ----------------------------
-   Contact Card
------------------------------*/
-.contact-card {
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(14px);
-  border-radius: 20px;
-  padding: 40px 35px;
+/* ----------------------------------------------------
+   Premium Card
+---------------------------------------------------- */
+.contact-premium-card {
   width: 100%;
-  max-width: 480px;
-  color: #ffffff;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  max-width: 520px;
+
+  padding: 48px 56px;
+  background: #ffffff; /* clean white card */
+
+  border-radius: 20px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.10);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+
+  color: #0f172a;
+
   animation: fadeInUp 0.7s ease-out;
 }
 
-.contact-title {
-  font-size: 32px;
-  margin-bottom: 10px;
+.premium-title {
+  font-size: 34px;
   font-weight: 700;
+  margin-bottom: 8px;
+  color: #0f172a;
 }
 
-.contact-subtitle {
+.premium-subtitle {
   font-size: 15px;
-  opacity: 0.9;
-  margin-bottom: 28px;
+  opacity: 0.7;
+  margin-bottom: 26px;
   line-height: 1.5;
 }
 
-/* ----------------------------
-   Form Inputs
------------------------------*/
-.input-group {
-  margin-bottom: 20px;
+/* ----------------------------------------------------
+   Inputs
+---------------------------------------------------- */
+.premium-input {
+  margin-bottom: 18px;
 }
 
-.input-group label {
+.premium-input label {
   display: block;
   margin-bottom: 6px;
   font-size: 14px;
+  font-weight: 500;
+  color: #475569;
 }
 
-input,
-textarea {
+.premium-input input,
+.premium-input textarea {
   width: 100%;
   padding: 14px 15px;
+
   border-radius: 12px;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d4d7dd;
+  background: #ffffff;
+
   font-size: 15px;
+  color: #0f172a;
+
   outline: none;
   transition: 0.25s ease;
 }
 
-input:focus,
-textarea:focus {
-  border-color: #0a4d92;
-  box-shadow: 0 0 0 3px rgba(10, 77, 146, 0.25);
+.premium-input input:focus,
+.premium-input textarea:focus {
+  border-color: #0b63e5;
+  box-shadow: 0 0 0 3px rgba(11, 99, 229, 0.15);
 }
 
-textarea {
-  resize: none;
-}
-
-/* ----------------------------
+/* ----------------------------------------------------
    Submit Button
------------------------------*/
-.submit-btn {
+---------------------------------------------------- */
+.premium-submit {
   width: 100%;
-  padding: 14px;
+  padding: 15px;
+
+  background: linear-gradient(135deg, #0b63e5, #004bbd);
+  color: white;
+
   font-size: 18px;
   font-weight: 600;
-  color: white;
+
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  background: linear-gradient(135deg, #0a4d92 0%, #063a73 100%);
+
+  box-shadow: 0 10px 25px rgba(11, 99, 229, 0.28);
   transition: 0.25s ease;
 }
 
-.submit-btn:hover {
-  background: linear-gradient(135deg, #094882 0%, #053567 100%);
+.premium-submit:hover {
   transform: translateY(-2px);
+  background: linear-gradient(135deg, #0a57c9, #003fa4);
 }
 
-.form-status {
+/* Status message */
+.premium-status {
   margin-top: 14px;
   font-size: 14px;
-  font-weight: 600;
-  color: #063a73;
-  animation: fadeIn 0.3s ease-in-out;
+  color: #0b63e5;
+  animation: fadeIn 0.4s ease;
 }
 
-/* ----------------------------
-   Modal Styles
------------------------------*/
-.modal-overlay {
+/* ----------------------------------------------------
+   Modal (Success popup)
+---------------------------------------------------- */
+.premium-modal-bg {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+
   animation: fadeIn 0.3s ease-in-out;
+  z-index: 1000;
 }
 
-.modal-content {
+.premium-modal-box {
   background: #ffffff;
-  color: #062850;
   padding: 32px 28px;
-  border-radius: 18px;
+
+  border-radius: 16px;
   text-align: center;
-  max-width: 400px;
+
   width: 90%;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  max-width: 400px;
+
+  color: #0f172a;
   animation: scaleIn 0.35s ease-in-out;
 }
 
-.modal-content h3 {
-  margin-bottom: 12px;
+.premium-modal-box h3 {
   font-size: 22px;
+  margin-bottom: 10px;
 }
 
-.modal-content p {
-  font-size: 16px;
-  margin-bottom: 22px;
+.premium-modal-box p {
+  font-size: 15px;
+  margin-bottom: 20px;
+  opacity: 0.8;
 }
 
-.modal-btn {
+.premium-modal-btn {
   padding: 10px 22px;
-  border: none;
-  background: #0a4d92;
+
+  background: #0b63e5;
   color: white;
-  border-radius: 8px;
-  cursor: pointer;
+
+  border: none;
+  border-radius: 10px;
+
   font-size: 15px;
   font-weight: 600;
-  transition: 0.2s ease;
+  cursor: pointer;
+
+  transition: 0.25s ease;
 }
 
-.modal-btn:hover {
-  background: #093f79;
+.premium-modal-btn:hover {
+  background: #004bbd;
   transform: translateY(-2px);
 }
 
-/* ----------------------------
-   Mobile Responsive Tweaks
------------------------------*/
+/* ----------------------------------------------------
+   Responsive (Mobile)
+---------------------------------------------------- */
 @media (max-width: 480px) {
-  .contact-card {
-    padding: 30px 25px;
+  .contact-premium-card {
+    padding: 50px 48px;
   }
 
-  .contact-title {
-    font-size: 26px;
+  .premium-title {
+    font-size: 28px;
   }
 
-  input,
-  textarea {
-    padding: 12px;
-    font-size: 14px;
-  }
-
-  .submit-btn {
-    padding: 12px;
+  .premium-submit {
     font-size: 16px;
-  }
-
-  .modal-content {
-    padding: 25px 20px;
+    padding: 12px;
   }
 }

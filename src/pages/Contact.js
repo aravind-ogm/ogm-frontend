@@ -44,16 +44,17 @@ export default function Contact() {
   const closeModal = () => setShowModal(false);
 
   return (
-    <div className="contact-wrapper">
-      <div className="contact-card">
-        <h2 className="contact-title">Contact Us</h2>
-        <p className="contact-subtitle">
-          We would love to hear from you. Please fill out the form below.
+    <div className="contact-premium-wrapper">
+
+      <div className="contact-premium-card">
+
+        <h2 className="premium-title">Get in Touch</h2>
+        <p className="premium-subtitle">
+          We're here to assist you with any queries about properties or services.
         </p>
 
-        <form className="contact-form" onSubmit={handleSubmit}>
-          {/* NAME */}
-          <div className="input-group">
+        <form className="premium-form" onSubmit={handleSubmit}>
+          <div className="premium-input">
             <label>Your Name</label>
             <input
               name="name"
@@ -65,8 +66,7 @@ export default function Contact() {
             />
           </div>
 
-          {/* EMAIL */}
-          <div className="input-group">
+          <div className="premium-input">
             <label>Email Address</label>
             <input
               name="email"
@@ -74,12 +74,10 @@ export default function Contact() {
               placeholder="Enter your email"
               value={form.email}
               onChange={handleChange}
-
             />
           </div>
 
-          {/* MOBILE NUMBER */}
-          <div className="input-group">
+          <div className="premium-input">
             <label>Mobile Number</label>
             <input
               name="mobile"
@@ -92,34 +90,33 @@ export default function Contact() {
             />
           </div>
 
-          {/* MESSAGE */}
-          <div className="input-group">
+          <div className="premium-input">
             <label>Your Message</label>
             <textarea
               name="message"
               rows="4"
-              placeholder="Write your message..."
+              placeholder="Type your message..."
               value={form.message}
               onChange={handleChange}
-
             ></textarea>
           </div>
 
-          <button type="submit" className="submit-btn">
+          <button type="submit" className="premium-submit">
             Send Message
           </button>
 
-          {status && !showModal && <p className="form-status">{status}</p>}
+          {status && !showModal && (
+            <p className="premium-status">{status}</p>
+          )}
         </form>
       </div>
 
-      {/* SUCCESS MODAL */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Success!</h3>
-            <p>Your message has been sent successfully.</p>
-            <button onClick={closeModal} className="modal-btn">
+        <div className="premium-modal-bg">
+          <div className="premium-modal-box">
+            <h3>Message Sent!</h3>
+            <p>Thank you for contacting us. We’ll get back to you shortly.</p>
+            <button onClick={closeModal} className="premium-modal-btn">
               Close
             </button>
           </div>
