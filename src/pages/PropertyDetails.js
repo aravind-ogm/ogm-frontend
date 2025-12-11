@@ -8,13 +8,9 @@ import ImageZoomModal from "../components/ImageZoomModal";
 import { BadgeCheck, Share2, Heart, Download } from "lucide-react";
 import "../styles/PropertyDetails.css";
 
+import NearbyLocations from "../components/NearbyLocations";
 export default function PropertyDetails() {
   const { id } = useParams();
-
-  /* -----------------------------------------
-        HOOKS MUST ALWAYS BE AT THE TOP
-  ----------------------------------------- */
-
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -22,6 +18,7 @@ export default function PropertyDetails() {
   const [copyToast, setCopyToast] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomImage, setZoomImage] = useState("");
+
 
   /* -------- FAVORITES -------- */
   const [favorite, setFavorite] = useState(() => {
@@ -87,8 +84,6 @@ export default function PropertyDetails() {
     setCopyToast(true);
     setTimeout(() => setCopyToast(false), 1500);
   };
-
-
 
   /* -----------------------------------------
         BROCHURE HANDLERS
@@ -376,7 +371,8 @@ export default function PropertyDetails() {
   </div>
 </div>
 
-
+{/* NEARBY LOCATIONS */}
+<NearbyLocations locations={property.nearby || []} />
 
       {/* AMENITIES */}
       <div className="details-section">

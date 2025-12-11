@@ -7,8 +7,7 @@ import Contact from "./pages/Contact";
 import PropertyDetails from "./pages/PropertyDetails";
 import Footer from "./components/Footer";
 import About from "./pages/About";
-
-
+import AIChatWidget from "./components/AIChatWidget";
 
 import "./styles/App.css";
 
@@ -18,14 +17,9 @@ function App() {
   // --------------------------- Load Properties --------------------------- //
   const loadProperties = async (query = "") => {
     try {
-      const url = query
-        ? `http://localhost:8080/api/properties?q=${encodeURIComponent(query)}`
-        : `http://localhost:8080/api/properties`;
-//const BASE_URL = process.env.REACT_APP_API_URL;
-//
-//const url = query
-//  ? `${BASE_URL}/api/properties?q=${encodeURIComponent(query)}`
-//  : `${BASE_URL}/api/properties`;
+     const url = query
+       ? `http://localhost:8080/api/properties?q=${encodeURIComponent(query)}&page=0&size=500`
+       : `http://localhost:8080/api/properties?page=0&size=500`;
 
 
       const res = await fetch(url);
@@ -44,8 +38,11 @@ function App() {
   return (
     <Router>
       <div className="app-container">
+
+        {/* HEADER */}
         <Header />
 
+        {/* ROUTES */}
         <Routes>
           {/* HOME PAGE */}
           <Route
@@ -58,10 +55,15 @@ function App() {
               </main>
             }
           />
+
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
         </Routes>
+
+        {/* ✅ AI CHAT WIDGET OUTSIDE ROUTES
+            ↓↓↓ This FIXES your crash */}
+        <AIChatWidget />
 
         <FloatingWhatsapp />
         <Footer />
@@ -84,7 +86,6 @@ function Header() {
             className="logo-img"
             style={{ height: "50px", cursor: "pointer" }}
           />
-
           <h1 className="header-title">One Global Marketplace</h1>
         </Link>
       </div>
@@ -98,39 +99,49 @@ function Header() {
   );
 }
 
-
-
-// --------------------------- SIMPLE SEARCH BAR (Functional) --------------------------- //
+// --------------------------- SIMPLE SEARCH BAR --------------------------- //
 function SearchBar({ onSearch }) {
   const [text, setText] = useState("");
 
-  const handleSearch = () => {
-    onSearch(text);
+  const handleSearch = () => onSearch(text);
+  const handleAskAI = () => {
+    window.dispatchEvent(new CustomEvent("open-ai-widget", { detail: text }));
   };
 
-  const handleKey = (e) => {
-    if (e.key === "Enter") handleSearch();
-  };
 
   return (
     <div className="search-wrap">
-      <div className="search-input">
-        <input
-          placeholder="Find Apartments, Villas, Plots in Bengaluru"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKey}
-        />
+      <div className="search-bar-outer">
 
-        <button className="search-btn" onClick={handleSearch}>
-          {/* Subtle clean icon */}
+        {/* LEFT — Search Section */}
+        <div className="segment left-segment">
+          <label className="segment-title">Search</label>
+          <input
+            className="segment-input"
+            placeholder="Find Apartments, Villas, Plots..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="divider"></div>
+
+        {/* RIGHT — AI Section */}
+        <div className="segment ai-segment" onClick={handleAskAI}>
+          <label className="segment-title">Ask AI Agent</label>
+          <span className="segment-sub">Let AI help you search</span>
+        </div>
+
+        {/* SEARCH ICON BUTTON */}
+        <button className="end-search-btn" onClick={handleSearch}>
           <svg
-            width="20"
-            height="20"
+            width="18"
+            height="18"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#475569"
-            strokeWidth="2"
+            stroke="#ffffff"
+            strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
@@ -142,6 +153,8 @@ function SearchBar({ onSearch }) {
     </div>
   );
 }
+
+
 
 
 // --------------------------- Property List --------------------------- //
