@@ -13,14 +13,13 @@ import "./styles/App.css";
 
 function App() {
   const [properties, setProperties] = useState([]);
-
-  // --------------------------- Load Properties --------------------------- //
   const loadProperties = async (query = "") => {
     try {
-     const url = query
-       ? `http://localhost:8080/api/properties?q=${encodeURIComponent(query)}&page=0&size=500`
-       : `http://localhost:8080/api/properties?page=0&size=500`;
+      const baseUrl = "https://ogm-backend.onrender.com";
 
+      const url = query
+        ? `${baseUrl}/api/properties?q=${encodeURIComponent(query)}&page=0&size=500`
+        : `${baseUrl}/api/properties?page=0&size=500`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -39,12 +38,9 @@ function App() {
     <Router>
       <div className="app-container">
 
-        {/* HEADER */}
         <Header />
 
-        {/* ROUTES */}
         <Routes>
-          {/* HOME PAGE */}
           <Route
             path="/"
             element={
@@ -61,10 +57,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
         </Routes>
 
-        {/* ✅ AI CHAT WIDGET OUTSIDE ROUTES
-            ↓↓↓ This FIXES your crash */}
         <AIChatWidget />
-
         <FloatingWhatsapp />
         <Footer />
       </div>
@@ -74,7 +67,6 @@ function App() {
 
 export default App;
 
-// --------------------------- Header --------------------------- //
 function Header() {
   return (
     <header className="topbar">
@@ -99,7 +91,6 @@ function Header() {
   );
 }
 
-// --------------------------- SIMPLE SEARCH BAR --------------------------- //
 function SearchBar({ onSearch }) {
   const [text, setText] = useState("");
 
@@ -108,12 +99,10 @@ function SearchBar({ onSearch }) {
     window.dispatchEvent(new CustomEvent("open-ai-widget", { detail: text }));
   };
 
-
   return (
     <div className="search-wrap">
       <div className="search-bar-outer">
 
-        {/* LEFT — Search Section */}
         <div className="segment left-segment">
           <label className="segment-title">Search</label>
           <input
@@ -124,16 +113,13 @@ function SearchBar({ onSearch }) {
           />
         </div>
 
-        {/* Divider */}
         <div className="divider"></div>
 
-        {/* RIGHT — AI Section */}
         <div className="segment ai-segment" onClick={handleAskAI}>
           <label className="segment-title">Ask AI Agent</label>
           <span className="segment-sub">Let AI help you search</span>
         </div>
 
-        {/* SEARCH ICON BUTTON */}
         <button className="end-search-btn" onClick={handleSearch}>
           <svg
             width="18"
@@ -154,10 +140,6 @@ function SearchBar({ onSearch }) {
   );
 }
 
-
-
-
-// --------------------------- Property List --------------------------- //
 function PropertyList({ properties }) {
   if (!properties || properties.length === 0) {
     return <p style={{ marginTop: "20px" }}>No properties found.</p>;

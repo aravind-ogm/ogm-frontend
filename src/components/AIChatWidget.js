@@ -34,7 +34,7 @@ export default function AIChatWidget() {
     setMessages(updatedMessages);
 
     try {
-      const res = await fetch("http://localhost:8080/api/ai/chat", {
+      const res = await fetch("https://ogm-backend.onrender.com/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: updatedMessages })
