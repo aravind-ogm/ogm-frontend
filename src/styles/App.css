@@ -274,3 +274,61 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
+/* --------------------------------------------
+   RESPONSIVE FIXES — Fit Laptop & Mobile
+-------------------------------------------- */
+
+/* Ensure full-width layout without overflow */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Laptop & smaller desktops */
+@media (max-width: 1440px) {
+  .app-container {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .header-actions {
+    right: 20px;
+  }
+
+  .search-wrap {
+    margin: 30px auto;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 16px;
+  }
+
+  .logo-img {
+    height: 46px;
+  }
+
+  .header-title {
+    font-size: 16px;
+  }
+
+  .header-actions {
+    position: static;
+    margin-top: 12px;
+    align-self: flex-end;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .property-card {
+    max-width: 100%;
+  }
+}
+

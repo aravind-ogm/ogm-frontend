@@ -24,7 +24,7 @@ export default function Contact() {
     setStatus("Sending...");
 
     try {
-      const response = await fetch("https://ogm-backend.onrender.com/api/contact/send", {
+      const response = await fetch("https://ogm-backend-clean.onrender.com/api/contact/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

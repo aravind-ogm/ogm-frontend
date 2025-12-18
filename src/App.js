@@ -15,7 +15,7 @@ function App() {
   const [properties, setProperties] = useState([]);
   const loadProperties = async (query = "") => {
     try {
-      const baseUrl = "https://ogm-backend.onrender.com";
+      const baseUrl = "https://ogm-backend-clean.onrender.com";
 
       const url = query
         ? `${baseUrl}/api/properties?q=${encodeURIComponent(query)}&page=0&size=500`

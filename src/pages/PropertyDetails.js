@@ -41,7 +41,7 @@ export default function PropertyDetails() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`https://ogm-backend.onrender.com/api/properties/${id}`);
+        const res = await fetch(`https://ogm-backend-clean.onrender.com/api/properties/${id}`);
         const data = await res.json();
         setProperty(data);
       } catch (err) {
@@ -119,7 +119,7 @@ export default function PropertyDetails() {
     setBrochureStatus("sending");
 
     try {
-      const res = await fetch("https://ogm-backend.onrender.com/api/brochure/request", {
+      const res = await fetch("https://ogm-backend-clean.onrender.com/api/brochure/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,7 +139,7 @@ export default function PropertyDetails() {
 
       // ⭐ Start Browser Download
       const downloadLink = document.createElement("a");
-      downloadLink.href = "https://ogm-backend.onrender.com" + data.url;
+      downloadLink.href = "https://ogm-backend-clean.onrender.com" + data.url;
       downloadLink.download = "";
       document.body.appendChild(downloadLink);
       downloadLink.click();
