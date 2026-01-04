@@ -1,17 +1,8 @@
-/* --------------------------------------------
-   GLOBAL — Clean Airbnb Background
--------------------------------------------- */
-html, body {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  font-family: "Inter", sans-serif;
-  background: #ffffff;
-  color: #0f172a;
-}
+/* ============================================
+   APP LAYOUT
+   (Global styles live in global.css)
+============================================ */
 
-/* PAGE LAYOUT */
 .app-container {
   width: 100%;
   max-width: 1750px;
@@ -20,9 +11,10 @@ html, body {
   background: #ffffff;
 }
 
-/* --------------------------------------------
-   HEADER — Centered Logo + Title Below
--------------------------------------------- */
+/* ============================================
+   HEADER — Logo + Title + CTA
+============================================ */
+
 .topbar {
   position: sticky;
   top: 0;
@@ -38,7 +30,7 @@ html, body {
   background: #ffffff;
 }
 
-/* container for logo + title */
+/* Logo + title container */
 .header-content {
   text-decoration: none;
   display: flex;
@@ -47,7 +39,7 @@ html, body {
   gap: 6px;
 }
 
-/* LOGO */
+/* Logo */
 .logo-img {
   height: 55px;
   transition: 0.25s ease;
@@ -58,7 +50,7 @@ html, body {
   transform: scale(1.05);
 }
 
-/* TITLE */
+/* Title */
 .header-title {
   margin: 0;
   font-size: 18px;
@@ -67,24 +59,24 @@ html, body {
   text-align: center;
 }
 
-/* remove underline */
+/* Remove underline */
 .header-content:link,
 .header-content:visited {
   text-decoration: none;
   color: inherit;
 }
 
-/* Contact button (desktop) */
+/* Contact button wrapper */
 .header-actions {
   position: absolute;
   right: 40px;
   top: 26px;
 }
 
-/* CONTACT BUTTON */
+/* Contact button */
 .contact {
   background: linear-gradient(135deg, #0b63e5, #004bbd);
-  color: white;
+  color: #ffffff;
   padding: 10px 22px;
   border-radius: 30px;
   font-weight: 600;
@@ -99,102 +91,10 @@ html, body {
   box-shadow: 0 10px 24px rgba(2, 6, 23, 0.22);
 }
 
-/* --------------------------------------------
-   SEARCH BAR — Airbnb Style
--------------------------------------------- */
-.search-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0 20px;
-  margin: 40px auto;
-}
+/* ============================================
+   PROPERTY LISTING
+============================================ */
 
-.search-bar-outer {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: 900px;
-  background: #ffffff;
-  border-radius: 50px;
-  padding: 6px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  border: 1px solid #e5e7eb;
-  transition: 0.25s ease-in-out;
-}
-
-.search-bar-outer:hover {
-  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
-}
-
-.segment {
-  flex: 1;
-  padding: 10px 22px;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  border-radius: 40px;
-  transition: 0.25s ease;
-}
-
-.segment:hover {
-  background: #f7f7f7;
-}
-
-.segment-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.segment-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  margin-top: 2px;
-  color: #334155;
-}
-
-.segment-input::placeholder {
-  color: #94a3b8;
-}
-
-.segment-sub {
-  font-size: 13px;
-  margin-top: 2px;
-  color: #64748b;
-}
-
-.divider {
-  width: 1px;
-  height: 42px;
-  background: #e2e8f0;
-}
-
-/* Search button */
-.end-search-btn {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: #ff385c;
-  border: none;
-  margin-left: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(255, 56, 92, 0.4);
-  transition: 0.15s ease-in-out;
-}
-
-.end-search-btn:hover {
-  transform: scale(1.1);
-}
-
-/* --------------------------------------------
-   PROPERTY LIST
--------------------------------------------- */
 .section-title {
   width: 100%;
   padding: 0 20px;
@@ -217,41 +117,20 @@ html, body {
   margin: 0 auto;
 }
 
-/* --------------------------------------------
-   RESPONSIVE — Tablet & Mobile
--------------------------------------------- */
+/* ============================================
+   RESPONSIVE — TABLET
+============================================ */
+
 @media (max-width: 768px) {
-
-  .search-bar-outer {
-    flex-direction: column;
-    padding: 10px;
-    border-radius: 30px;
-  }
-
-  .divider {
-    width: 100%;
-    height: 1px;
-    margin: 4px 0;
-  }
-
-  .segment {
-    width: 100%;
-    padding: 14px;
-  }
-
-  .end-search-btn {
-    margin-top: 10px;
-    align-self: center;
-  }
-
   .property-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
 
-/* --------------------------------------------
-   MOBILE — FIX OVERFLOW & HEADER
--------------------------------------------- */
+/* ============================================
+   RESPONSIVE — MOBILE
+============================================ */
+
 @media (max-width: 480px) {
 
   .topbar {
@@ -259,7 +138,7 @@ html, body {
     align-items: center;
   }
 
-  /* KEY FIX: remove absolute positioning */
+  /* KEY FIX: remove absolute positioning on mobile */
   .header-actions {
     position: static;
     margin-top: 10px;
@@ -288,11 +167,8 @@ html, body {
   }
 }
 
-/* Extra-small phones */
-@media (max-width: 360px) {
-  .segment-title,
-  .segment-input,
-  .segment-sub {
-    font-size: 12px;
-  }
-}
+/* ============================================
+   NOTE
+   Search bar styles live in:
+   /search/SearchBar.css
+============================================ */
