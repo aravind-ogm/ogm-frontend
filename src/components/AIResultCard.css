@@ -1,0 +1,117 @@
+.ai-card {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
+}
+
+/* LEFT 30% */
+.ai-card-images {
+  width: 30%;
+  position: relative;
+}
+
+.ai-card-images img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 10px;
+}
+
+
+
+.image-count {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* RIGHT 70% */
+.ai-card-content {
+  width: 70%;
+}
+
+.ai-title {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.ai-location {
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.ai-icons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.ai-highlights {
+  margin-bottom: 12px;
+  padding-left: 16px;
+}
+
+.ai-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.ai-actions button {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+}
+
+.ai-actions .primary {
+  background: #ff385c;
+  color: #fff;
+  border: none;
+}
+
+.ai-description {
+  margin: 10px 0;
+  color: #444;
+  line-height: 1.4;
+}
+
+.ai-actions button {
+  transition: all 0.2s ease;
+}
+
+.ai-actions button:hover {
+  transform: scale(1.05);
+}
+
+.ai-actions button:active {
+  transform: scale(0.95);
+}
+
+/* Premium AI bottom refine bar */
+.ai-bottom-search {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, #ffffff 70%, rgba(255,255,255,0.9));
+  padding: 18px 0 10px;
+  margin-top: 40px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+}
+
+/* Slightly narrow for focus */
+.ai-bottom-search .search-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
