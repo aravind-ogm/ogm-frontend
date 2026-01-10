@@ -1,14 +1,16 @@
+/* CARD */
 .ai-card {
   display: flex;
   gap: 16px;
   padding: 16px;
   border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 24px;
+  border-left: 4px solid #ff385c;
 }
 
-/* LEFT 30% */
+/* LEFT — 30% IMAGES */
 .ai-card-images {
   width: 30%;
   position: relative;
@@ -22,20 +24,18 @@
   border-radius: 10px;
 }
 
-
-
 .image-count {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
 }
 
-/* RIGHT 70% */
+/* RIGHT — 70% CONTENT */
 .ai-card-content {
   width: 70%;
 }
@@ -50,17 +50,21 @@
   margin-bottom: 8px;
 }
 
-.ai-icons {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 10px;
+/* BULLETS */
+.ai-bullets {
+  margin: 10px 0 14px;
+  padding-left: 0;
+  list-style: none;
 }
 
-.ai-highlights {
-  margin-bottom: 12px;
-  padding-left: 16px;
+.ai-bullets li {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 6px;
+  line-height: 1.45;
 }
 
+/* ACTIONS */
 .ai-actions {
   display: flex;
   gap: 12px;
@@ -70,23 +74,8 @@
   padding: 8px 14px;
   border-radius: 20px;
   border: 1px solid #ddd;
-  background: #fff;
+  background: #ffffff;
   cursor: pointer;
-}
-
-.ai-actions .primary {
-  background: #ff385c;
-  color: #fff;
-  border: none;
-}
-
-.ai-description {
-  margin: 10px 0;
-  color: #444;
-  line-height: 1.4;
-}
-
-.ai-actions button {
   transition: all 0.2s ease;
 }
 
@@ -94,24 +83,39 @@
   transform: scale(1.05);
 }
 
-.ai-actions button:active {
-  transform: scale(0.95);
+.ai-actions button.active {
+  background: #0b63e5;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 6px 18px rgba(11, 99, 229, 0.35);
 }
 
-/* Premium AI bottom refine bar */
-.ai-bottom-search {
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(to top, #ffffff 70%, rgba(255,255,255,0.9));
-  padding: 18px 0 10px;
-  margin-top: 40px;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
-  z-index: 20;
+.ai-actions .primary {
+  background: #ff385c;
+  color: #ffffff;
+  border: none;
 }
 
-/* Slightly narrow for focus */
-.ai-bottom-search .search-wrap {
-  max-width: 900px;
-  margin: 0 auto;
-}
+/* MOBILE */
+@media (max-width: 768px) {
+  .ai-card {
+    flex-direction: column;
+  }
 
+  .ai-card-images,
+  .ai-card-content {
+    width: 100%;
+  }
+
+  .ai-card-images img {
+    height: 220px;
+  }
+
+  .ai-actions {
+    flex-wrap: wrap;
+  }
+
+  .ai-actions button {
+    flex: 1;
+  }
+}
