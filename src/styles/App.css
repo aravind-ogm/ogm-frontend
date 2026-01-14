@@ -72,6 +72,12 @@
   right: 40px;
   top: 26px;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 
 /* Contact button */
 .contact {
@@ -157,6 +163,16 @@
     padding: 8px 18px;
     font-size: 13px;
   }
+
+  .contact {
+    background: #2563eb;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
 
   .section-title {
     font-size: 20px;
@@ -246,5 +262,20 @@
   font-size: 13px;
   color: #666;
   margin-bottom: 10px;
+}
+
+.auth-btn {
+  background: linear-gradient(135deg,#ff4d6d,#ff8fa3);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-right: 14px;
+  box-shadow: 0 8px 20px rgba(255,77,109,0.35);
+}
+
+.auth-btn:hover {
+  opacity: 0.95;
 }
 

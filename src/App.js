@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 import About from "./pages/About";
 import SearchBar from "./search/SearchBar";
 import "./styles/App.css";
+import AuthContainer from "./components/ogm-auth/AuthContainer";
 
 function App() {
   const [properties, setProperties] = useState([]);
@@ -141,6 +142,7 @@ function App() {
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/auth" element={<AuthContainer />} />
         </Routes>
         <FloatingWhatsapp />
         <Footer />
@@ -154,25 +156,29 @@ export default App;
 /* ================= HEADER ================= */
 function Header() {
   return (
-    <header className="topbar">
-      <div className="header-left">
-        <Link to="/" className="header-content">
-          <img
-            src="/logo.png"
-            alt="OGM Logo"
-            className="logo-img"
-            style={{ height: "50px", cursor: "pointer" }}
-          />
-          <h1 className="header-title">One Global Marketplace</h1>
-        </Link>
-      </div>
+      <header className="topbar">
+        <div className="header-left">
+          <Link to="/" className="header-content">
+            <img
+                src="/logo.png"
+                alt="OGM Logo"
+                className="logo-img"
+                style={{ height: "50px", cursor: "pointer" }}
+            />
+            <h1 className="header-title">One Global Marketplace</h1>
+          </Link>
+        </div>
 
-      <div className="header-actions">
-        <Link to="/contact" className="contact">
-          Contact Us
-        </Link>
-      </div>
-    </header>
+        <div className="header-actions">
+          <Link to="/auth" className="auth-btn">
+            Login / Sign Up
+          </Link>
+
+          <Link to="/contact" className="contact">
+            Contact Us
+          </Link>
+        </div>
+      </header>
   );
 }
 
