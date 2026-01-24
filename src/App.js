@@ -17,7 +17,7 @@ function App() {
   const [wishlist, setWishlist] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
 
-  const baseUrl = "http://localhost:8080";
+  const baseUrl = "https://ogm-backend-clean-879813720468.asia-south1.run.app";
 
   /* ================= NORMAL SEARCH ================= */
   const loadProperties = async (query = "") => {

@@ -15,7 +15,7 @@ function SearchBar({ onSearch, mode = "both" }) {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/ai/search?prompt=${encodeURIComponent(aiText)}`
+        `https://ogm-backend-clean-879813720468.asia-south1.run.app/api/ai/search?prompt=${encodeURIComponent(aiText)}`
       );
       const page = await res.json();
 
