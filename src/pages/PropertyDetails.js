@@ -6,7 +6,7 @@ import Amenities from "../components/Amenities";
 import ImageZoomModal from "../components/ImageZoomModal";
 
 import { BadgeCheck, Share2, Heart, Download } from "lucide-react";
-import "../styles/PropertyDetails.css";
+import "../styles/property-details.css";
 
 import NearbyLocations from "../components/NearbyLocations";
 export default function PropertyDetails() {

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { MapPin, Share2, Bookmark, Navigation } from "lucide-react";
-import "../styles/NearbyLocations.css";
+import "../styles/nearby-locations.css";
 
 export default function NearbyLocations({ locations = [] }) {
   if (!locations.length) return null;

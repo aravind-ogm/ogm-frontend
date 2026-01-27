@@ -14,7 +14,7 @@ import {
   Wifi,
 } from "lucide-react";
 
-import "../styles/Amenities.css";
+import "../styles/amenities.css";
 
 // Use only icons that exist in lucide-react
 const ICONS = {
