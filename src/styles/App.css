@@ -248,3 +248,66 @@
   margin-bottom: 10px;
 }
 
+@media (max-width: 768px) {
+  .ai-suggestions.premium {
+    flex-direction: column;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-bottom-search {
+    padding: 12px 8px 10px;
+  }
+
+  .ai-bottom-search .search-wrap {
+    max-width: 100%;
+    padding: 0 8px;
+  }
+
+  .ai-bottom-search .search-pill.ai {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    align-items: center;
+    text-align: center;
+  }
+
+  .header-content {
+    align-items: center;
+  }
+
+  .header-actions {
+    position: static;
+    margin-top: 12px;
+  }
+}
+@media (max-width: 768px) {
+  .search-pill {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 52px; /* space for icon */
+  }
+
+  .pill-btn {
+    right: 10px;
+  }
+}
+@media (max-width: 768px) {
+  .section-title {
+    padding: 0 12px;
+  }
+}
+@media (max-width: 768px) {
+  .whatsapp-float {
+    bottom: 16px;
+    right: 12px;
+  }
+}
+
+
+
+

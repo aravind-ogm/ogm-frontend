@@ -7,3 +7,10 @@ html, body {
   background: #ffffff;
   color: #0f172a;
 }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  max-width: 100%;
+}

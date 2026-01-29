@@ -131,3 +131,12 @@
     display: none;
   }
 }
+
+.search-pill {
+  position: relative;
+}
+
+.search-pill.ai {
+  position: relative;
+}
+
