@@ -2,7 +2,7 @@ import React from "react";
 import whatsappLogo from "../assets/whatsapp.png";
 
 export default function FloatingWhatsapp() {
-  const whatsappNumber = "919494808825"; // <-- your WhatsApp number here
+  const whatsappNumber = "918309120616";
 
   return (
     <a

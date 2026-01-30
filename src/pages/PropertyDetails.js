@@ -246,7 +246,7 @@ export default function PropertyDetails() {
        {/* CALL NOW */}
        <div className="tooltip-wrapper">
          <a
-           href="tel:+919876543210"
+           href="tel:+918309120616"
            className="action-btn call-btn"
            style={{ pointerEvents: "auto" }}
          >
