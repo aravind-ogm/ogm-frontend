@@ -44,7 +44,7 @@ export default function Footer() {
       <div className="footer-links-card">
         <Link to="/about">About Us</Link>
         <a href="#">Terms & Conditions</a>
-        <a href="#">Privacy Policy</a>
+        <Link to="/privacy-policy">Privacy Policy</Link>
         <a href="#">Customer Support</a>
         <Link to="/contact">Contact</Link>
       </div>

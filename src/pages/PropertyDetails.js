@@ -116,48 +116,58 @@ export default function PropertyDetails() {
   const handleBrochureSubmit = async (e) => {
     e.preventDefault();
 
+    if (!property || !property.id) {
+      setBrochureStatus("error");
+      return;
+    }
+
     setBrochureStatus("sending");
 
     try {
-      const res = await fetch("https://ogm-backend-clean-879813720468.asia-south1.run.app/api/brochure/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: brochureForm.name,
-          mobile: brochureForm.mobile,
-          email: brochureForm.email,
-          propertyId: property.id,
-        }),
-      });
+      const res = await fetch(
+          "https://ogm-backend-clean-879813720468.asia-south1.run.app/api/brochure/request",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: brochureForm.name,
+              mobile: brochureForm.mobile,
+              email: brochureForm.email || null,
+              propertyId: property.id,
+            }),
+          }
+      );
 
-      const data = await res.json();
-
-      if (!res.ok || !data.url) {
+      let data;
+      try {
+        data = await res.json();
+      } catch {
         setBrochureStatus("error");
         return;
       }
 
-      // ⭐ Start Browser Download
-      const downloadLink = document.createElement("a");
-      downloadLink.href = "https://ogm-backend-clean-879813720468.asia-south1.run.app" + data.url;
-      downloadLink.download = "";
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
+      if (!res.ok || !data?.url) {
+        setBrochureStatus("error");
+        return;
+      }
 
       setBrochureStatus("success");
 
-      // Close modal after 1 sec
+      // 🔥 Trigger brochure download
+      window.location.href =
+          "https://ogm-backend-clean-879813720468.asia-south1.run.app" + data.url;
+
       setTimeout(() => {
         setShowBrochureModal(false);
         setBrochureStatus("");
       }, 1000);
 
-    } catch (error) {
-      console.error("Brochure error:", error);
+    } catch (err) {
+      console.error("Brochure error:", err);
       setBrochureStatus("error");
     }
   };
+
 
 
   /* -----------------------------------------
@@ -345,7 +355,8 @@ export default function PropertyDetails() {
       <div className="spec-grid">
         <div className="spec-box"><b>{property.bedrooms}</b> Bedrooms</div>
         <div className="spec-box"><b>{property.bathrooms}</b> Bathrooms</div>
-        <div className="spec-box"><b>{property.carpetArea}</b> Carpet Area</div>
+        {/*<div className="spec-box"><b>{property.carpetArea}</b> Carpet Area</div>*/}
+        <div className="spec-box"><b>{property.landArea}</b> Land Area</div>
         <div className="spec-box"><b>{property.parking}</b> Parking</div>
       </div>
 

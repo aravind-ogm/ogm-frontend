@@ -16,6 +16,7 @@ export function normalizeProperty(raw = {}) {
     bedrooms: raw.bedrooms ?? "—",
     bathrooms: raw.bathrooms ?? "—",
     carpetArea: raw.carpetArea || "—",
+    landArea: raw.landArea || "—",
     builtupArea: raw.builtupArea || "—",
     parking: raw.parking || "—",
     maintenance: raw.maintenance || "—",
