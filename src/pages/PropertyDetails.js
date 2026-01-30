@@ -154,8 +154,7 @@ export default function PropertyDetails() {
       setBrochureStatus("success");
 
       // 🔥 Trigger brochure download
-      window.location.href =
-          "https://ogm-backend-clean-879813720468.asia-south1.run.app" + data.url;
+      window.location.href = data.url;
 
       setTimeout(() => {
         setShowBrochureModal(false);
