@@ -157,8 +157,8 @@ function App() {
                 }
             />
 
-          <Route path="/property/:id" element={<PropertyDetails />} />
-          <Route path="/about" element={<About />} />
+            <Route path="/property/:slug" element={<PropertyDetails />} />
+            <Route path="/about" element={<About />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/contact" element={<Contact />} />
         </Routes>

@@ -169,31 +169,140 @@
 }
 
 /* -------------------------------------------------------
-   DETAILS SECTION
+   DETAILS SECTION -Property Details
 -------------------------------------------------------- */
+
 .details-section {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .details-section h2 {
-  font-size: 22px;
+  font-size: 20px;
+  font-weight: 600;
   margin-bottom: 14px;
+  color: #0f172a;
 }
 
+/* GRID */
 .details-table {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
 }
 
+/* CARD */
 .details-table div {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  position: relative;
+  transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease,
+          border-color 0.25s ease;
 }
 
-.details-table span {
-  color: #6b7280;
+/* ICON */
+.details-table svg {
+  width: 16px;
+  height: 16px;
+  color: #2563eb;
+  flex-shrink: 0;
 }
+
+/* LABEL */
+.details-table span {
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* VALUE */
+.details-table b {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* HOVER — subtle luxury */
+.details-table div:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow:
+          0 6px 18px rgba(15, 23, 42, 0.08),
+          inset 0 0 0 1px rgba(37, 99, 235, 0.05);
+}
+
+/* LEFT ACCENT (HOVER ONLY) */
+.details-table div::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18%;
+  width: 3px;
+  height: 64%;
+  background: linear-gradient(180deg, #2563eb, #38bdf8);
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.details-table div:hover::before {
+  opacity: 1;
+}
+
+/* =======================================================
+   DARK LUXURY THEME SUPPORT
+======================================================= */
+
+.dark-theme .details-section h2 {
+  color: #e5e7eb;
+}
+
+.dark-theme .details-table div {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-theme .details-table span {
+  color: #94a3b8;
+}
+
+.dark-theme .details-table b {
+  color: #f8fafc;
+}
+
+.dark-theme .details-table svg {
+  color: #38bdf8;
+}
+
+.dark-theme .details-table div:hover {
+  box-shadow:
+          0 10px 30px rgba(0, 0, 0, 0.6),
+          inset 0 0 0 1px rgba(56, 189, 248, 0.2);
+}
+
+/* =======================================================
+   MOBILE OPTIMIZATION
+======================================================= */
+
+@media (max-width: 768px) {
+  .details-table {
+    grid-template-columns: 1fr;
+  }
+
+  .details-table div {
+    padding: 10px 12px;
+  }
+}
+
 
 ./* -------------------------------------------------------
     DESCRIPTION GRID (Premium – like amenities)

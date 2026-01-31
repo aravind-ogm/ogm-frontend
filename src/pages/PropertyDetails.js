@@ -4,13 +4,12 @@ import GalleryCarousel from "../components/GalleryCarousel";
 import VideoModal from "../components/VideoModal";
 import Amenities from "../components/Amenities";
 import ImageZoomModal from "../components/ImageZoomModal";
-
 import { BadgeCheck, Share2, Heart, Download } from "lucide-react";
 import "../styles/PropertyDetails.css";
 
 import NearbyLocations from "../components/NearbyLocations";
 export default function PropertyDetails() {
-  const { id } = useParams();
+  // const { id } = useParams();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -18,11 +17,10 @@ export default function PropertyDetails() {
   const [copyToast, setCopyToast] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomImage, setZoomImage] = useState("");
-
-
+  const { slug } = useParams();
   /* -------- FAVORITES -------- */
   const [favorite, setFavorite] = useState(() => {
-    const saved = localStorage.getItem(`fav-${id}`);
+    const saved = localStorage.getItem(`fav-${slug}`);
     return saved === "true";
   });
 
@@ -36,22 +34,34 @@ export default function PropertyDetails() {
   });
 
   /* -----------------------------------------
-          FETCH PROPERTY DETAILS
+     FETCH PROPERTY DETAILS
   ----------------------------------------- */
   useEffect(() => {
+    if (!slug) return;
+
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`https://ogm-backend-clean-879813720468.asia-south1.run.app/api/properties/${id}`);
+        const res = await fetch(
+            `https://ogm-backend-clean-879813720468.asia-south1.run.app/api/properties/slug/${slug}`
+        );
+
+        if (!res.ok) {
+          throw new Error("Property not found");
+        }
+
         const data = await res.json();
         setProperty(data);
       } catch (err) {
         console.error("Failed to load property", err);
+        setProperty(null);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProperty();
-  }, [id]);
+  }, [slug]);
+
 
   /* -----------------------------------------
           FAVORITE TOGGLE
@@ -59,7 +69,7 @@ export default function PropertyDetails() {
   const toggleFavorite = () => {
     const newValue = !favorite;
     setFavorite(newValue);
-    localStorage.setItem(`fav-${id}`, newValue);
+    localStorage.setItem(`fav-${slug}`, newValue);
   };
 
   /* -----------------------------------------
