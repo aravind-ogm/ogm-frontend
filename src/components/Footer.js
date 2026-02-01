@@ -56,7 +56,7 @@ export default function Footer() {
       </p>
 
       <p className="footer-copy">
-        © {new Date().getFullYear()} OGM Market. All Rights Reserved.
+        © {new Date().getFullYear()} One Global Marketplace. All Rights Reserved.
       </p>
     </footer>
   );
