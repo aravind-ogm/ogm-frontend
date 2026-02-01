@@ -1,5 +1,5 @@
 /* ============================================
-   DUAL SEARCH BAR — NO GAP (CONNECTED)
+   DUAL SEARCH BAR — SMART & ADAPTIVE
 ============================================ */
 
 .search-wrap {
@@ -10,7 +10,6 @@
   padding: 0 16px;
 }
 
-/* 🔴 KEY FIX: remove gap */
 .dual-search-bar {
   display: flex;
   width: 100%;
@@ -18,7 +17,7 @@
 }
 
 /* --------------------------------------------
-   SEARCH PILL (CONNECTED)
+   SEARCH PILL — BASE
 -------------------------------------------- */
 .search-pill {
   flex: 1;
@@ -28,24 +27,30 @@
   padding: 10px 14px 10px 22px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 6px 22px rgba(0,0,0,0.1);
-}
-
-/* LEFT pill — round only left side */
-.search-pill:first-child {
-  border-radius: 999px 0 0 999px;
-  border-right: none; /* remove double border */
-}
-
-/* RIGHT pill — round only right side */
-.search-pill.ai {
-  border-radius: 0 999px 999px 0;
-  border-left: 1px solid #e5e7eb;
-  background: #fff;
+  position: relative;
 }
 
 /* --------------------------------------------
-   VERTICAL DIVIDER (CENTER LINE)
+   SINGLE PILL CASE (AI DISABLED)
 -------------------------------------------- */
+.dual-search-bar:has(.search-pill:only-child) .search-pill {
+  border-radius: 999px;
+}
+
+/* --------------------------------------------
+   DUAL PILL CASE (AI ENABLED)
+-------------------------------------------- */
+.search-pill:first-child {
+  border-radius: 999px 0 0 999px;
+  border-right: none;
+}
+
+.search-pill.ai {
+  border-radius: 0 999px 999px 0;
+  border-left: 1px solid #e5e7eb;
+}
+
+/* CENTER DIVIDER (ONLY WHEN AI EXISTS) */
 .search-pill.ai::before {
   content: "";
   width: 1px;
@@ -108,17 +113,17 @@
   transform: scale(1.1);
 }
 
-/* AI button variant */
 .pill-btn.ai {
   background: linear-gradient(135deg, #ff385c, #ff6f91);
 }
 
 /* --------------------------------------------
-   RESPONSIVE
+   RESPONSIVE (MOBILE)
 -------------------------------------------- */
 @media (max-width: 900px) {
   .dual-search-bar {
     flex-direction: column;
+    gap: 12px;
   }
 
   .search-pill,
@@ -131,12 +136,3 @@
     display: none;
   }
 }
-
-.search-pill {
-  position: relative;
-}
-
-.search-pill.ai {
-  position: relative;
-}
-

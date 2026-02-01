@@ -10,6 +10,14 @@ function SearchBar({ onSearch, mode = "both" }) {
     onSearch(normalText);
   };
 
+  /*
+   ⚠️ AI SEARCH TEMPORARILY DISABLED
+   Reason:
+   - After clearing AI search results, app redirects to home page
+   - UX needs stabilization before enabling AI flow
+   - Will re-enable once result-clear + routing logic is fixed
+  */
+  /*
   const handleAISearch = async () => {
     if (!aiText.trim()) return;
 
@@ -25,32 +33,34 @@ function SearchBar({ onSearch, mode = "both" }) {
       console.error("AI search failed", e);
     }
   };
+  */
 
   return (
-    <div className="search-wrap">
-      <div className="dual-search-bar">
+      <div className="search-wrap">
+        <div className="dual-search-bar">
 
-        {/* NORMAL SEARCH (ONLY IF NOT AI MODE) */}
-        {mode !== "ai" && (
-          <div className="search-pill">
-            <div className="pill-content">
-              <label className="pill-title">Search</label>
-              <input
-                className="pill-input"
-                placeholder="Find Apartments, Villas, Plots..."
-                value={normalText}
-                onChange={(e) => setNormalText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleNormalSearch()}
-              />
-            </div>
+          {/* NORMAL SEARCH */}
+          {mode !== "ai" && (
+              <div className="search-pill">
+                <div className="pill-content">
+                  <label className="pill-title">Search</label>
+                  <input
+                      className="pill-input"
+                      placeholder="Find Apartments, Villas, Plots..."
+                      value={normalText}
+                      onChange={(e) => setNormalText(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleNormalSearch()}
+                  />
+                </div>
 
-            <button className="pill-btn" onClick={handleNormalSearch}>
-              🔍
-            </button>
-          </div>
-        )}
+                <button className="pill-btn" onClick={handleNormalSearch}>
+                  🔍
+                </button>
+              </div>
+          )}
 
-        {/* AI SEARCH (ALWAYS SHOWN) */}
+          {/* AI SEARCH UI DISABLED – see note above */}
+          {/*
         <div className="search-pill ai">
           <div className="pill-content">
             <label className="pill-title">Ask AI Property Agent</label>
@@ -67,9 +77,9 @@ function SearchBar({ onSearch, mode = "both" }) {
             🤖
           </button>
         </div>
-
+        */}
+        </div>
       </div>
-    </div>
   );
 }
 
