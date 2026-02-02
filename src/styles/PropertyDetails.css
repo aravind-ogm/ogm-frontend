@@ -872,30 +872,33 @@
     position: relative;
     display: inline-flex;
     justify-content: center;
-    pointer-events: auto;
 }
 
-.tooltip {
-    pointer-events: none;
-}
-
-/* Tooltip style */
 .tooltip {
     position: absolute;
-    bottom: 60px;
+    bottom: calc(100% + 12px);
+    left: 50%;
+
     background: #111;
     color: #fff;
     padding: 6px 10px;
     font-size: 12px;
     border-radius: 6px;
+
+    max-width: 220px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
+
     opacity: 0;
     pointer-events: none;
-    white-space: nowrap;
-    transform: translateY(4px);
+
+    transform: translateX(-50%) translateY(4px);
     transition: opacity 0.25s ease, transform 0.25s ease;
+
+    z-index: 9999;
 }
 
-/* Tooltip arrow */
 .tooltip::after {
     content: "";
     position: absolute;
@@ -907,11 +910,11 @@
     border-color: #111 transparent transparent transparent;
 }
 
-/* Show tooltip on hover */
 .tooltip-wrapper:hover .tooltip {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
 }
+
 
 /* -------------------------------------------------------
    GALLERY — Full Image Visible (No Cropping)
