@@ -2,65 +2,75 @@ import React, { useState } from "react";
 import "./SearchBar.css";
 
 function SearchBar({ onSearch, mode = "both" }) {
-  const [normalText, setNormalText] = useState("");
-  const [aiText, setAiText] = useState("");
+    const [normalText, setNormalText] = useState("");
+    const [aiText, setAiText] = useState("");
 
-  const handleNormalSearch = () => {
-    if (!normalText.trim()) return;
-    onSearch(normalText);
-  };
+    const handleNormalSearch = () => {
+        if (!normalText.trim()) return;
+        onSearch(normalText);
+    };
 
-  /*
-   ⚠️ AI SEARCH TEMPORARILY DISABLED
-   Reason:
-   - After clearing AI search results, app redirects to home page
-   - UX needs stabilization before enabling AI flow
-   - Will re-enable once result-clear + routing logic is fixed
-  */
-  /*
-  const handleAISearch = async () => {
-    if (!aiText.trim()) return;
+    // ✅ FIX: notify parent when search is cleared
+    const handleNormalChange = (value) => {
+        setNormalText(value);
 
-    try {
-      const res = await fetch(
-        `https://ogm-backend-clean-879813720468.asia-south1.run.app/api/ai/search?prompt=${encodeURIComponent(aiText)}`
-      );
-      const page = await res.json();
+        // when input is cleared → go back to homepage
+        if (!value.trim()) {
+            onSearch(null);
+        }
+    };
 
-      // AI search returns array
-      onSearch(page.content);
-    } catch (e) {
-      console.error("AI search failed", e);
-    }
-  };
-  */
+    /*
+     ⚠️ AI SEARCH TEMPORARILY DISABLED
+     Reason:
+     - After clearing AI search results, app redirects to home page
+     - UX needs stabilization before enabling AI flow
+     - Will re-enable once result-clear + routing logic is fixed
+    */
+    /*
+    const handleAISearch = async () => {
+      if (!aiText.trim()) return;
 
-  return (
-      <div className="search-wrap">
-        <div className="dual-search-bar">
+      try {
+        const res = await fetch(
+          `https://ogm-backend-clean-879813720468.asia-south1.run.app/api/ai/search?prompt=${encodeURIComponent(aiText)}`
+        );
+        const page = await res.json();
 
-          {/* NORMAL SEARCH */}
-          {mode !== "ai" && (
-              <div className="search-pill">
-                <div className="pill-content">
-                  <label className="pill-title">Search</label>
-                  <input
-                      className="pill-input"
-                      placeholder="Find Apartments, Villas, Plots..."
-                      value={normalText}
-                      onChange={(e) => setNormalText(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleNormalSearch()}
-                  />
-                </div>
+        // AI search returns array
+        onSearch(page.content);
+      } catch (e) {
+        console.error("AI search failed", e);
+      }
+    };
+    */
 
-                <button className="pill-btn" onClick={handleNormalSearch}>
-                  🔍
-                </button>
-              </div>
-          )}
+    return (
+        <div className="search-wrap">
+            <div className="dual-search-bar">
 
-          {/* AI SEARCH UI DISABLED – see note above */}
-          {/*
+                {/* NORMAL SEARCH */}
+                {mode !== "ai" && (
+                    <div className="search-pill">
+                        <div className="pill-content">
+                            <label className="pill-title">Search</label>
+                            <input
+                                className="pill-input"
+                                placeholder="Find Apartments, Villas, Plots..."
+                                value={normalText}
+                                onChange={(e) => handleNormalChange(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleNormalSearch()}
+                            />
+                        </div>
+
+                        <button className="pill-btn" onClick={handleNormalSearch}>
+                            🔍
+                        </button>
+                    </div>
+                )}
+
+                {/* AI SEARCH UI DISABLED – see note above */}
+                {/*
         <div className="search-pill ai">
           <div className="pill-content">
             <label className="pill-title">Ask AI Property Agent</label>
@@ -78,9 +88,9 @@ function SearchBar({ onSearch, mode = "both" }) {
           </button>
         </div>
         */}
+            </div>
         </div>
-      </div>
-  );
+    );
 }
 
 export default SearchBar;
