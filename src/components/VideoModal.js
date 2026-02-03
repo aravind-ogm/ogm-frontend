@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/PropertyDetails.css";
+import "../styles/property-details.css";
 
 export default function VideoModal({ open, onClose, videoUrl }) {
   if (!open) return null;

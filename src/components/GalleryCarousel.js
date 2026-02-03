@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import "../styles/PropertyDetails.css";
+import "../styles/property-details.css";
 
 export default function GalleryCarousel({
   images = [],
