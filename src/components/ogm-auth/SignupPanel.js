@@ -26,7 +26,7 @@ export default function SignupPanel() {
             </button>
 
             {/* ✅ Google Signup ALSO here */}
-            <SocialAuthButtons />
+            <SocialAuthButtons/>
         </form>
     );
 }

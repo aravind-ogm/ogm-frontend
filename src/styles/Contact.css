@@ -2,213 +2,229 @@
    Animations
 ---------------------------------------------------- */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(25px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* ----------------------------------------------------
    Premium Clean White Layout
 ---------------------------------------------------- */
 .contact-premium-wrapper {
-  min-height: 100vh;
-  padding: 60px 20px;
+    min-height: 100vh;
+    padding: 60px 20px;
 
-  background: #f8fafc; /* soft premium white */
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+    background: #f8fafc; /* soft premium white */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 /* ----------------------------------------------------
    Premium Card
 ---------------------------------------------------- */
 .contact-premium-card {
-  width: 100%;
-  max-width: 520px;
+    width: 100%;
+    max-width: 520px;
 
-  padding: 48px 56px;
-  background: #ffffff; /* clean white card */
+    padding: 48px 56px;
+    background: #ffffff; /* clean white card */
 
-  border-radius: 20px;
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.10);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.10);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 
-  color: #0f172a;
+    color: #0f172a;
 
-  animation: fadeInUp 0.7s ease-out;
+    animation: fadeInUp 0.7s ease-out;
 }
 
 .premium-title {
-  font-size: 34px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #0f172a;
+    font-size: 34px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #0f172a;
 }
 
 .premium-subtitle {
-  font-size: 15px;
-  opacity: 0.7;
-  margin-bottom: 26px;
-  line-height: 1.5;
+    font-size: 15px;
+    opacity: 0.7;
+    margin-bottom: 26px;
+    line-height: 1.5;
 }
 
 /* ----------------------------------------------------
    Inputs
 ---------------------------------------------------- */
 .premium-input {
-  margin-bottom: 18px;
+    margin-bottom: 18px;
 }
 
 .premium-input label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #475569;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
 }
 
 .premium-input input,
 .premium-input textarea {
-  width: 100%;
-  padding: 14px 15px;
+    width: 100%;
+    padding: 14px 15px;
 
-  border-radius: 12px;
-  border: 1px solid #d4d7dd;
-  background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #d4d7dd;
+    background: #ffffff;
 
-  font-size: 15px;
-  color: #0f172a;
+    font-size: 15px;
+    color: #0f172a;
 
-  outline: none;
-  transition: 0.25s ease;
+    outline: none;
+    transition: 0.25s ease;
 }
 
 .premium-input input:focus,
 .premium-input textarea:focus {
-  border-color: #0b63e5;
-  box-shadow: 0 0 0 3px rgba(11, 99, 229, 0.15);
+    border-color: #0b63e5;
+    box-shadow: 0 0 0 3px rgba(11, 99, 229, 0.15);
 }
 
 /* ----------------------------------------------------
    Submit Button
 ---------------------------------------------------- */
 .premium-submit {
-  width: 100%;
-  padding: 15px;
+    width: 100%;
+    padding: 15px;
 
-  background: linear-gradient(135deg, #0b63e5, #004bbd);
-  color: white;
+    background: linear-gradient(135deg, #0b63e5, #004bbd);
+    color: white;
 
-  font-size: 18px;
-  font-weight: 600;
+    font-size: 18px;
+    font-weight: 600;
 
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
 
-  box-shadow: 0 10px 25px rgba(11, 99, 229, 0.28);
-  transition: 0.25s ease;
+    box-shadow: 0 10px 25px rgba(11, 99, 229, 0.28);
+    transition: 0.25s ease;
 }
 
 .premium-submit:hover {
-  transform: translateY(-2px);
-  background: linear-gradient(135deg, #0a57c9, #003fa4);
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #0a57c9, #003fa4);
 }
 
 /* Status message */
 .premium-status {
-  margin-top: 14px;
-  font-size: 14px;
-  color: #0b63e5;
-  animation: fadeIn 0.4s ease;
+    margin-top: 14px;
+    font-size: 14px;
+    color: #0b63e5;
+    animation: fadeIn 0.4s ease;
 }
 
 /* ----------------------------------------------------
    Modal (Success popup)
 ---------------------------------------------------- */
 .premium-modal-bg {
-  position: fixed;
-  inset: 0;
+    position: fixed;
+    inset: 0;
 
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-  animation: fadeIn 0.3s ease-in-out;
-  z-index: 1000;
+    animation: fadeIn 0.3s ease-in-out;
+    z-index: 1000;
 }
 
 .premium-modal-box {
-  background: #ffffff;
-  padding: 32px 28px;
+    background: #ffffff;
+    padding: 32px 28px;
 
-  border-radius: 16px;
-  text-align: center;
+    border-radius: 16px;
+    text-align: center;
 
-  width: 90%;
-  max-width: 400px;
+    width: 90%;
+    max-width: 400px;
 
-  color: #0f172a;
-  animation: scaleIn 0.35s ease-in-out;
+    color: #0f172a;
+    animation: scaleIn 0.35s ease-in-out;
 }
 
 .premium-modal-box h3 {
-  font-size: 22px;
-  margin-bottom: 10px;
+    font-size: 22px;
+    margin-bottom: 10px;
 }
 
 .premium-modal-box p {
-  font-size: 15px;
-  margin-bottom: 20px;
-  opacity: 0.8;
+    font-size: 15px;
+    margin-bottom: 20px;
+    opacity: 0.8;
 }
 
 .premium-modal-btn {
-  padding: 10px 22px;
+    padding: 10px 22px;
 
-  background: #0b63e5;
-  color: white;
+    background: #0b63e5;
+    color: white;
 
-  border: none;
-  border-radius: 10px;
+    border: none;
+    border-radius: 10px;
 
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
 
-  transition: 0.25s ease;
+    transition: 0.25s ease;
 }
 
 .premium-modal-btn:hover {
-  background: #004bbd;
-  transform: translateY(-2px);
+    background: #004bbd;
+    transform: translateY(-2px);
 }
 
 /* ----------------------------------------------------
    Responsive (Mobile)
 ---------------------------------------------------- */
 @media (max-width: 480px) {
-  .contact-premium-card {
-    padding: 50px 48px;
-  }
+    .contact-premium-card {
+        padding: 50px 48px;
+    }
 
-  .premium-title {
-    font-size: 28px;
-  }
+    .premium-title {
+        font-size: 28px;
+    }
 
-  .premium-submit {
-    font-size: 16px;
-    padding: 12px;
-  }
+    .premium-submit {
+        font-size: 16px;
+        padding: 12px;
+    }
 }

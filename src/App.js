@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 
 import PropertyCard from "./components/PropertyCard";
-import AIResultCard from "./components/AIResultCard";
+import AIResultCard from "./components/property/AIResultCard";
 import FloatingWhatsapp from "./components/FloatingWhatsapp";
 import Contact from "./pages/Contact";
 import PropertyDetails from "./pages/PropertyDetails";
@@ -17,8 +17,10 @@ import About from "./pages/About";
 import SearchBar from "./search/SearchBar";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import "./styles/App.css";
+import AuthContainer from "./components/ogm-auth/AuthContainer";
 
 /* ================= META PIXEL ROUTE TRACKER ================= */
+
 function MetaPixelTracker() {
     const location = useLocation();
 
@@ -170,6 +172,7 @@ function App() {
                     <Route path="/about" element={<About/>}/>
                     <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                     <Route path="/contact" element={<Contact/>}/>
+                    <Route path="/login" element={<AuthContainer/>}/>
                 </Routes>
 
                 <FloatingWhatsapp/>

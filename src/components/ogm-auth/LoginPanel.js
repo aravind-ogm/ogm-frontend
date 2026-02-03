@@ -1,6 +1,6 @@
 import SocialAuthButtons from "./SocialAuthButtons";
 
-export default function LoginPanel({ onOtp }) {
+export default function LoginPanel({onOtp}) {
     return (
         <form className="ogm-auth-form">
             <input
@@ -29,7 +29,7 @@ export default function LoginPanel({ onOtp }) {
             </button>
 
             {/* ✅ Google Login ALSO here */}
-            <SocialAuthButtons />
+            <SocialAuthButtons/>
         </form>
     );
 }

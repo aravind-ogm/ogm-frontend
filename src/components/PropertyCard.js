@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { Heart } from "lucide-react";
-import { Link } from "react-router-dom";
+import React, {useState} from "react";
+import {Heart} from "lucide-react";
+import {Link} from "react-router-dom";
 import "../styles/PropertyCard.css";
 
-export default function PropertyCard({ property }) {
+export default function PropertyCard({property}) {
     const [isFavorite, setIsFavorite] = useState(false);
 
     const mainImage =

@@ -3,136 +3,136 @@
 ============================================ */
 
 .search-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin: 40px auto;
-  padding: 0 16px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 40px auto;
+    padding: 0 16px;
 }
 
 .dual-search-bar {
-  display: flex;
-  width: 100%;
-  max-width: 1100px;
+    display: flex;
+    width: 100%;
+    max-width: 1100px;
 }
 
 /* --------------------------------------------
    SEARCH PILL — BASE
 -------------------------------------------- */
 .search-pill {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  padding: 10px 14px 10px 22px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.1);
-  position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    padding: 10px 14px 10px 22px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
 /* --------------------------------------------
    SINGLE PILL CASE (AI DISABLED)
 -------------------------------------------- */
 .dual-search-bar:has(.search-pill:only-child) .search-pill {
-  border-radius: 999px;
+    border-radius: 999px;
 }
 
 /* --------------------------------------------
    DUAL PILL CASE (AI ENABLED)
 -------------------------------------------- */
 .search-pill:first-child {
-  border-radius: 999px 0 0 999px;
-  border-right: none;
+    border-radius: 999px 0 0 999px;
+    border-right: none;
 }
 
 .search-pill.ai {
-  border-radius: 0 999px 999px 0;
-  border-left: 1px solid #e5e7eb;
+    border-radius: 0 999px 999px 0;
+    border-left: 1px solid #e5e7eb;
 }
 
 /* CENTER DIVIDER (ONLY WHEN AI EXISTS) */
 .search-pill.ai::before {
-  content: "";
-  width: 1px;
-  height: 42px;
-  background: #e2e8f0;
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+    content: "";
+    width: 1px;
+    height: 42px;
+    background: #e2e8f0;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 /* --------------------------------------------
    PILL CONTENT
 -------------------------------------------- */
 .pill-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .pill-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
 }
 
 .pill-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  margin-top: 2px;
-  color: #334155;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    margin-top: 2px;
+    color: #334155;
 }
 
 .pill-input::placeholder {
-  color: #94a3b8;
+    color: #94a3b8;
 }
 
 /* --------------------------------------------
    BUTTON
 -------------------------------------------- */
 .pill-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  background: #ff385c;
-  color: white;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(255, 56, 92, 0.4);
-  transition: 0.15s ease;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: #ff385c;
+    color: white;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(255, 56, 92, 0.4);
+    transition: 0.15s ease;
 }
 
 .pill-btn:hover {
-  transform: scale(1.1);
+    transform: scale(1.1);
 }
 
 .pill-btn.ai {
-  background: linear-gradient(135deg, #ff385c, #ff6f91);
+    background: linear-gradient(135deg, #ff385c, #ff6f91);
 }
 
 /* --------------------------------------------
    RESPONSIVE (MOBILE)
 -------------------------------------------- */
 @media (max-width: 900px) {
-  .dual-search-bar {
-    flex-direction: column;
-    gap: 12px;
-  }
+    .dual-search-bar {
+        flex-direction: column;
+        gap: 12px;
+    }
 
-  .search-pill,
-  .search-pill.ai {
-    border-radius: 999px;
-    border: 1px solid #e5e7eb;
-  }
+    .search-pill,
+    .search-pill.ai {
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+    }
 
-  .search-pill.ai::before {
-    display: none;
-  }
+    .search-pill.ai::before {
+        display: none;
+    }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import api from "../../api";
 
 export default function OtpPanel() {
@@ -29,7 +29,7 @@ export default function OtpPanel() {
 
         try {
             await api.post("/api/auth/otp/send", null, {
-                params: { identifier: "+91" + phone }
+                params: {identifier: "+91" + phone}
             });
 
             setStep("OTP");

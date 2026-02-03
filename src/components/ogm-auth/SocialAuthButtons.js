@@ -11,7 +11,7 @@ export default function SocialAuthButtons() {
                     window.location.href = "http://localhost:8080/oauth2/authorization/google";
                 }}
             >
-                <img src="/google.svg" alt="Google" />
+                <img src="/google.svg" alt="Google"/>
                 Continue with Google
             </button>
         </>

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import "./SearchBar.css";
 
-function AIChatSearch({ onResults }) {
+function AIChatSearch({onResults}) {
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);

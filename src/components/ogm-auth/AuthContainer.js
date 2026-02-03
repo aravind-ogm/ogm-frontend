@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import LoginPanel from "./LoginPanel";
 import SignupPanel from "./SignupPanel";
 import OtpPanel from "./OtpPanel";
@@ -24,7 +22,7 @@ export default function AuthContainer() {
 
                 {/* ===== Brand ===== */}
                 <div className="ogm-auth-brand">
-                    <img src="/logo.png" alt="OGM Logo" />
+                    <img src="/logo.png" alt="OGM Logo"/>
                     <span>One Global Marketplace</span>
                 </div>
 
@@ -48,15 +46,15 @@ export default function AuthContainer() {
                 {/* ===== Content (Animated) ===== */}
                 <div className={`ogm-auth-slider ogm-view-${activeView}`}>
                     {activeView === "login" && (
-                        <LoginPanel onOtp={() => setActiveView("otp")} />
+                        <LoginPanel onOtp={() => setActiveView("otp")}/>
                     )}
 
                     {activeView === "signup" && (
-                        <SignupPanel />
+                        <SignupPanel/>
                     )}
 
                     {activeView === "otp" && (
-                        <OtpPanel onBack={() => setActiveView("login")} />
+                        <OtpPanel onBack={() => setActiveView("login")}/>
                     )}
                 </div>
 

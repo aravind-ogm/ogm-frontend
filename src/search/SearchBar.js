@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import "./SearchBar.css";
 
-function SearchBar({ onSearch, mode = "both" }) {
+function SearchBar({onSearch, mode = "both"}) {
     const [normalText, setNormalText] = useState("");
     const [aiText, setAiText] = useState("");
 
@@ -20,30 +20,24 @@ function SearchBar({ onSearch, mode = "both" }) {
         }
     };
 
-    /*
-     ⚠️ AI SEARCH TEMPORARILY DISABLED
-     Reason:
-     - After clearing AI search results, app redirects to home page
-     - UX needs stabilization before enabling AI flow
-     - Will re-enable once result-clear + routing logic is fixed
-    */
-    /*
+
     const handleAISearch = async () => {
-      if (!aiText.trim()) return;
+        if (!aiText.trim()) return;
 
-      try {
-        const res = await fetch(
-          `https://ogm-backend-clean-879813720468.asia-south1.run.app/api/ai/search?prompt=${encodeURIComponent(aiText)}`
-        );
-        const page = await res.json();
+        try {
+            const res = await fetch(
+                // `https://ogm-backend-clean-879813720468.asia-south1.run.app/api/ai/search?prompt=${encodeURIComponent(aiText)}`
+                `http://localhost:8080/api/ai/search?prompt=${encodeURIComponent(aiText)}`
+            );
+            const page = await res.json();
 
-        // AI search returns array
-        onSearch(page.content);
-      } catch (e) {
-        console.error("AI search failed", e);
-      }
+            // AI search returns array
+            onSearch(page.content);
+        } catch (e) {
+            console.error("AI search failed", e);
+        }
     };
-    */
+
 
     return (
         <div className="search-wrap">
@@ -69,25 +63,23 @@ function SearchBar({ onSearch, mode = "both" }) {
                     </div>
                 )}
 
-                {/* AI SEARCH UI DISABLED – see note above */}
-                {/*
-        <div className="search-pill ai">
-          <div className="pill-content">
-            <label className="pill-title">Ask AI Property Agent</label>
-            <input
-              className="pill-input"
-              placeholder="Search, compare, locate with AI agent"
-              value={aiText}
-              onChange={(e) => setAiText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAISearch()}
-            />
-          </div>
 
-          <button className="pill-btn ai" onClick={handleAISearch}>
-            🤖
-          </button>
-        </div>
-        */}
+                <div className="search-pill ai">
+                    <div className="pill-content">
+                        <label className="pill-title">Ask AI Property Agent</label>
+                        <input
+                            className="pill-input"
+                            placeholder="Search, compare, locate with AI agent"
+                            value={aiText}
+                            onChange={(e) => setAiText(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAISearch()}
+                        />
+                    </div>
+
+                    <button className="pill-btn ai" onClick={handleAISearch}>
+                        🤖
+                    </button>
+                </div>
             </div>
         </div>
     );
