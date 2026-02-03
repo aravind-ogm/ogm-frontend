@@ -1,7 +1,7 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import api from "../../api";
 
-export default function OtpPanel() {
+export default function OtpPanel({ onBack, onSuccess }) {
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
     const [step, setStep] = useState("PHONE");
@@ -29,7 +29,7 @@ export default function OtpPanel() {
 
         try {
             await api.post("/api/auth/otp/send", null, {
-                params: {identifier: "+91" + phone}
+                params: { identifier: "+91" + phone },
             });
 
             setStep("OTP");
@@ -51,12 +51,18 @@ export default function OtpPanel() {
         setLoading(true);
 
         try {
-            await api.post("/api/auth/otp/verify", {
-                email: "+91" + phone, // backend uses same field for email/phone
-                otp
+            const res = await api.post("/api/auth/otp/verify", {
+                email: "+91" + phone, // backend uses same field
+                otp,
             });
 
-            alert("OTP Verified 🎉");
+            // 🔐 STORE TOKEN
+            if (res?.data?.token) {
+                localStorage.setItem("token", res.data.token);
+            }
+
+            // 🔥 TELL APP LOGIN SUCCEEDED
+            if (onSuccess) onSuccess();
         } catch (err) {
             setError("Invalid or expired OTP");
         } finally {
@@ -109,13 +115,21 @@ export default function OtpPanel() {
                         : "Verify OTP"}
             </button>
 
+            {/* 🔁 RESEND */}
             {step === "OTP" && (
                 <span
                     className={`ogm-resend-otp ${timer > 0 ? "disabled" : ""}`}
                     onClick={timer === 0 ? sendOtp : undefined}
                 >
-                    {timer > 0 ? `Resend OTP in ${timer}s` : "Resend OTP"}
-                </span>
+          {timer > 0 ? `Resend OTP in ${timer}s` : "Resend OTP"}
+        </span>
+            )}
+
+            {/* 🔙 BACK TO LOGIN */}
+            {onBack && (
+                <span className="ogm-back-link" onClick={onBack}>
+          ← Back to Login
+        </span>
             )}
         </form>
     );

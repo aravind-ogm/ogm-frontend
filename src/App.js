@@ -20,7 +20,6 @@ import "./styles/App.css";
 import AuthContainer from "./components/ogm-auth/AuthContainer";
 
 /* ================= META PIXEL ROUTE TRACKER ================= */
-
 function MetaPixelTracker() {
     const location = useLocation();
 
@@ -36,67 +35,48 @@ function MetaPixelTracker() {
 function App() {
     const [properties, setProperties] = useState([]);
     const [searchMode, setSearchMode] = useState("default");
-    const [wishlist, setWishlist] = useState([]);
-    const [watchlist, setWatchlist] = useState([]);
 
-    // const baseUrl = "https://ogm-backend-clean-879813720468.asia-south1.run.app";
+    const [isAuthenticated, setIsAuthenticated] = useState(
+        Boolean(localStorage.getItem("token"))
+    );
+
     const baseUrl = "http://localhost:8080";
 
     /* ================= LOAD PROPERTIES ================= */
     const loadProperties = async (query = "") => {
         try {
             const url = query
-                ? `${baseUrl}/api/properties?q=${encodeURIComponent(
-                    query
-                )}&page=0&size=50`
+                ? `${baseUrl}/api/properties?q=${encodeURIComponent(query)}&page=0&size=50`
                 : `${baseUrl}/api/properties?page=0&size=50`;
 
             const res = await fetch(url);
             const data = await res.json();
             setProperties(data?.content || []);
-        } catch (err) {
-            console.error("Failed to fetch properties", err);
+        } catch {
             setProperties([]);
         }
     };
 
-    /* ================= UNIFIED SEARCH HANDLER ================= */
+    /* ================= SEARCH ================= */
     const handleSearch = (data) => {
-        // 🏠 LOGO CLICK / RESET
         if (data === null) {
             setSearchMode("default");
             loadProperties();
             return;
         }
 
-        // 🤖 AI SEARCH
         if (Array.isArray(data)) {
             setProperties(data);
             setSearchMode("ai");
             return;
         }
 
-        // 🔍 NORMAL SEARCH
         setSearchMode("normal");
         loadProperties(data);
     };
 
-    const handleWishlist = (property) => {
-        setWishlist((prev) =>
-            prev.some((p) => p.id === property.id) ? prev : [...prev, property]
-        );
-    };
-
-    const handleWatchlist = (property) => {
-        setWatchlist((prev) =>
-            prev.some((p) => p.id === property.id) ? prev : [...prev, property]
-        );
-    };
-
-    /* ================= INITIAL LOAD ================= */
     useEffect(() => {
         loadProperties();
-        setSearchMode("default");
     }, []);
 
     return (
@@ -104,66 +84,31 @@ function App() {
             <MetaPixelTracker/>
 
             <div className="app-container">
-                {/* 🔑 HEADER MUST RECEIVE onSearch */}
-                <Header onSearch={handleSearch}/>
+                <Header
+                    isAuthenticated={isAuthenticated}
+                    onLogout={() => {
+                        localStorage.removeItem("token");
+                        setIsAuthenticated(false);
+                    }}
+                />
 
                 <Routes>
                     <Route
                         path="/"
                         element={
                             <main className="main-section">
-                                {/* AI SUGGESTIONS */}
-                                {searchMode === "ai" && (
-                                    <div className="ai-suggestions premium">
-                                        <div className="ai-suggestion-card">
-                                            ✨ <strong>Refine your search</strong>
-                                            <p>
-                                                Find <b>2 BHKs under ₹2 Cr</b> in{" "}
-                                                <b>Sarjapur Road</b>
-                                            </p>
-                                        </div>
-
-                                        <div className="ai-suggestion-card">
-                                            📊 <strong>Compare smarter</strong>
-                                            <p>
-                                                Add properties to your <b>watchlist</b> and compare
-                                                easily.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* SEARCH BAR */}
                                 {searchMode !== "ai" && (
                                     <SearchBar onSearch={handleSearch}/>
                                 )}
 
-                                {/* TITLE */}
                                 <h2 className="section-title">
-                                    {searchMode === "default"
-                                        ? "Popular Homes in Bengaluru"
-                                        : searchMode === "ai"
-                                            ? "AI Curated Properties"
-                                            : "Search Results"}
+                                    Popular Homes in Bengaluru
                                 </h2>
 
-                                {/* PROPERTY LIST */}
                                 <PropertyList
                                     properties={properties}
                                     searchMode={searchMode}
-                                    onWishlist={handleWishlist}
-                                    onWatchlist={handleWatchlist}
                                 />
-
-                                {/* AI BOTTOM SEARCH */}
-                                {searchMode === "ai" && (
-                                    <div className="ai-bottom-search">
-                                        <div className="ai-refine-hint">
-                                            🔎 Try “under 2 Cr”, “near Wipro”, “with clubhouse”
-                                        </div>
-                                        <SearchBar onSearch={handleSearch} mode="ai"/>
-                                    </div>
-                                )}
                             </main>
                         }
                     />
@@ -172,7 +117,16 @@ function App() {
                     <Route path="/about" element={<About/>}/>
                     <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                     <Route path="/contact" element={<Contact/>}/>
-                    <Route path="/login" element={<AuthContainer/>}/>
+
+                    {/* 🔐 AUTH */}
+                    <Route
+                        path="/auth"
+                        element={
+                            <AuthContainer
+                                onAuthSuccess={() => setIsAuthenticated(true)}
+                            />
+                        }
+                    />
                 </Routes>
 
                 <FloatingWhatsapp/>
@@ -182,79 +136,52 @@ function App() {
     );
 }
 
-export default App;
-
 /* ================= HEADER ================= */
-
-function Header({onSearch}) {
+function Header({isAuthenticated, onLogout}) {
     const navigate = useNavigate();
-
-    const handleLogoClick = () => {
-        // RESET STATE
-        if (onSearch) {
-            onSearch(null);
-        }
-
-        // FORCE HOME NAVIGATION
-        navigate("/", {replace: true});
-    };
 
     return (
         <header className="topbar">
             <div
                 className="header-left header-content"
-                onClick={handleLogoClick}
+                onClick={() => navigate("/")}
                 style={{cursor: "pointer"}}
             >
-                <img
-                    src="/logo.png"
-                    alt="OGM Logo"
-                    className="logo-img"
-                    style={{height: "50px"}}
-                />
+                <img src="/logo.png" alt="OGM Logo" className="logo-img"/>
                 <h1 className="header-title">One Global Marketplace</h1>
             </div>
 
             <div className="header-actions">
-                <button
-                    className="contact"
-                    onClick={() => {
-                        window.fbq && window.fbq("track", "Lead");
-                        navigate("/contact");
-                    }}
-                >
-                    Contact Us
-                </button>
+                {isAuthenticated ? (
+                    <button className="contact" onClick={onLogout}>
+                        Logout
+                    </button>
+                ) : (
+                    <>
+                        <button
+                            className="contact secondary"
+                            onClick={() => navigate("/auth")}
+                        >
+                            Login
+                        </button>
+
+                        <button
+                            className="contact"
+                            onClick={() => navigate("/auth?view=signup")}
+                        >
+                            Sign Up
+                        </button>
+                    </>
+                )}
             </div>
         </header>
     );
 }
 
 /* ================= PROPERTY LIST ================= */
-
-function PropertyList({
-                          properties,
-                          searchMode,
-                          onWishlist,
-                          onWatchlist,
-                      }) {
+function PropertyList({properties}) {
     if (!properties || properties.length === 0) {
         return <p>No properties found.</p>;
-    }
-
-    if (searchMode === "ai") {
-        return (
-            <div className="ai-results">
-                {properties.map((prop) => (
-                    <AIResultCard
-                        key={prop.id}
-                        property={prop}
-                        onWishlist={onWishlist}
-                        onWatchlist={onWatchlist}
-                    />
-                ))}
-            </div>
-        );
     }
 
     return (
@@ -265,3 +192,5 @@ function PropertyList({
         </div>
     );
 }
+
+export default App;

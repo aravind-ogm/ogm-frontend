@@ -1,65 +1,76 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import LoginPanel from "./LoginPanel";
 import SignupPanel from "./SignupPanel";
 import OtpPanel from "./OtpPanel";
 import "./ogm-auth.css";
 
-export default function AuthContainer() {
+export default function AuthContainer({ onAuthSuccess }) {
     const [activeView, setActiveView] = useState("login");
-    // login | signup | otp
+    const location = useLocation();
+    const navigate = useNavigate();
 
-    /* 🔒 Lock scroll for auth page */
+    /* 🔁 Read ?view=signup */
     useEffect(() => {
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = "auto";
-        };
-    }, []);
+        const params = new URLSearchParams(location.search);
+        const view = params.get("view");
+
+        if (view === "signup") {
+            setActiveView("signup");
+        }
+    }, [location.search]);
+
+    const handleSuccess = () => {
+        onAuthSuccess && onAuthSuccess();
+        navigate("/", { replace: true });
+    };
 
     return (
         <div className="ogm-auth-page">
             <div className="ogm-auth-card">
-
-                {/* ===== Brand ===== */}
                 <div className="ogm-auth-brand">
-                    <img src="/logo.png" alt="OGM Logo"/>
+                    <img src="/logo.png" alt="OGM Logo" />
                     <span>One Global Marketplace</span>
                 </div>
 
-                {/* ===== Tabs ===== */}
-                <div className="ogm-auth-tabs">
-                    <button
-                        className={activeView === "login" ? "active" : ""}
-                        onClick={() => setActiveView("login")}
-                    >
-                        Login
-                    </button>
+                {activeView !== "otp" && (
+                    <div className="ogm-auth-tabs">
+                        <button
+                            className={activeView === "login" ? "active" : ""}
+                            onClick={() => setActiveView("login")}
+                        >
+                            Login
+                        </button>
 
-                    <button
-                        className={activeView === "signup" ? "active" : ""}
-                        onClick={() => setActiveView("signup")}
-                    >
-                        Sign Up
-                    </button>
-                </div>
+                        <button
+                            className={activeView === "signup" ? "active" : ""}
+                            onClick={() => setActiveView("signup")}
+                        >
+                            Sign Up
+                        </button>
+                    </div>
+                )}
 
-                {/* ===== Content (Animated) ===== */}
                 <div className={`ogm-auth-slider ogm-view-${activeView}`}>
                     {activeView === "login" && (
-                        <LoginPanel onOtp={() => setActiveView("otp")}/>
+                        <LoginPanel
+                            onOtp={() => setActiveView("otp")}
+                            onSuccess={handleSuccess}
+                        />
                     )}
 
                     {activeView === "signup" && (
-                        <SignupPanel/>
+                        <SignupPanel onSuccess={() => setActiveView("login")} />
                     )}
 
                     {activeView === "otp" && (
-                        <OtpPanel onBack={() => setActiveView("login")}/>
+                        <OtpPanel
+                            onBack={() => setActiveView("login")}
+                            onSuccess={handleSuccess}
+                        />
                     )}
                 </div>
-
             </div>
-
         </div>
     );
 }
