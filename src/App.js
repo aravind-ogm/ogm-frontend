@@ -37,7 +37,7 @@ function App() {
     const [wishlist, setWishlist] = useState([]);
     const [watchlist, setWatchlist] = useState([]);
 
-    const baseUrl = "https://ogm-backend-clean-879813720468.asia-south1.run.app";
+    const baseUrl = "https://ogm-backend-clean-us-879813720468.us-central1.run.app";
     // const baseUrl = "http://localhost:8080";
 
     /* ================= LOAD PROPERTIES ================= */

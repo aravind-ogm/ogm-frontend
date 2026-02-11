@@ -40,7 +40,7 @@ export default function PropertyDetails() {
         const fetchProperty = async () => {
             try {
                 const res = await fetch(
-                    `https://ogm-backend-clean-879813720468.asia-south1.run.app/api/properties/slug/${slug}`
+                    `https://ogm-backend-clean-us-879813720468.us-central1.run.app/api/properties/slug/${slug}`
                     // `http://localhost:8080/api/properties/slug/${slug}`
                 );
 
@@ -133,7 +133,7 @@ export default function PropertyDetails() {
 
         try {
             const res = await fetch(
-                "https://ogm-backend-clean-879813720468.asia-south1.run.app/api/brochure/request",
+                "https://ogm-backend-clean-us-879813720468.us-central1.run.app/api/brochure/request",
                 // "http://localhost:8080/api/brochure/request",
                 {
                     method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({
