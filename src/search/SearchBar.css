@@ -1,6 +1,6 @@
-/* ============================================
-   DUAL SEARCH BAR — SMART & ADAPTIVE
-============================================ */
+/* ============================================================
+   1. CONTAINER & GLOBAL LAYOUT
+   ============================================================ */
 
 .search-wrap {
     width: 100%;
@@ -8,53 +8,42 @@
     justify-content: center;
     margin: 40px auto;
     padding: 0 16px;
+    box-sizing: border-box;
 }
 
 .dual-search-bar {
     display: flex;
     width: 100%;
     max-width: 1100px;
+    background: #ffffff;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Clips internal pills to the bar's rounded corners */
 }
 
-/* --------------------------------------------
-   SEARCH PILL — BASE
--------------------------------------------- */
+/* ============================================================
+   2. SEARCH PILL — BASE STYLES
+   ============================================================ */
+
 .search-pill {
     flex: 1;
     display: flex;
     align-items: center;
-    background: #ffffff;
     padding: 10px 14px 10px 22px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
     position: relative;
+    transition: background-color 0.2s ease;
 }
 
-/* --------------------------------------------
-   SINGLE PILL CASE (AI DISABLED)
--------------------------------------------- */
-.dual-search-bar:has(.search-pill:only-child) .search-pill {
-    border-radius: 999px;
+.search-pill:hover {
+    background-color: #fcfcfc;
 }
 
-/* --------------------------------------------
-   DUAL PILL CASE (AI ENABLED)
--------------------------------------------- */
-.search-pill:first-child {
-    border-radius: 999px 0 0 999px;
-    border-right: none;
-}
-
-.search-pill.ai {
-    border-radius: 0 999px 999px 0;
-    border-left: 1px solid #e5e7eb;
-}
-
-/* CENTER DIVIDER (ONLY WHEN AI EXISTS) */
+/* Vertical Divider (Desktop Only) */
 .search-pill.ai::before {
     content: "";
     width: 1px;
-    height: 42px;
+    height: 40px;
     background: #e2e8f0;
     position: absolute;
     left: 0;
@@ -62,9 +51,10 @@
     transform: translateY(-50%);
 }
 
-/* --------------------------------------------
-   PILL CONTENT
--------------------------------------------- */
+/* ============================================================
+   3. PILL CONTENT, INPUTS & CLEAR BUTTON
+   ============================================================ */
+
 .pill-content {
     flex: 1;
     display: flex;
@@ -72,9 +62,19 @@
 }
 
 .pill-title {
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
 }
 
 .pill-input {
@@ -82,17 +82,40 @@
     outline: none;
     background: transparent;
     font-size: 14px;
-    margin-top: 2px;
     color: #334155;
+    width: 100%;
 }
 
 .pill-input::placeholder {
     color: #94a3b8;
+    font-weight: 400;
 }
 
-/* --------------------------------------------
-   BUTTON
--------------------------------------------- */
+.clear-btn {
+    background: #f1f5f9;
+    border: none;
+    color: #94a3b8;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* ============================================================
+   4. ACTION BUTTONS & ANIMATIONS
+   ============================================================ */
+
 .pill-btn {
     width: 44px;
     height: 44px;
@@ -105,31 +128,71 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(255, 56, 92, 0.4);
-    transition: 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 }
 
-.pill-btn:hover {
-    transform: scale(1.1);
+.pill-btn:hover:not(:disabled) {
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(255, 56, 92, 0.3);
+}
+
+.pill-btn:active:not(:disabled) {
+    transform: scale(0.95);
 }
 
 .pill-btn.ai {
-    background: linear-gradient(135deg, #ff385c, #ff6f91);
+    background: linear-gradient(135deg, #ff385c, #e61e4d);
 }
 
-/* --------------------------------------------
-   RESPONSIVE (MOBILE)
--------------------------------------------- */
+/* Loading States */
+.pill-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.loading-active {
+    animation: pulse-glow 1.5s infinite;
+    cursor: wait;
+    opacity: 0.8;
+}
+
+.loader-dots {
+    display: inline-block;
+    font-weight: bold;
+    animation: pulse-text 1s infinite;
+}
+
+@keyframes pulse-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 56, 92, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0); }
+}
+
+/* ============================================================
+   5. RESPONSIVE DESIGN (Mobile)
+   ============================================================ */
+
 @media (max-width: 900px) {
     .dual-search-bar {
         flex-direction: column;
+        background: transparent;
+        border: none;
+        box-shadow: none;
         gap: 12px;
+        overflow: visible;
     }
 
-    .search-pill,
-    .search-pill.ai {
-        border-radius: 999px;
+    .search-pill {
+        background: white;
+        border-radius: 999px !important;
         border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .search-pill.ai::before {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState, useCallback} from "react";
 import {
     BrowserRouter as Router,
     Routes,
@@ -7,17 +7,22 @@ import {
     useNavigate,
 } from "react-router-dom";
 
+// Components
+import SearchBarContainer from "./search/SearchBarContainer";
 import PropertyCard from "./components/PropertyCard";
 import AIResultCard from "./components/property/AIResultCard";
 import FloatingWhatsapp from "./components/FloatingWhatsapp";
+import Footer from "./components/Footer";
+import AuthContainer from "./components/ogm-auth/AuthContainer";
+
+// Pages
 import Contact from "./pages/Contact";
 import PropertyDetails from "./pages/PropertyDetails";
-import Footer from "./components/Footer";
 import About from "./pages/About";
-import SearchBar from "./search/SearchBar";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+
+// Styles
 import "./styles/App.css";
-import AuthContainer from "./components/ogm-auth/AuthContainer";
 
 /* ================= META PIXEL ROUTE TRACKER ================= */
 
@@ -33,26 +38,23 @@ function MetaPixelTracker() {
     return null;
 }
 
+/* ================= MAIN APP CLASS ================= */
+
 function App() {
     const [properties, setProperties] = useState([]);
-    const [searchMode, setSearchMode] = useState("default");
-    const [wishlist, setWishlist] = useState([]);
-    const [watchlist, setWatchlist] = useState([]);
-
-    // 🔐 AUTH STATE (NEW)
+    const [searchMode, setSearchMode] = useState("default"); // 'default', 'ai', 'normal'
     const [isAuthenticated, setIsAuthenticated] = useState(
         Boolean(localStorage.getItem("token"))
     );
 
     const baseUrl = "http://localhost:8080";
 
-    /* ================= LOAD PROPERTIES ================= */
-    const loadProperties = async (query = "") => {
+    /* ================= DATA LOADING LOGIC ================= */
+
+    const loadProperties = useCallback(async (query = "") => {
         try {
             const url = query
-                ? `${baseUrl}/api/properties?q=${encodeURIComponent(
-                    query
-                )}&page=0&size=50`
+                ? `${baseUrl}/api/properties?q=${encodeURIComponent(query)}&page=0&size=50`
                 : `${baseUrl}/api/properties?page=0&size=50`;
 
             const res = await fetch(url);
@@ -62,47 +64,42 @@ function App() {
             console.error("Failed to fetch properties", err);
             setProperties([]);
         }
-    };
+    }, [baseUrl]);
 
     /* ================= UNIFIED SEARCH HANDLER ================= */
+
+    /**
+     * Handles data from NormalSearch (string), AISearch (array), or Reset (null)
+     */
     const handleSearch = (data) => {
+        // 1. Reset Mode (Input cleared or Logo clicked)
         if (data === null) {
             setSearchMode("default");
             loadProperties();
             return;
         }
 
+        // 2. AI Mode (Backend returned a list of curated properties)
         if (Array.isArray(data)) {
             setProperties(data);
             setSearchMode("ai");
             return;
         }
 
+        // 3. Normal Mode (Keyword search string)
         setSearchMode("normal");
         loadProperties(data);
     };
 
-    const handleWishlist = (property) => {
-        setWishlist((prev) =>
-            prev.some((p) => p.id === property.id) ? prev : [...prev, property]
-        );
-    };
-
-    const handleWatchlist = (property) => {
-        setWatchlist((prev) =>
-            prev.some((p) => p.id === property.id) ? prev : [...prev, property]
-        );
-    };
-
     /* ================= INITIAL LOAD ================= */
+
     useEffect(() => {
         loadProperties();
-        setSearchMode("default");
-    }, []);
+    }, [loadProperties]);
 
     return (
         <Router>
-            <MetaPixelTracker />
+            <MetaPixelTracker/>
 
             <div className="app-container">
                 <Header
@@ -119,81 +116,64 @@ function App() {
                         path="/"
                         element={
                             <main className="main-section">
+                                {/* AI SUGGESTIONS BANNER (Only visible in AI mode) */}
                                 {searchMode === "ai" && (
                                     <div className="ai-suggestions premium">
                                         <div className="ai-suggestion-card">
                                             ✨ <strong>Refine your search</strong>
-                                            <p>
-                                                Find <b>2 BHKs under ₹2 Cr</b> in{" "}
-                                                <b>Sarjapur Road</b>
-                                            </p>
+                                            <p>Find <b>2 BHKs under ₹2 Cr</b> in <b>Sarjapur Road</b></p>
                                         </div>
-
                                         <div className="ai-suggestion-card">
                                             📊 <strong>Compare smarter</strong>
-                                            <p>
-                                                Add properties to your <b>watchlist</b> and compare
-                                                easily.
-                                            </p>
+                                            <p>Add properties to your <b>watchlist</b> and compare easily.</p>
                                         </div>
                                     </div>
                                 )}
 
+                                {/* SEARCH BAR (Stays visible unless in AI mode - adjust as needed) */}
                                 {searchMode !== "ai" && (
-                                    <SearchBar onSearch={handleSearch} />
+                                    <SearchBarContainer onSearch={handleSearch}/>
                                 )}
 
                                 <h2 className="section-title">
-                                    {searchMode === "default"
-                                        ? "Popular Homes in Bengaluru"
-                                        : searchMode === "ai"
-                                            ? "AI Curated Properties"
-                                            : "Search Results"}
+                                    {searchMode === "default" && "Popular Homes in Bengaluru"}
+                                    {searchMode === "ai" && "AI Curated Properties"}
+                                    {searchMode === "normal" && "Search Results"}
                                 </h2>
 
                                 <PropertyList
                                     properties={properties}
                                     searchMode={searchMode}
-                                    onWishlist={handleWishlist}
-                                    onWatchlist={handleWatchlist}
                                 />
                             </main>
                         }
                     />
 
-                    <Route path="/property/:slug" element={<PropertyDetails />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/contact" element={<Contact />} />
-
-                    {/* 🔐 AUTH ROUTE */}
+                    <Route path="/property/:slug" element={<PropertyDetails/>}/>
+                    <Route path="/about" element={<About/>}/>
+                    <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
+                    <Route path="/contact" element={<Contact/>}/>
                     <Route
                         path="/auth"
-                        element={
-                            <AuthContainer
-                                onAuthSuccess={() => {
-                                    setIsAuthenticated(true);
-                                }}
-                            />
-                        }
+                        element={<AuthContainer onAuthSuccess={() => setIsAuthenticated(true)}/>}
                     />
                 </Routes>
 
-                <FloatingWhatsapp />
-                <Footer />
+                <FloatingWhatsapp/>
+                <Footer/>
             </div>
         </Router>
     );
 }
 
-/* ================= HEADER ================= */
+/* ================= HEADER SUB-COMPONENT ================= */
 
-function Header({ onSearch, isAuthenticated, onLogout }) {
+function Header({onSearch, isAuthenticated, onLogout}) {
     const navigate = useNavigate();
 
     const handleLogoClick = () => {
-        onSearch && onSearch(null);
-        navigate("/", { replace: true });
+        onSearch && onSearch(null); // Reset search state
+        navigate("/", {replace: true});
     };
 
     return (
@@ -201,66 +181,53 @@ function Header({ onSearch, isAuthenticated, onLogout }) {
             <div
                 className="header-left header-content"
                 onClick={handleLogoClick}
-                style={{ cursor: "pointer" }}
+                style={{cursor: "pointer"}}
             >
-                <img
-                    src="/logo.png"
-                    alt="OGM Logo"
-                    className="logo-img"
-                    style={{ height: "50px" }}
-                />
+                <img src="/logo.png" alt="OGM Logo" className="logo-img" style={{height: "50px"}}/>
                 <h1 className="header-title">One Global Marketplace</h1>
             </div>
 
             <div className="header-actions">
                 {isAuthenticated ? (
-                    <button className="contact" onClick={onLogout}>
-                        Logout
-                    </button>
+                    <button className="contact" onClick={onLogout}>Logout</button>
                 ) : (
-                    <button
-                        className="contact"
-                        onClick={() => navigate("/auth")}
-                    >
-                        Login
-                    </button>
+                    <button className="contact" onClick={() => navigate("/auth")}>Login</button>
                 )}
             </div>
         </header>
     );
 }
 
-/* ================= PROPERTY LIST ================= */
+/* ================= PROPERTY LIST SUB-COMPONENT ================= */
 
-function PropertyList({
-                          properties,
-                          searchMode,
-                          onWishlist,
-                          onWatchlist,
-                      }) {
+function PropertyList({properties, searchMode}) {
     if (!properties || properties.length === 0) {
-        return <p>No properties found.</p>;
-    }
-
-    if (searchMode === "ai") {
         return (
-            <div className="ai-results">
-                {properties.map((prop) => (
-                    <AIResultCard
-                        key={prop.id}
-                        property={prop}
-                        onWishlist={onWishlist}
-                        onWatchlist={onWatchlist}
-                    />
-                ))}
+            <div className="no-results-container">
+                <div className="no-results-content">
+                    <div className="no-results-icon">🏠</div>
+                    <h3>No properties found</h3>
+                    <p>We couldn't find any listings matching your current criteria. Try adjusting your filters or
+                        search terms.</p>
+                    <button
+                        className="reset-search-btn"
+                        onClick={() => window.location.reload()}
+                    >
+                        Clear all filters
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="property-grid">
+        <div className={searchMode === "ai" ? "ai-results" : "property-grid"}>
             {properties.map((prop) => (
-                <PropertyCard key={prop.id} property={prop} />
+                searchMode === "ai" ? (
+                    <AIResultCard key={prop.id} property={prop}/>
+                ) : (
+                    <PropertyCard key={prop.id} property={prop}/>
+                )
             ))}
         </div>
     );
