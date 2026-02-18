@@ -1,11 +1,35 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Property Listings</title>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Property Listings</title>
+
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+
+    // Initialize both Pixel IDs
+    fbq('init', '894418379733558');
+    fbq('init', '901311722301515');
+
+    // This single command sends a 'PageView' event to BOTH pixels simultaneously
+    fbq('track', 'PageView');
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none"
+         src="https://www.facebook.com/tr?id=894418379733558&ev=PageView&noscript=1"/>
+    <img height="1" width="1" style="display:none"
+         src="https://www.facebook.com/tr?id=901311722301515&ev=PageView&noscript=1"/>
+  </noscript>
+</head>
+<body>
+<div id="root"></div>
+</body>
 </html>
