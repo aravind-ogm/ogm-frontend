@@ -7,6 +7,7 @@ import ImageZoomModal from "../components/ImageZoomModal";
 import {BadgeCheck, Share2, Heart, Download} from "lucide-react";
 import "../styles/PropertyDetails.css";
 import NearbyLocations from "../components/NearbyLocations";
+import LiveTourButton from "../components/LiveTourButton";
 
 export default function PropertyDetails() {
     // const { id } = useParams();
@@ -468,6 +469,8 @@ export default function PropertyDetails() {
                 </form>
             </div>
         </div>)}
+
+        <LiveTourButton property={property} variant="netflix" /> //use netflix also
 
     </div>);
 }

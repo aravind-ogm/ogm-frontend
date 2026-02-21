@@ -1,0 +1,249 @@
+/* ============================= */
+/* 🔴 PREMIUM FLOATING BUTTON */
+/* ============================= */
+
+.live-premium-btn {
+  position: fixed;
+  bottom: 120px;
+  right: 25px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 18px 30px;
+  border-radius: 60px;
+
+  background: linear-gradient(135deg, #ff0000, #dc2626);
+  color: #ffffff;
+
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  cursor: pointer;
+  z-index: 9999;
+
+  box-shadow:
+    0 12px 35px rgba(220, 38, 38, 0.6),
+    0 0 0 0 rgba(255, 0, 0, 0.7);
+
+  transition: all 0.3s ease;
+
+  animation: pulseGlow 2s infinite, floatUpDown 3s ease-in-out infinite;
+}
+
+/* Hover boost */
+.live-premium-btn:hover {
+  transform: scale(1.08);
+  box-shadow:
+    0 18px 50px rgba(220, 38, 38, 0.8),
+    0 0 25px rgba(255, 0, 0, 0.7);
+}
+
+/* 🔴 Live dot */
+.live-dot {
+  width: 10px;
+  height: 10px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #22c55e;
+  animation: blinkDot 1.2s infinite;
+}
+
+@keyframes blinkDot {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+/* Red glow pulse */
+@keyframes pulseGlow {
+  0% {
+    box-shadow:
+      0 12px 35px rgba(220, 38, 38, 0.6),
+      0 0 0 0 rgba(255, 0, 0, 0.7);
+  }
+  70% {
+    box-shadow:
+      0 12px 35px rgba(220, 38, 38, 0.6),
+      0 0 0 25px rgba(255, 0, 0, 0);
+  }
+  100% {
+    box-shadow:
+      0 12px 35px rgba(220, 38, 38, 0.6),
+      0 0 0 0 rgba(255, 0, 0, 0);
+  }
+}
+
+/* Floating effect */
+@keyframes floatUpDown {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+/* ============================= */
+/* OVERLAY */
+/* ============================= */
+
+.premium-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 10000;
+}
+
+/* ============================= */
+/* MODAL */
+/* ============================= */
+
+.premium-modal {
+  width: 95%;
+  max-width: 1100px;
+  height: 85vh;
+
+  background: #111827;
+  border-radius: 16px;
+  overflow: hidden;
+
+  position: relative;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
+}
+
+/* ============================= */
+/* PREJOIN */
+/* ============================= */
+
+.prejoin-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.prejoin-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.prejoin-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.prejoin-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  background: rgba(17, 24, 39, 0.85);
+  padding: 40px;
+  border-radius: 14px;
+  text-align: center;
+  color: white;
+  width: 100%;
+  max-width: 420px;
+  z-index: 2;
+}
+
+.prejoin-content input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 15px;
+}
+
+.prejoin-content button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  background: #dc2626;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prejoin-content button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(220, 38, 38, 0.5);
+}
+
+.cancel-btn {
+  margin-top: 10px;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.5) !important;
+}
+
+/* ============================= */
+/* JITSI */
+/* ============================= */
+
+.jitsi-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* CLOSE BUTTON ABOVE IFRAME */
+
+.jitsi-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+  border: none;
+
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  z-index: 999999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jitsi-close-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 768px) {
+  .premium-modal {
+    height: 90vh;
+  }
+
+  .live-premium-btn {
+    bottom: 95px;
+    right: 15px;
+    padding: 14px 22px;
+    font-size: 13px;
+  }
+}
