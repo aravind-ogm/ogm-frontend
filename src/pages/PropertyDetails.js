@@ -470,7 +470,7 @@ export default function PropertyDetails() {
             </div>
         </div>)}
 
-        <LiveTourButton property={property} variant="netflix" /> //use netflix also
+        <LiveTourButton property={property} variant="netflix" /> 
 
     </div>);
 }
