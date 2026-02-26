@@ -23,6 +23,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 // Styles
 import "./styles/App.css";
+import AiSearchPage from "./pages/AiSearchPage";
 
 /* ================= META PIXEL ROUTE TRACKER ================= */
 
@@ -153,6 +154,7 @@ function App() {
                     <Route path="/about" element={<About/>}/>
                     <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                     <Route path="/contact" element={<Contact/>}/>
+                    <Route path="/ai-search" element={<AiSearchPage />} />
                     <Route
                         path="/auth"
                         element={<AuthContainer onAuthSuccess={() => setIsAuthenticated(true)}/>}

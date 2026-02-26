@@ -1,0 +1,395 @@
+/* =========================================================
+   GLOBAL LAYOUT
+   Main container wrapping sidebar + chat area
+========================================================= */
+
+.ai-layout {
+  display: flex;
+  height: 100vh;
+  background: #f7f8fb;
+  font-family: "Inter", sans-serif;
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   ENTERPRISE SIDEBAR
+   Clean SaaS dark panel
+========================================================= */
+
+.ai-sidebar {
+  width: 280px;
+  background: #0b1220;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #1e293b;
+  transition: width 0.3s ease;
+}
+
+.ai-sidebar.collapsed {
+  width: 70px;
+}
+
+
+/* -----------------------------
+   Sidebar Header
+------------------------------ */
+
+.sidebar-top {
+  padding: 20px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.brand-logo {
+  width: 10px;
+  height: 10px;
+  background: #2563eb;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.brand-text {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+
+/* -----------------------------
+   Primary CTA Button
+------------------------------ */
+
+.primary-btn {
+  width: 100%;
+  background: #2563eb;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: background 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: #1d4ed8;
+}
+
+
+/* -----------------------------
+   Sidebar Search
+------------------------------ */
+
+.search-box {
+  position: relative;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 8px 8px 8px 30px;
+  border-radius: 6px;
+  border: 1px solid #1e293b;
+  background: #111827;
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+
+/* -----------------------------
+   Chat History List
+------------------------------ */
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.chat-row {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s ease;
+}
+
+.chat-row:hover {
+  background: #1e293b;
+}
+
+.chat-row.active {
+  background: #1e293b;
+  border-left: 3px solid #2563eb;
+}
+
+.chat-title {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.chat-menu {
+  opacity: 0;
+  font-size: 16px;
+}
+
+.chat-row:hover .chat-menu {
+  opacity: 1;
+}
+
+
+/* -----------------------------
+   Sidebar Footer (User)
+------------------------------ */
+
+.sidebar-footer {
+  padding: 15px;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+.user-info {
+  font-size: 12px;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.user-role {
+  opacity: 0.6;
+}
+
+
+/* =========================================================
+   CHAT AREA (OpenAI / Gemini Style)
+========================================================= */
+
+.ai-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, #f8f9fb, #f3f4f6);
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* Soft bottom gradient to blend floating input */
+.ai-chat-area::after {
+  content: "";
+  position: fixed;
+  bottom: 0;
+  left: 280px;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(
+    to top,
+    rgba(247,248,251,1),
+    rgba(247,248,251,0)
+  );
+  pointer-events: none;
+}
+
+
+/* -----------------------------
+   Messages Container
+------------------------------ */
+
+.chat-messages {
+  flex: 1;
+  padding: 100px 24px 220px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  scroll-behavior: smooth;
+}
+
+
+/* -----------------------------
+   Message Bubble Base
+------------------------------ */
+
+.bubble {
+  width: 100%;
+  max-width: 680px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  border-radius: 20px;
+  font-size: 15px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  animation: fadeUp 0.25s ease;
+}
+
+
+/* User Message */
+
+.bubble.user {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 6px;
+}
+
+
+/* AI Message */
+
+.bubble.ai {
+  background: #ffffff;
+  color: #111827;
+  align-self: flex-start;
+  border-bottom-left-radius: 6px;
+  border: 1px solid #f0f2f5;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+
+/* Message Entrance Animation */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* =========================================================
+   FLOATING INPUT (OpenAI Style)
+========================================================= */
+
+.input-bar {
+  position: fixed;
+  bottom: 60px;
+  left: calc(280px + 40%);
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 720px;
+  background: white;
+  border-radius: 30px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.input-bar textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 15px;
+  padding: 14px 18px;
+  background: transparent;
+  max-height: 120px;
+}
+
+.input-bar button {
+  background: #2563eb;
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 22px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.input-bar button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   Typing Indicator
+========================================================= */
+
+.typing-indicator {
+  width: 100%;
+  max-width: 680px;
+  margin-bottom: 32px;
+  align-self: flex-start;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: #9ca3af;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+
+/* =========================================================
+   Scrollbar Styling
+========================================================= */
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
