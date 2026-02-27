@@ -12,18 +12,17 @@
 }
 
 
-
 /* =========================================================
-   SIDEBAR (ENTERPRISE DARK PANEL)
+   SIDEBAR (CLEAN LIGHT MODE)
 ========================================================= */
 
 .ai-sidebar {
   width: 280px;
-  background: #0b1220;
-  color: #e5e7eb;
+  background: #ffffff;
+  color: #1f2937;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #1e293b;
+  border-right: 1px solid #e5e7eb;
   transition: width 0.3s ease;
 }
 
@@ -31,11 +30,11 @@
   width: 70px;
 }
 
-/* Sidebar Header */
+/* ================= HEADER ================= */
 
 .sidebar-top {
   padding: 20px;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .brand-row {
@@ -54,10 +53,11 @@
 
 .brand-text {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
+  color: #111827;
 }
 
-/* Primary Button */
+/* ================= PRIMARY BUTTON ================= */
 
 .primary-btn {
   width: 100%;
@@ -74,9 +74,11 @@
 
 .primary-btn:hover {
   background: #1d4ed8;
+  transform: translateY(-1px);
 }
 
-/* Sidebar Search */
+/* ================= SEARCH ================= */
+
 .search-box {
   position: relative;
   width: 100%;
@@ -85,64 +87,80 @@
 .search-box input {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 10px 10px 32px;
+  padding: 10px 12px 10px 34px;
   border-radius: 8px;
-  border: 1px solid #1e293b;
-  background: #111827;
-  color: #e5e7eb;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .search-icon {
   position: absolute;
-  left: 8px;
-  top: 8px;
+  left: 10px;
+  top: 9px;
   font-size: 14px;
-  opacity: 0.6;
+  color: #9ca3af;
 }
 
-/* Chat List */
+/* ================= CHAT LIST ================= */
 
 .chat-list {
   flex: 1;
   overflow-y: auto;
-  padding: 15px;
+  padding: 12px;
 }
+
+/* Chat item */
 
 .chat-row {
   padding: 10px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-bottom: 6px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.1s ease;
+  color: #374151;
 }
 
 .chat-row:hover {
-  background: #1e293b;
+  background: #f3f4f6;
 }
 
 .chat-row.active {
-  background: #1e293b;
-  border-left: 3px solid #2563eb;
+  background: #e0ecff;
+  color: #1d4ed8;
+  font-weight: 500;
 }
+
+/* Chat title */
 
 .chat-title {
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 160px;
+  max-width: 180px;
 }
 
-/* Sidebar Footer */
+/* ================= FOOTER ================= */
 
 .sidebar-footer {
-  padding: 15px;
-  border-top: 1px solid #1e293b;
+  padding: 16px;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
+  background: #fafafa;
 }
 
 .user-avatar {
@@ -150,6 +168,7 @@
   height: 34px;
   border-radius: 50%;
   background: #2563eb;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,7 +176,19 @@
   margin-right: 10px;
 }
 
+.user-info {
+  font-size: 13px;
+}
 
+.user-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #6b7280;
+}
 
 /* =========================================================
    CHAT AREA
