@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
     BrowserRouter as Router,
     Routes,
@@ -20,10 +20,10 @@ import Contact from "./pages/Contact";
 import PropertyDetails from "./pages/PropertyDetails";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import AiSearchPage from "./pages/AiSearchPage";
 
 // Styles
 import "./styles/App.css";
-import AiSearchPage from "./pages/AiSearchPage";
 
 /* ================= META PIXEL ROUTE TRACKER ================= */
 
@@ -39,18 +39,31 @@ function MetaPixelTracker() {
     return null;
 }
 
-/* ================= MAIN APP CLASS ================= */
+/* ================= MAIN APP ================= */
 
 function App() {
+    return (
+        <Router>
+            <AppContent />
+        </Router>
+    );
+}
+
+/* ================= APP CONTENT (NO LOGIC CHANGED) ================= */
+
+function AppContent() {
+    const location = useLocation();
+    const navigate = useNavigate();
+
     const [properties, setProperties] = useState([]);
-    const [searchMode, setSearchMode] = useState("default"); // 'default', 'ai', 'normal'
+    const [searchMode, setSearchMode] = useState("default");
     const [isAuthenticated, setIsAuthenticated] = useState(
         Boolean(localStorage.getItem("token"))
     );
 
     const baseUrl = "http://localhost:8080";
 
-    /* ================= DATA LOADING LOGIC ================= */
+    /* ================= DATA LOADING ================= */
 
     const loadProperties = useCallback(async (query = "") => {
         try {
@@ -67,40 +80,44 @@ function App() {
         }
     }, [baseUrl]);
 
-    /* ================= UNIFIED SEARCH HANDLER ================= */
+    /* ================= SEARCH HANDLER ================= */
 
-    /**
-     * Handles data from NormalSearch (string), AISearch (array), or Reset (null)
-     */
     const handleSearch = (data) => {
-        // 1. Reset Mode (Input cleared or Logo clicked)
         if (data === null) {
             setSearchMode("default");
             loadProperties();
             return;
         }
 
-        // 2. AI Mode (Backend returned a list of curated properties)
         if (Array.isArray(data)) {
             setProperties(data);
             setSearchMode("ai");
             return;
         }
 
-        // 3. Normal Mode (Keyword search string)
         setSearchMode("normal");
         loadProperties(data);
     };
-
-    /* ================= INITIAL LOAD ================= */
 
     useEffect(() => {
         loadProperties();
     }, [loadProperties]);
 
+    /* ================= FOOTER HIDE LOGIC ================= */
+
+    const hideFooterRoutes = [
+        "/ai-search",
+        "/dashboard",
+        "/admin"
+    ];
+
+    const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
+
+    /* ================= RENDER ================= */
+
     return (
-        <Router>
-            <MetaPixelTracker/>
+        <>
+            <MetaPixelTracker />
 
             <div className="app-container">
                 <Header
@@ -117,7 +134,6 @@ function App() {
                         path="/"
                         element={
                             <main className="main-section">
-                                {/* AI SUGGESTIONS BANNER (Only visible in AI mode) */}
                                 {searchMode === "ai" && (
                                     <div className="ai-suggestions premium">
                                         <div className="ai-suggestion-card">
@@ -131,9 +147,8 @@ function App() {
                                     </div>
                                 )}
 
-                                {/* SEARCH BAR (Stays visible unless in AI mode - adjust as needed) */}
                                 {searchMode !== "ai" && (
-                                    <SearchBarContainer onSearch={handleSearch}/>
+                                    <SearchBarContainer onSearch={handleSearch} />
                                 )}
 
                                 <h2 className="section-title">
@@ -150,32 +165,33 @@ function App() {
                         }
                     />
 
-                    <Route path="/property/:slug" element={<PropertyDetails/>}/>
-                    <Route path="/about" element={<About/>}/>
-                    <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
-                    <Route path="/contact" element={<Contact/>}/>
+                    <Route path="/property/:slug" element={<PropertyDetails />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/contact" element={<Contact />} />
                     <Route path="/ai-search" element={<AiSearchPage />} />
                     <Route
                         path="/auth"
-                        element={<AuthContainer onAuthSuccess={() => setIsAuthenticated(true)}/>}
+                        element={<AuthContainer onAuthSuccess={() => setIsAuthenticated(true)} />}
                     />
                 </Routes>
 
-                <FloatingWhatsapp/>
-                <Footer/>
+                <FloatingWhatsapp />
+
+                {!shouldHideFooter && <Footer />}
             </div>
-        </Router>
+        </>
     );
 }
 
-/* ================= HEADER SUB-COMPONENT ================= */
+/* ================= HEADER ================= */
 
-function Header({onSearch, isAuthenticated, onLogout}) {
+function Header({ onSearch, isAuthenticated, onLogout }) {
     const navigate = useNavigate();
 
     const handleLogoClick = () => {
-        onSearch && onSearch(null); // Reset search state
-        navigate("/", {replace: true});
+        onSearch && onSearch(null);
+        navigate("/", { replace: true });
     };
 
     return (
@@ -183,9 +199,9 @@ function Header({onSearch, isAuthenticated, onLogout}) {
             <div
                 className="header-left header-content"
                 onClick={handleLogoClick}
-                style={{cursor: "pointer"}}
+                style={{ cursor: "pointer" }}
             >
-                <img src="/logo.png" alt="OGM Logo" className="logo-img" style={{height: "50px"}}/>
+                <img src="/logo.png" alt="OGM Logo" className="logo-img" style={{ height: "50px" }} />
                 <h1 className="header-title">One Global Marketplace</h1>
             </div>
 
@@ -200,17 +216,16 @@ function Header({onSearch, isAuthenticated, onLogout}) {
     );
 }
 
-/* ================= PROPERTY LIST SUB-COMPONENT ================= */
+/* ================= PROPERTY LIST ================= */
 
-function PropertyList({properties, searchMode}) {
+function PropertyList({ properties, searchMode }) {
     if (!properties || properties.length === 0) {
         return (
             <div className="no-results-container">
                 <div className="no-results-content">
                     <div className="no-results-icon">🏠</div>
                     <h3>No properties found</h3>
-                    <p>We couldn't find any listings matching your current criteria. Try adjusting your filters or
-                        search terms.</p>
+                    <p>We couldn't find any listings matching your current criteria.</p>
                     <button
                         className="reset-search-btn"
                         onClick={() => window.location.reload()}
@@ -224,13 +239,13 @@ function PropertyList({properties, searchMode}) {
 
     return (
         <div className={searchMode === "ai" ? "ai-results" : "property-grid"}>
-            {properties.map((prop) => (
+            {properties.map((prop) =>
                 searchMode === "ai" ? (
-                    <AIResultCard key={prop.id} property={prop}/>
+                    <AIResultCard key={prop.id} property={prop} />
                 ) : (
-                    <PropertyCard key={prop.id} property={prop}/>
+                    <PropertyCard key={prop.id} property={prop} />
                 )
-            ))}
+            )}
         </div>
     );
 }

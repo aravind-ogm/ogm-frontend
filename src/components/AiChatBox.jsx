@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
+import SuggestionChips from "./SuggestionChips";
 
 export default function AiChatBox({ chat, sendMessage }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
 
-  // 🔹 Auto scroll to bottom
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+
+  /* Auto scroll when new message arrives */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat?.messages]);
+  }, [chat?.messages?.length]);
+
+  /* Auto focus input when chat changes */
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [chat?.id]);
 
   if (!chat) {
     return (
@@ -23,38 +31,46 @@ export default function AiChatBox({ chat, sendMessage }) {
 
   const handleSend = async (overrideText) => {
     const question = overrideText || input;
+
     if (!question.trim() || isLoading) return;
 
     setIsLoading(true);
     setInput("");
 
-    await sendMessage(question);
-
-    setIsLoading(false);
+    try {
+      await sendMessage(question);
+    } catch (error) {
+      console.error("Send message failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="ai-chat-area">
 
       {/* ===================== */}
-      {/* MESSAGES */}
+      {/* CHAT MESSAGES */}
       {/* ===================== */}
-
       <div className="chat-messages">
-        {chat.messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`bubble ${msg.role === "user" ? "user" : "ai"}`}
-          >
-            {msg.text
-                .replace(/\*\*/g, "")
-                .replace(/\n/g, "\n\n")}
-         </div>
-        ))}
+        {chat?.messages?.map((msg, index) => {
+          const role = msg.role === "user" ? "user" : "ai";
 
+          return (
+            <div
+              key={msg.id || `${role}-${index}`}
+              className={`chat-message ${role}`}
+            >
+              <div className={`bubble ${role}`}>
+                {msg.text}
+              </div>
+            </div>
+          );
+        })}
 
-         {/* 👇 ADD THIS HERE */}
-          {isLoading && (
+        {/* Typing indicator */}
+        {isLoading && (
+          <div className="chat-message ai">
             <div className="typing-indicator">
               <div className="typing-dots">
                 <span></span>
@@ -62,7 +78,8 @@ export default function AiChatBox({ chat, sendMessage }) {
                 <span></span>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
         <div ref={messagesEndRef} />
       </div>
@@ -70,40 +87,38 @@ export default function AiChatBox({ chat, sendMessage }) {
       {/* ===================== */}
       {/* SUGGESTION CHIPS */}
       {/* ===================== */}
-
-      {chat.messages.length === 0 && (
-        <div className="suggestion-row">
-          <span className="chip" onClick={() => handleSend("2 BHK in Whitefield")}>
-            2 BHK Whitefield
-          </span>
-          <span className="chip" onClick={() => handleSend("Villa under 1 crore")}>
-            Villa under 1 Cr
-          </span>
-          <span className="chip" onClick={() => handleSend("3 BHK near metro")}>
-            3 BHK near metro
-          </span>
-        </div>
+      {chat?.messages?.length === 0 && (
+        <SuggestionChips
+          onSelect={(value) => handleSend(value)}
+        />
       )}
 
       {/* ===================== */}
       {/* INPUT BAR */}
       {/* ===================== */}
-
       <div className="input-bar">
-        <input
-          placeholder="Ask anything about properties..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          disabled={isLoading}
-        />
+        <div className="input-bar-inner">
+          <input
+            ref={inputRef}
+            placeholder="Ask anything about properties..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            disabled={isLoading}
+          />
 
-        <button
-          onClick={() => handleSend()}
-          disabled={!input.trim() || isLoading}
-        >
-          {isLoading ? "..." : "Send"}
-        </button>
+          <button
+            onClick={() => handleSend()}
+            disabled={!input.trim() || isLoading}
+          >
+            {isLoading ? "..." : "Send"}
+          </button>
+        </div>
       </div>
 
     </div>

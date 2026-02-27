@@ -1,11 +1,20 @@
 import React from "react";
 
-export default function AiMessage({ type, text }) {
+function AiMessage({
+  role = "ai",
+  text = ""
+}) {
+  const safeRole = role === "user" ? "user" : "ai";
+
+  if (!text) return null;
+
   return (
-    <div className={`chat-message ${type}`}>
-      <div className="bubble">
+    <div className={`chat-message ${safeRole}`}>
+      <div className={`bubble ${safeRole}`}>
         {text}
       </div>
     </div>
   );
 }
+
+export default React.memo(AiMessage);
