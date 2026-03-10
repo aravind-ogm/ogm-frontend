@@ -531,3 +531,20 @@
   background: #cbd5e1;
   border-radius: 4px;
 }
+
+.ai-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.ai-results-full {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+}

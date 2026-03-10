@@ -34,7 +34,7 @@ export default function AiSearchPage() {
   };
 
   /* ========================= */
-  /* APPEND MESSAGE SAFELY */
+  /* APPEND MESSAGE */
   /* ========================= */
 
   const appendMessage = (chatId, message) => {
@@ -51,7 +51,7 @@ export default function AiSearchPage() {
   };
 
   /* ========================= */
-  /* ACTIVE CHAT (MEMOIZED) */
+  /* ACTIVE CHAT */
   /* ========================= */
 
   const activeChat = useMemo(
@@ -71,7 +71,7 @@ export default function AiSearchPage() {
   }, []);
 
   /* ========================= */
-  /* AUTO SEND INITIAL QUESTION (SAFE) */
+  /* AUTO SEND INITIAL QUESTION */
   /* ========================= */
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function AiSearchPage() {
   }, [initialQuestion, activeChatId]);
 
   /* ========================= */
-  /* AI CALL FUNCTION */
+  /* SEND MESSAGE */
   /* ========================= */
 
   const sendMessage = async (questionText) => {
@@ -95,7 +95,7 @@ export default function AiSearchPage() {
 
     const currentChatId = activeChatId;
 
-    // Add user message
+    // Add user message immediately
     appendMessage(currentChatId, {
       id: crypto.randomUUID(),
       role: "user",
@@ -103,8 +103,8 @@ export default function AiSearchPage() {
     });
 
     try {
-     const response = await fetch(
-       "http://localhost:8080/api/ai/ask",
+      const response = await fetch(
+        "http://localhost:8080/api/ai/ask",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -114,21 +114,26 @@ export default function AiSearchPage() {
 
       const data = await response.json();
 
+      // 🔥 IMPORTANT: include properties + hasResults
       appendMessage(currentChatId, {
         id: crypto.randomUUID(),
         role: "ai",
         text:
+          data.message ||
           data.summary ||
           data.reply ||
-          "No response received."
+          "No response received.",
+        hasResults: data.hasResults || false,
+        properties: data.properties || []
       });
 
     } catch (error) {
       appendMessage(currentChatId, {
         id: crypto.randomUUID(),
         role: "ai",
-        text:
-          "Something went wrong. Please try again."
+        text: "Something went wrong. Please try again.",
+        hasResults: false,
+        properties: []
       });
     }
   };
@@ -146,10 +151,12 @@ export default function AiSearchPage() {
         createNewChat={createNewChat}
       />
 
-      <AiChatBox
-        chat={activeChat}
-        sendMessage={sendMessage}
-      />
+      <div className="ai-results-full">
+        <AiChatBox
+          chat={activeChat}
+          sendMessage={sendMessage}
+        />
+      </div>
     </div>
   );
 }

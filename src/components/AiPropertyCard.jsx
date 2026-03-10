@@ -12,6 +12,13 @@ function AiPropertyCard({ property }) {
     navigate(`/property/${property.slug || property.id}`);
   };
 
+  const imageSrc =
+    property.primaryImage ||
+    property.image ||
+    (property.gallery && property.gallery.length > 0
+      ? property.gallery[0]
+      : FALLBACK_IMAGE);
+
   const formattedPrice = property.price
     ? `₹ ${Number(property.price).toLocaleString()}`
     : "Price on request";
@@ -27,7 +34,7 @@ function AiPropertyCard({ property }) {
       }}
     >
       <img
-        src={property.image || FALLBACK_IMAGE}
+        src={imageSrc}
         alt={property.title || "Property image"}
         loading="lazy"
         className="ai-property-img"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import SuggestionChips from "./SuggestionChips";
+import AiPropertyCard from "./AiPropertyCard";
 
 export default function AiChatBox({ chat, sendMessage }) {
   const [input, setInput] = useState("");
@@ -8,12 +9,10 @@ export default function AiChatBox({ chat, sendMessage }) {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  /* Auto scroll when new message arrives */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages?.length]);
 
-  /* Auto focus input when chat changes */
   useEffect(() => {
     inputRef.current?.focus();
   }, [chat?.id]);
@@ -31,7 +30,6 @@ export default function AiChatBox({ chat, sendMessage }) {
 
   const handleSend = async (overrideText) => {
     const question = overrideText || input;
-
     if (!question.trim() || isLoading) return;
 
     setIsLoading(true);
@@ -48,11 +46,8 @@ export default function AiChatBox({ chat, sendMessage }) {
 
   return (
     <div className="ai-chat-area">
-
-      {/* ===================== */}
-      {/* CHAT MESSAGES */}
-      {/* ===================== */}
       <div className="chat-messages">
+
         {chat?.messages?.map((msg, index) => {
           const role = msg.role === "user" ? "user" : "ai";
 
@@ -64,19 +59,31 @@ export default function AiChatBox({ chat, sendMessage }) {
               <div className={`bubble ${role}`}>
                 {msg.text}
               </div>
+
+              {/* 🔥 THIS BLOCK WAS PROBABLY MISSING */}
+              {role === "ai" &&
+                msg.hasResults === true &&
+                msg.properties &&
+                msg.properties.length > 0 && (
+                  <div className="ai-property-results">
+                    {msg.properties.map((property) => (
+                      <AiPropertyCard
+                        key={property.id}
+                        property={property}
+                      />
+                    ))}
+                  </div>
+                )}
             </div>
           );
         })}
 
-        {/* Typing indicator */}
         {isLoading && (
           <div className="chat-message ai">
             <div className="typing-indicator">
-              <div className="typing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
           </div>
         )}
@@ -84,18 +91,10 @@ export default function AiChatBox({ chat, sendMessage }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ===================== */}
-      {/* SUGGESTION CHIPS */}
-      {/* ===================== */}
       {chat?.messages?.length === 0 && (
-        <SuggestionChips
-          onSelect={(value) => handleSend(value)}
-        />
+        <SuggestionChips onSelect={(value) => handleSend(value)} />
       )}
 
-      {/* ===================== */}
-      {/* INPUT BAR */}
-      {/* ===================== */}
       <div className="input-bar">
         <div className="input-bar-inner">
           <input
@@ -120,7 +119,6 @@ export default function AiChatBox({ chat, sendMessage }) {
           </button>
         </div>
       </div>
-
     </div>
   );
 }
