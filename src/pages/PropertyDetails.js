@@ -189,6 +189,20 @@ export default function PropertyDetails() {
 
     const videoThumbnail = property.mainImages?.[0] || property.images?.[0] || property.image || "/images/default-video-thumb.jpg";
 
+    function formatIndianPrice(price) {
+        if (!price) return "";
+
+        if (price >= 10000000) {
+            return `₹ ${(price / 10000000).toFixed(2)} Cr`;
+        }
+
+        if (price >= 100000) {
+            return `₹ ${(price / 100000).toFixed(2)} L`;
+        }
+
+        return `₹ ${price.toLocaleString("en-IN")}`;
+    }
+
     /* -----------------------------------------
                   JSX RETURN
     ----------------------------------------- */
@@ -307,7 +321,7 @@ export default function PropertyDetails() {
 
         {/* PRICE */}
         <div className="details-top-info">
-            <span className="details-price">{property.price}</span>
+            <span className="details-price">{formatIndianPrice(property.price)}</span>
             {property.reraApproved && (<span className="rera-tag">RERA Approved</span>)}
         </div>
 
