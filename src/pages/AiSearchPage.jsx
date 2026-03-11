@@ -89,54 +89,67 @@ export default function AiSearchPage() {
   /* ========================= */
   /* SEND MESSAGE */
   /* ========================= */
+const sendMessage = async (questionText) => {
 
-  const sendMessage = async (questionText) => {
-    if (!questionText || !activeChatId) return;
+  if (!questionText || !activeChatId) return;
 
-    const currentChatId = activeChatId;
+  const currentChatId = activeChatId;
 
-    // Add user message immediately
+  // Add user message immediately
+  appendMessage(currentChatId, {
+    id: crypto.randomUUID(),
+    role: "user",
+    text: questionText
+  });
+
+  // 🔹 Update chat title if it is still "New Chat"
+  setChats((prev) =>
+    prev.map((chat) =>
+      chat.id === currentChatId && chat.title === "New Chat"
+        ? {
+            ...chat,
+            title: questionText.split(" ").slice(0,5).join(" ")
+          }
+        : chat
+    )
+  );
+
+  try {
+    const response = await fetch(
+      "http://localhost:8080/api/ai/ask",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: questionText })
+      }
+    );
+
+    const data = await response.json();
+
     appendMessage(currentChatId, {
       id: crypto.randomUUID(),
-      role: "user",
-      text: questionText
+      role: "ai",
+      text:
+        data.message ||
+        data.summary ||
+        data.reply ||
+        "No response received.",
+      hasResults: data.hasResults || false,
+      properties: data.properties || []
     });
 
-    try {
-      const response = await fetch(
-        "http://localhost:8080/api/ai/ask",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: questionText })
-        }
-      );
+  } catch (error) {
 
-      const data = await response.json();
+    appendMessage(currentChatId, {
+      id: crypto.randomUUID(),
+      role: "ai",
+      text: "Something went wrong. Please try again.",
+      hasResults: false,
+      properties: []
+    });
 
-      // 🔥 IMPORTANT: include properties + hasResults
-      appendMessage(currentChatId, {
-        id: crypto.randomUUID(),
-        role: "ai",
-        text:
-          data.message ||
-          data.summary ||
-          data.reply ||
-          "No response received.",
-        hasResults: data.hasResults || false,
-        properties: data.properties || []
-      });
-
-    } catch (error) {
-      appendMessage(currentChatId, {
-        id: crypto.randomUUID(),
-        role: "ai",
-        text: "Something went wrong. Please try again.",
-        hasResults: false,
-        properties: []
-      });
-    }
-  };
+  }
+};
 
   /* ========================= */
   /* RENDER */
