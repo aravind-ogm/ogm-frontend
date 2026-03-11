@@ -11,6 +11,12 @@ export default function PropertyCard({property}) {
         property.images?.[0] ||
         property.image;
 
+    // ⭐ Safe price formatter
+    const formatPrice = (price) => {
+        if (!price || isNaN(price)) return "Price on request";
+        return `₹ ${Number(price).toLocaleString("en-IN")}`;
+    };
+
     return (
         <Link
             to={`/property/${property.slug}`}
@@ -35,8 +41,8 @@ export default function PropertyCard({property}) {
                     <button
                         className="fav-btn"
                         onClick={(e) => {
-                            e.preventDefault(); // prevents navigation ONLY for heart
-                            e.stopPropagation(); // ⭐ important
+                            e.preventDefault();
+                            e.stopPropagation();
                             setIsFavorite(!isFavorite);
                         }}
                     >
@@ -53,7 +59,7 @@ export default function PropertyCard({property}) {
                 <h3>{property.title}</h3>
                 <p className="loc">{property.location}</p>
                 <p className="details">
-                    {property.type} • {property.sqft} Sqft • {property.price}
+                    {property.type} • {property.sqft} Sqft • {formatPrice(property.price)}
                 </p>
             </div>
         </Link>

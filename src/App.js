@@ -20,9 +20,7 @@ import Contact from "./pages/Contact";
 import PropertyDetails from "./pages/PropertyDetails";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import AiSearchPage from "./pages/AiSearchPage";
-
-// Styles
+import AiSearchPage from "./components/ai/AiSearchPage";
 import "./styles/App.css";
 
 /* ================= META PIXEL ROUTE TRACKER ================= */

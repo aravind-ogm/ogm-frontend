@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { FiPlus, FiSearch, FiMoreHorizontal } from "react-icons/fi";
-import "../styles/ai/ai-sidebar.css";
-
+import "../../styles/ai/ai-sidebar.css";
 export default function AiSidebar({
   chats = [],
   activeChatId = null,

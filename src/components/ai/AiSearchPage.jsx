@@ -5,10 +5,10 @@ import React, {
   useMemo
 } from "react";
 import { useLocation } from "react-router-dom";
-import AiSidebar from "../components/AiSidebar";
-import AiChatBox from "../components/AiChatBox";
-import "../styles/ai.css";
+import AiChatBox from "./AiChatBox";
+import AiSidebar from "./AiSidebar";
 
+import "../../styles/ai/ai.css";
 export default function AiSearchPage() {
   const location = useLocation();
   const initialQuestion = location.state?.question;
