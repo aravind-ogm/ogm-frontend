@@ -19,9 +19,21 @@ function AiPropertyCard({ property }) {
       ? property.gallery[0]
       : FALLBACK_IMAGE);
 
-  const formattedPrice = property.price
-    ? `₹ ${Number(property.price).toLocaleString()}`
-    : "Price on request";
+  const formatPrice = (price) => {
+    if (!price) return "Price on request";
+
+    const cleaned = String(price).replace(/[₹,]/g, "");
+    const num = Number(cleaned);
+
+    if (isNaN(num)) return price;
+
+    if (num >= 10000000) return `₹ ${(num / 10000000).toFixed(2)} Cr`;
+    if (num >= 100000) return `₹ ${(num / 100000).toFixed(2)} Lakhs`;
+
+    return `₹ ${num.toLocaleString("en-IN")}`;
+  };
+
+  const formattedPrice = formatPrice(property.price);
 
   return (
     <div
