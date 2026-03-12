@@ -1,121 +1,84 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import Icon from "./Icon";
+import AiMessage from "./AiMessage";
 import SuggestionChips from "./SuggestionChips";
-import AiPropertyCard from "./AiPropertyCard";
+import "../../styles/ai/ai-chatbox.css";
 
-export default function AiChatBox({ chat, sendMessage }) {
+export default function AiChatBox({ chat, loading = false, onSend, onEditMessage, onRetry, onCopy }) {
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
   const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const textareaRef = useRef(null);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat?.messages?.length]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chat?.messages?.length, loading]);
+  useEffect(() => { setTimeout(() => textareaRef.current?.focus(), 60); }, [chat?.id]);
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, [chat?.id]);
+  const handleInputChange = useCallback((e) => {
+    setInput(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
+  }, []);
+
+  const handleSend = useCallback((overrideText) => {
+    const text = (overrideText || input).trim();
+    if (!text || loading) return;
+    setInput("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+    onSend?.(text);
+  }, [input, loading, onSend]);
+
+  const handleFollowUp = useCallback((suggestion) => {
+    if (!loading) onSend?.(suggestion);
+  }, [loading, onSend]);
 
   if (!chat) {
     return (
-      <div className="ai-chat-area empty-chat">
-        <div className="welcome-state">
-          <h2>Ask AI Property Agent</h2>
-          <p>Search, compare and discover properties with AI</p>
+      <div className="ai-content">
+        <div className="chat-empty-state">
+          <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
+          <h2>AI Property Agent</h2>
+          <p>Search, compare, and discover properties. Ask anything to get started.</p>
         </div>
       </div>
     );
   }
 
-  const handleSend = async (overrideText) => {
-    const question = overrideText || input;
-    if (!question.trim() || isLoading) return;
-
-    setIsLoading(true);
-    setInput("");
-
-    try {
-      await sendMessage(question);
-    } catch (error) {
-      console.error("Send message failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const messages = chat.messages || [];
 
   return (
-    <div className="ai-chat-area">
-      <div className="chat-messages">
-
-        {chat?.messages?.map((msg, index) => {
-          const role = msg.role === "user" ? "user" : "ai";
-
-          return (
-            <div
-              key={msg.id || `${role}-${index}`}
-              className={`chat-message ${role}`}
-            >
-              <div className={`bubble ${role}`}>
-                {msg.text}
+    <div className="ai-content">
+      <div className="chat-messages-area">
+        {messages.length === 0 && !loading ? (
+          <div className="chat-empty-state">
+            <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
+            <h2>What can I help you find?</h2>
+            <p>Search for properties, compare listings, or ask anything about real estate.</p>
+            <SuggestionChips onSelect={(val) => handleSend(val)} />
+          </div>
+        ) : (
+          <div className="chat-messages-container">
+            {messages.map((msg, i) => (
+              <AiMessage key={msg.id || `msg-${i}`} msg={msg} chatId={chat.id} index={i}
+                onEdit={onEditMessage} onRetry={onRetry} onCopy={onCopy} onFollowUp={handleFollowUp} />
+            ))}
+            {loading && (
+              <div className="message-row ai">
+                <div className="typing-indicator">
+                  <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+                </div>
               </div>
-
-              {/* 🔥 THIS BLOCK WAS PROBABLY MISSING */}
-              {role === "ai" &&
-                msg.hasResults === true &&
-                msg.properties &&
-                msg.properties.length > 0 && (
-                  <div className="ai-property-results">
-                    {msg.properties.map((property) => (
-                      <AiPropertyCard
-                        key={property.id}
-                        property={property}
-                      />
-                    ))}
-                  </div>
-                )}
-            </div>
-          );
-        })}
-
-        {isLoading && (
-          <div className="chat-message ai">
-            <div className="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
         )}
-
-        <div ref={messagesEndRef} />
       </div>
 
-      {chat?.messages?.length === 0 && (
-        <SuggestionChips onSelect={(value) => handleSend(value)} />
-      )}
-
-      <div className="input-bar">
-        <div className="input-bar-inner">
-          <input
-            ref={inputRef}
-            placeholder="Ask anything about properties..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            disabled={isLoading}
-          />
-
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-          >
-            {isLoading ? "..." : "Send"}
+      <div className="chat-input-bar">
+        <div className="chat-input-wrapper">
+          <textarea ref={textareaRef} rows={1} value={input} onChange={handleInputChange}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Ask anything - find, compare, and locate best suitable properties" disabled={loading} />
+          <button className="chat-send-btn" onClick={() => handleSend()} disabled={!input.trim() || loading}>
+            <Icon name="send" size={16} />
           </button>
         </div>
       </div>

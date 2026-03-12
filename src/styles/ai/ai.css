@@ -1,6 +1,7 @@
 /* =========================================================
    GLOBAL LAYOUT
-========================================================= */
+========================================================= *//*
+
 
 .ai-layout {
   display: flex;
@@ -10,7 +11,9 @@
   overflow: hidden;
 }
 
-/* ================= PRIMARY BUTTON ================= */
+*/
+/* ================= PRIMARY BUTTON ================= *//*
+
 
 .primary-btn {
   width: 100%;
@@ -30,7 +33,9 @@
   transform: translateY(-1px);
 }
 
-/* ================= SEARCH ================= */
+*/
+/* ================= SEARCH ================= *//*
+
 
 .search-box {
   position: relative;
@@ -64,7 +69,9 @@
   color: #9ca3af;
 }
 
-/* ================= CHAT LIST ================= */
+*/
+/* ================= CHAT LIST ================= *//*
+
 
 .chat-list {
   flex: 1;
@@ -72,7 +79,9 @@
   padding: 12px;
 }
 
-/* Chat item */
+*/
+/* Chat item *//*
+
 
 .chat-row {
   padding: 10px 12px;
@@ -96,7 +105,9 @@
   font-weight: 500;
 }
 
-/* Chat title */
+*/
+/* Chat title *//*
+
 
 .chat-title {
   font-size: 14px;
@@ -108,9 +119,11 @@
 
 
 
+*/
 /* =========================================================
    CHAT AREA
-========================================================= */
+========================================================= *//*
+
 
 .ai-chat-area {
   flex: 1;
@@ -121,39 +134,51 @@
   position: relative;
 }
 
+*/
 /* =========================================================
    CHAT MESSAGES
-========================================================= */
+========================================================= *//*
+
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 80px 24px 300px 24px;  /* increased bottom space */
+  padding: 80px 24px 300px 24px;  */
+/* increased bottom space *//*
+
   display: flex;
   flex-direction: column;
    align-items: center;
 }
 
-/* Each message row */
+*/
+/* Each message row *//*
+
 
 .chat-message {
   width: 100%;
   display: flex;
 }
 
-/* USER RIGHT */
+*/
+/* USER RIGHT *//*
+
 
 .chat-message.user {
   justify-content: flex-end;
 }
 
-/* AI LEFT */
+*/
+/* AI LEFT *//*
+
 
 .chat-message.ai {
   justify-content: flex-start;
 }
 
-/* BUBBLE */
+*/
+/* BUBBLE *//*
+
 
 .bubble {
   padding: 14px 18px;
@@ -165,7 +190,9 @@
   white-space: pre-wrap;
 }
 
-/* USER */
+*/
+/* USER *//*
+
 
 .bubble.user {
   background: #2563eb;
@@ -173,7 +200,9 @@
   border-bottom-right-radius: 6px;
 }
 
-/* AI */
+*/
+/* AI *//*
+
 
 .bubble.ai {
   background: #f3f4f6;
@@ -189,9 +218,11 @@
 
 
 
+*/
 /* =========================================================
    FLOATING INPUT
-========================================================= */
+========================================================= *//*
+
 
 
 .input-bar {
@@ -216,7 +247,9 @@
   border: 1px solid #e5e7eb;
 }
 
-/* Make input take remaining space */
+*/
+/* Make input take remaining space *//*
+
 
 .input-bar input,
 .input-bar textarea {
@@ -228,7 +261,9 @@
   background: transparent;
 }
 
-/* Push button fully right */
+*/
+/* Push button fully right *//*
+
 
 .input-bar button {
   margin-left: auto;
@@ -245,9 +280,11 @@
 .input-bar button:hover {
   background: #1d4ed8;
 }
+*/
 /* =========================================================
    SUGGESTION CHIPS
-========================================================= */
+========================================================= *//*
+
 
 .chips {
   width: 100%;
@@ -255,8 +292,12 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  justify-content: center;   /* 👈 centers horizontally */
-  margin: 0 auto 40px auto;  /* centers container */
+  justify-content: center;   */
+/* 👈 centers horizontally *//*
+
+  margin: 0 auto 40px auto;  */
+/* centers container *//*
+
 }
 
 .chip-btn {
@@ -283,9 +324,11 @@
 }
 
 
+*/
 /* =========================================================
    AI PROPERTY CARD
-========================================================= */
+========================================================= *//*
+
 
 .ai-property-card {
   background: white;
@@ -313,9 +356,11 @@
 
 
 
+*/
 /* =========================================================
    PROPERTY CARD (LISTINGS)
-========================================================= */
+========================================================= *//*
+
 
 .property-card {
   background: white;
@@ -344,9 +389,11 @@
 
 
 
+*/
 /* =========================================================
    COMPARE BAR
-========================================================= */
+========================================================= *//*
+
 
 .compare-bar {
   position: fixed;
@@ -373,9 +420,11 @@
 
 
 
+*/
 /* =========================================================
    COMPARE MODAL
-========================================================= */
+========================================================= *//*
+
 
 .compare-overlay {
   position: fixed;
@@ -406,9 +455,11 @@
 
 
 
+*/
 /* =========================================================
    TYPING INDICATOR
-========================================================= */
+========================================================= *//*
+
 
 .typing-indicator {
   width: 100%;
@@ -437,9 +488,11 @@
 
 
 
+*/
 /* =========================================================
    SCROLLBAR
-========================================================= */
+========================================================= *//*
+
 
 .chat-messages::-webkit-scrollbar {
   width: 6px;
@@ -465,4 +518,4 @@
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-}
+}*/

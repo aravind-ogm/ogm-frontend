@@ -1,41 +1,38 @@
 import React, { useEffect } from "react";
+import { formatPrice } from "../../utils/helpers";
+import "../../styles/ai/ai-compare.css";
 
-export default function CompareModal({
-  properties = [],
-  onClose = () => {}
-}) {
+export default function CompareModal({ properties = [], onClose = () => {} }) {
   useEffect(() => {
-    const handleEsc = (e) => {
+    const handler = (e) => {
       if (e.key === "Escape") onClose();
     };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
   if (!properties.length) return null;
 
-  const formatPrice = (price) =>
-    price ? `₹ ${Number(price).toLocaleString()}` : "N/A";
+  const rows = [
+    { label: "Location", key: "location" },
+    { label: "Price", key: "price", format: formatPrice },
+    { label: "Type", key: "type" },
+    { label: "Size (Sqft)", key: "sqft" },
+    { label: "RERA", key: "reraApproved", format: (v) => (v ? "Approved" : "Not Approved") },
+    { label: "Status", key: "soldOut", format: (v) => (v ? "Sold Out" : "Available") },
+  ];
 
   return (
     <div className="compare-overlay" onClick={onClose}>
-      <div
-        className="compare-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          className="close-btn"
-          onClick={onClose}
-          aria-label="Close compare modal"
-        >
+      <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="compare-close-btn" onClick={onClose} aria-label="Close">
           ✕
         </button>
 
         <div className="compare-grid">
-
-          {/* HEADER ROW */}
+          {/* Header */}
           <div className="compare-row header">
-            <div className="compare-label"></div>
+            <div className="compare-label" />
             {properties.map((p) => (
               <div key={p.id} className="compare-cell title">
                 {p.title}
@@ -43,66 +40,17 @@ export default function CompareModal({
             ))}
           </div>
 
-          {/* LOCATION */}
-          <div className="compare-row">
-            <div className="compare-label">Location</div>
-            {properties.map((p) => (
-              <div key={p.id} className="compare-cell">
-                {p.location || "N/A"}
-              </div>
-            ))}
-          </div>
-
-          {/* PRICE */}
-          <div className="compare-row">
-            <div className="compare-label">Price</div>
-            {properties.map((p) => (
-              <div key={p.id} className="compare-cell">
-                {formatPrice(p.price)}
-              </div>
-            ))}
-          </div>
-
-          {/* TYPE */}
-          <div className="compare-row">
-            <div className="compare-label">Type</div>
-            {properties.map((p) => (
-              <div key={p.id} className="compare-cell">
-                {p.type || "N/A"}
-              </div>
-            ))}
-          </div>
-
-          {/* SIZE */}
-          <div className="compare-row">
-            <div className="compare-label">Size (Sqft)</div>
-            {properties.map((p) => (
-              <div key={p.id} className="compare-cell">
-                {p.sqft || "N/A"}
-              </div>
-            ))}
-          </div>
-
-          {/* RERA */}
-          <div className="compare-row">
-            <div className="compare-label">RERA</div>
-            {properties.map((p) => (
-              <div key={p.id} className="compare-cell">
-                {p.reraApproved ? "Approved" : "Not Approved"}
-              </div>
-            ))}
-          </div>
-
-          {/* STATUS */}
-          <div className="compare-row">
-            <div className="compare-label">Status</div>
-            {properties.map((p) => (
-              <div key={p.id} className="compare-cell">
-                {p.soldOut ? "Sold Out" : "Available"}
-              </div>
-            ))}
-          </div>
-
+          {/* Data rows */}
+          {rows.map((row) => (
+            <div className="compare-row" key={row.label}>
+              <div className="compare-label">{row.label}</div>
+              {properties.map((p) => (
+                <div key={p.id} className="compare-cell">
+                  {row.format ? row.format(p[row.key]) : p[row.key] || "N/A"}
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     </div>

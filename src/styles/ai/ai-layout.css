@@ -1,0 +1,120 @@
+/* ═══════════════════════════════════════════════
+   AI LAYOUT — works inside existing Navbar
+   Uses calc(100vh - navbar height) so it doesn't
+   overflow behind the navbar.
+   ═══════════════════════════════════════════════ */
+
+.ai-layout {
+  display: flex;
+  /* Adjust 70px to match your actual navbar height */
+  height: calc(100vh - 70px);
+  background: var(--bg-deep);
+  overflow: hidden;
+  position: relative;
+}
+
+.ai-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg-deep);
+}
+
+/* ── TOP BAR ── */
+
+.ai-topbar {
+  height: 50px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.topbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+  flex-shrink: 0;
+}
+
+.topbar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topbar-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-spacer { flex: 1; }
+
+.topbar-shortcuts {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: flex;
+  gap: 12px;
+}
+
+.topbar-shortcuts kbd {
+  padding: 2px 6px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+/* ── TOAST ── */
+
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  padding: 10px 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--success);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s var(--ease);
+  z-index: 999;
+  box-shadow: var(--shadow-md);
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── RESPONSIVE ── */
+
+@media (max-width: 768px) {
+  .topbar-shortcuts { display: none; }
+
+  .ai-layout {
+    height: calc(100vh - 60px); /* smaller navbar on mobile */
+  }
+}

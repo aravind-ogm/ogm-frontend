@@ -1,9 +1,7 @@
 import React from "react";
+import "../../styles/ai/ai-compare.css";
 
-export default function CompareBar({
-  count = 0,
-  onClick = () => {}
-}) {
+export default function CompareBar({ count = 0, onClick = () => {} }) {
   if (count === 0) return null;
 
   const isDisabled = count < 2;
@@ -13,7 +11,6 @@ export default function CompareBar({
       <span className="compare-text">
         {count} {count === 1 ? "property" : "properties"} selected
       </span>
-
       <button
         type="button"
         onClick={onClick}
