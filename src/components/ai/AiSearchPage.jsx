@@ -156,7 +156,7 @@ export default function AiSearchPage() {
         const response = await fetch(ENDPOINTS.AI_ASK, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: text }),
+          body: JSON.stringify({ question: text, chatId: chatId }),
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -169,6 +169,7 @@ export default function AiSearchPage() {
           text: data.message || data.summary || data.reply || "No response received.",
           hasResults: data.hasResults || false,
           properties: data.properties || [],
+          followUps: data.followUps || [],
         });
       } catch (err) {
         appendMessage(chatId, {
