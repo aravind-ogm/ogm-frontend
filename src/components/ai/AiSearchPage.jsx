@@ -273,16 +273,10 @@ export default function AiSearchPage() {
 
           <div className="topbar-spacer" />
 
-          <div className="topbar-shortcuts">
-            <span><kbd>⌘N</kbd> New</span>
-            <span><kbd>⌘B</kbd> Sidebar</span>
-            <span><kbd>⌘J</kbd> Theme</span>
-          </div>
-
           <button
             className="topbar-btn"
             onClick={toggleTheme}
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode (Ctrl+J)`}
+            title="Toggle theme"
           >
             <Icon name={theme === "dark" ? "sun" : "moon"} size={16} />
           </button>
