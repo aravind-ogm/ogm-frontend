@@ -2,17 +2,21 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { useLocation } from "react-router-dom";
 
 /* ── Components (same folder) ── */
-import AiSidebar from "./AiSidebar";
-import AiChatBox from "./AiChatBox";
+import AiSidebar     from "./AiSidebar";
+import AiChatBox     from "./AiChatBox";
 import ConfirmDialog from "./Confirmdialog";
-import Icon from "./Icon";
+import Icon          from "./Icon";
 
-/* ── Hooks (matching exact disk filenames) ── */
-import useTheme from "./Usetheme";
-import useKeyboardShortcuts from "./Usekeyboardshortcuts";
+/* ── Hooks ── */
+import useTheme              from "./Usetheme";
+import useKeyboardShortcuts  from "./Usekeyboardshortcuts";
+import useGeolocation, { detectNearMeIntent } from "./Usegeolocation";
 
-/* ── Utils (same folder) ── */
-import { uid, truncateWords } from "./Helpers";
+/* ── Location modal ── */
+import LocationPermissionModal from "./LocationPermissionModal";
+
+/* ── Utils ── */
+import { uid, truncateWords }            from "./Helpers";
 import { ENDPOINTS, KEYBOARD_SHORTCUTS } from "./Constants";
 
 /* ── Styles ── */
@@ -24,16 +28,28 @@ import "../../styles/ai/ai-layout.css";
    ═══════════════════════════════════════════════ */
 
 export default function AiSearchPage() {
-  const location = useLocation();
+  const location        = useLocation();
   const initialQuestion = location.state?.question;
 
   /* ── STATE ── */
-  const [chats, setChats] = useState([]);
+  const [chats,        setChats]        = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading,      setLoading]      = useState(false);
+  const [sidebarOpen,  setSidebarOpen]  = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [toast, setToast] = useState({ visible: false, text: "" });
+  const [toast,        setToast]        = useState({ visible: false, text: "" });
+
+  /* ── LOCATION STATE ── */                                          // ← NEW BLOCK
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [pendingQuery,      setPendingQuery]       = useState("");
+  const {
+    position,
+    locationName,       // reverse-geocoded place name e.g. "Koramangala, Bengaluru"
+    permissionStatus,
+    requestLocation,
+    isGranted,
+    isDenied,
+  } = useGeolocation();
 
   const hasSentInitial = useRef(false);
   const { theme, toggleTheme } = useTheme();
@@ -49,10 +65,7 @@ export default function AiSearchPage() {
      ═══════════════════════════════════════ */
 
   const makeChat = useCallback((title = "New Chat") => ({
-    id: uid(),
-    title,
-    messages: [],
-    createdAt: Date.now(),
+    id: uid(), title, messages: [], createdAt: Date.now(),
   }), []);
 
   const showToast = useCallback((text) => {
@@ -121,27 +134,69 @@ export default function AiSearchPage() {
     );
   }, []);
 
-  const copyMessageText = useCallback(
-    (text) => {
-      navigator.clipboard?.writeText(text);
-      showToast("Copied to clipboard");
-    },
-    [showToast]
-  );
+  const copyMessageText = useCallback((text) => {
+    navigator.clipboard?.writeText(text);
+    showToast("Copied to clipboard");
+  }, [showToast]);
 
   /* ═══════════════════════════════════════
-     SEND MESSAGE
+     SEND MESSAGE  ← only function changed
      ═══════════════════════════════════════ */
 
+  /**
+   * sendMessage now accepts either:
+   *   - a plain string:  sendMessage("find 2 BHKs in Whitefield")
+   *   - an object:       sendMessage({ question, userLatitude, userLongitude })
+   *
+   * When the query contains "near me" / "nearby" / "my current location":
+   *   1. If location already granted  → attach coords and fire immediately
+   *   2. If location not yet granted  → open the permission modal,
+   *                                     hold the query in pendingQuery,
+   *                                     fire once user allows (handleLocationGranted)
+   *   3. If location denied           → fire without coords, backend handles gracefully
+   */
   const sendMessage = useCallback(
-    async (questionText) => {
-      const text = questionText?.trim();
+    async (input) => {
+      // Accept string or { question, userLatitude, userLongitude }
+      const isObject    = input !== null && typeof input === "object";
+      const text        = isObject ? input.question?.trim() : input?.trim();
+      let   userLat     = isObject ? input.userLatitude    : null;
+      let   userLng     = isObject ? input.userLongitude   : null;
+      let   userLocName = isObject ? input.userLocationName : null;
+
       if (!text || !activeChatId || loading) return;
+
+      // ── Location interception ─────────────────────────────────────────────
+      const needsLocation = detectNearMeIntent(text);
+
+      if (needsLocation && !isDenied) {
+        if (isGranted && position) {
+          // Already have it — use cached position
+          userLat = position.latitude;
+          userLng = position.longitude;
+        } else {
+          // Need to ask — hold query and show modal
+          setPendingQuery(text);
+          setLocationModalOpen(true);
+          return; // ← will resume in handleLocationGranted
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      // Always attach the latest known position + location name to every message.
+      // This ensures follow-up messages ("show me cheaper ones", "any 3 BHK?")
+      // continue to return nearby results and Gemini keeps location context.
+      if (!userLat && position) {
+        userLat     = position.latitude;
+        userLng     = position.longitude;
+        userLocName = userLocName ?? position.locationName ?? locationName ?? null;
+      }
 
       const chatId = activeChatId;
 
       appendMessage(chatId, { id: uid(), role: "user", text });
 
+      // Auto-title the chat from first message
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === chatId && chat.title === "New Chat"
@@ -154,9 +209,17 @@ export default function AiSearchPage() {
 
       try {
         const response = await fetch(ENDPOINTS.AI_ASK, {
-          method: "POST",
+          method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: text, chatId: chatId }),
+          body: JSON.stringify({
+            question:         text,
+            chatId:           chatId,
+            userLatitude:     userLat ?? null,
+            userLongitude:    userLng ?? null,
+            // Human-readable location name so Gemini can answer
+            // "what is my location?" with the real place name
+            userLocationName: userLat != null ? userLocName : null,
+          }),
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -164,28 +227,41 @@ export default function AiSearchPage() {
         const data = await response.json();
 
         appendMessage(chatId, {
-          id: uid(),
-          role: "ai",
-          text: data.message || data.summary || data.reply || "No response received.",
-          hasResults: data.hasResults || false,
-          properties: data.properties || [],
-          followUps: data.followUps || [],
+          id:         uid(),
+          role:       "ai",
+          text:       data.message || data.summary || data.reply || "No response received.",
+          hasResults: data.hasResults  || false,
+          properties: data.properties  || [],
+          followUps:  data.followUps   || [],
         });
       } catch (err) {
         appendMessage(chatId, {
-          id: uid(),
-          role: "ai",
-          text: "Something went wrong. Please try again.",
+          id:         uid(),
+          role:       "ai",
+          text:       "Something went wrong. Please try again.",
           hasResults: false,
           properties: [],
-          isError: true,
+          isError:    true,
         });
       } finally {
         setLoading(false);
       }
     },
-    [activeChatId, loading, appendMessage]
+    [activeChatId, loading, appendMessage, isGranted, isDenied, position]
   );
+
+  /* ── Location granted from modal ── */                            // ← NEW
+  const handleLocationGranted = useCallback((pos) => {
+    if (pendingQuery) {
+      sendMessage({
+        question:         pendingQuery,
+        userLatitude:     pos.latitude,
+        userLongitude:    pos.longitude,
+        userLocationName: pos.locationName ?? null,
+      });
+      setPendingQuery("");
+    }
+  }, [pendingQuery, sendMessage]);
 
   /* ── RETRY ── */
   const retryMessage = useCallback(
@@ -215,9 +291,7 @@ export default function AiSearchPage() {
      ═══════════════════════════════════════ */
 
   useEffect(() => {
-    if (chats.length === 0) {
-      createNewChat();
-    }
+    if (chats.length === 0) createNewChat();
   }, []); // Run once on mount
 
   useEffect(() => {
@@ -234,9 +308,9 @@ export default function AiSearchPage() {
   useKeyboardShortcuts(
     useMemo(
       () => ({
-        [KEYBOARD_SHORTCUTS.NEW_CHAT]: createNewChat,
-        [KEYBOARD_SHORTCUTS.TOGGLE_SIDEBAR]: () => setSidebarOpen((v) => !v),
-        [KEYBOARD_SHORTCUTS.TOGGLE_THEME]: toggleTheme,
+        [KEYBOARD_SHORTCUTS.NEW_CHAT]:        createNewChat,
+        [KEYBOARD_SHORTCUTS.TOGGLE_SIDEBAR]:  () => setSidebarOpen((v) => !v),
+        [KEYBOARD_SHORTCUTS.TOGGLE_THEME]:    toggleTheme,
       }),
       [createNewChat, toggleTheme]
     )
@@ -248,6 +322,15 @@ export default function AiSearchPage() {
 
   return (
     <div className="ai-layout">
+
+      {/* ── LOCATION PERMISSION MODAL ── */}                        {/* ← NEW */}
+      <LocationPermissionModal
+        open={locationModalOpen}
+        onClose={() => { setLocationModalOpen(false); setPendingQuery(""); }}
+        onLocationGranted={handleLocationGranted}
+        queryText={pendingQuery}
+      />
+
       {/* SIDEBAR */}
       <AiSidebar
         chats={chats}
@@ -283,7 +366,7 @@ export default function AiSearchPage() {
           </button>
         </div>
 
-        {/* CHAT BOX */}
+        {/* CHAT BOX — userPosition passed so cards can show distance badges */}
         <AiChatBox
           chat={activeChat}
           loading={loading}
@@ -291,6 +374,7 @@ export default function AiSearchPage() {
           onEditMessage={editMessage}
           onRetry={retryMessage}
           onCopy={copyMessageText}
+          userPosition={position}
         />
       </main>
 
