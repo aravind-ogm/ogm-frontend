@@ -1,82 +1,77 @@
 import { useState } from "react";
+import { authApi } from "./utils/authapi";
+import { tokenStore } from "./utils/tokenstore";
+import { validateFields, isValid } from "./utils/validators";
+import { useAsync } from "./hooks/useasync";
+import FormField from "./FormField";
 import SocialAuthButtons from "./SocialAuthButtons";
 
 export default function LoginPanel({ onOtp, onSuccess }) {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [fields, setFields] = useState({ email: "", password: "" });
+    const [fieldErrors, setFieldErrors] = useState({});
+    const { run, loading, error } = useAsync();
+
+    const set = (key) => (e) =>
+        setFields((prev) => ({ ...prev, [key]: e.target.value }));
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); // 🚫 stop page reload
-        setError("");
-        setLoading(true);
+        e.preventDefault();
 
-        try {
-            const res = await fetch("http://localhost:8080/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            });
+        const errors = validateFields(fields);
+        setFieldErrors(errors);
+        if (!isValid(errors)) return;
 
-            if (!res.ok) {
-                throw new Error("Invalid email or password");
-            }
+        const data = await run(() => authApi.login(fields.email, fields.password));
+        if (!data) return;
 
-            const data = await res.json();
-
-            // 🔐 OTP FLOW
-            if (data.otpRequired) {
-                onOtp();
-                return;
-            }
-
-            // 🔐 NORMAL LOGIN
-            localStorage.setItem("token", data.token);
-
-            // 🔥 TELL APP LOGIN SUCCEEDED
-            if (onSuccess) onSuccess();
-        } catch (err) {
-            setError(err.message || "Login failed");
-        } finally {
-            setLoading(false);
+        if (data.otpRequired) {
+            onOtp?.();
+            return;
         }
+
+        tokenStore.set(data.token);
+        onSuccess?.();
     };
 
     return (
-        <form className="ogm-auth-form" onSubmit={handleSubmit}>
-            <input
+        <form className="ogm-auth-form" onSubmit={handleSubmit} noValidate>
+            <FormField
                 type="email"
                 placeholder="Email address"
-                value={email}
+                value={fields.email}
+                onChange={set("email")}
+                error={fieldErrors.email}
                 required
-                onChange={(e) => setEmail(e.target.value)}
             />
 
-            <input
+            <FormField
                 type="password"
                 placeholder="Password"
-                value={password}
+                value={fields.password}
+                onChange={set("password")}
+                error={fieldErrors.password}
                 required
-                onChange={(e) => setPassword(e.target.value)}
             />
 
-            {error && <p className="ogm-auth-error">{error}</p>}
+            {error && (
+                <p className="ogm-auth-error" role="alert">
+                    {error}
+                </p>
+            )}
 
             <div className="ogm-auth-actions">
-        <span className="link" onClick={onOtp}>
-          Login with OTP
-        </span>
-                <span className="link">
-          Forgot?
-        </span>
+                <span className="ogm-link" onClick={onOtp} role="button" tabIndex={0}>
+                    Login with OTP
+                </span>
+                <span className="ogm-link" role="button" tabIndex={0}>
+                    Forgot password?
+                </span>
             </div>
 
-            <button className="ogm-primary-btn" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
+            <button className="ogm-primary-btn" disabled={loading} type="submit">
+                {loading ? "Logging in…" : "Login"}
             </button>
 
-            {/* ✅ Social Login */}
             <SocialAuthButtons />
         </form>
     );

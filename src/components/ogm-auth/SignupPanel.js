@@ -1,85 +1,79 @@
 import { useState } from "react";
+import { authApi } from "./utils/authapi";
+import { validateFields, isValid } from "./utils/validators";
+import { useAsync } from "./hooks/useasync";
+import FormField from "./FormField";
 import SocialAuthButtons from "./SocialAuthButtons";
 
 export default function SignupPanel({ onSuccess }) {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [fields, setFields] = useState({ name: "", email: "", password: "" });
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [successMsg, setSuccessMsg] = useState("");
+    const { run, loading, error } = useAsync();
+
+    const set = (key) => (e) =>
+        setFields((prev) => ({ ...prev, [key]: e.target.value }));
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); // 🚫 prevent page reload
-        setError("");
-        setSuccess("");
-        setLoading(true);
+        e.preventDefault();
 
-        try {
-            const res = await fetch("http://localhost:8080/api/auth/signup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name,
-                    email,
-                    password,
-                }),
-            });
+        const errors = validateFields(fields);
+        setFieldErrors(errors);
+        if (!isValid(errors)) return;
 
-            if (!res.ok) {
-                throw new Error("Signup failed. Email may already exist.");
-            }
+        const data = await run(() =>
+            authApi.signup(fields.name, fields.email, fields.password)
+        );
+        if (!data) return;
 
-            await res.json();
-
-            // ✅ SIGNUP SUCCESS
-            setSuccess("Account created successfully. Please login.");
-
-            // 🔁 Switch back to login after short delay
-            setTimeout(() => {
-                if (onSuccess) onSuccess();
-            }, 800);
-        } catch (err) {
-            setError(err.message || "Signup failed");
-        } finally {
-            setLoading(false);
-        }
+        setSuccessMsg("Account created! Redirecting to login…");
+        setTimeout(() => onSuccess?.(), 900);
     };
 
     return (
-        <form className="ogm-auth-form" onSubmit={handleSubmit}>
-            <input
+        <form className="ogm-auth-form" onSubmit={handleSubmit} noValidate>
+            <FormField
                 type="text"
                 placeholder="Full Name"
-                value={name}
+                value={fields.name}
+                onChange={set("name")}
+                error={fieldErrors.name}
                 required
-                onChange={(e) => setName(e.target.value)}
             />
 
-            <input
+            <FormField
                 type="email"
                 placeholder="Email address"
-                value={email}
+                value={fields.email}
+                onChange={set("email")}
+                error={fieldErrors.email}
                 required
-                onChange={(e) => setEmail(e.target.value)}
             />
 
-            <input
+            <FormField
                 type="password"
                 placeholder="Create password"
-                value={password}
+                value={fields.password}
+                onChange={set("password")}
+                error={fieldErrors.password}
                 required
-                onChange={(e) => setPassword(e.target.value)}
             />
 
-            {error && <p className="ogm-auth-error">{error}</p>}
-            {success && <p className="ogm-auth-success">{success}</p>}
+            {error && (
+                <p className="ogm-auth-error" role="alert">
+                    {error}
+                </p>
+            )}
+            {successMsg && (
+                <p className="ogm-auth-success" role="status">
+                    {successMsg}
+                </p>
+            )}
 
-            <button className="ogm-primary-btn" disabled={loading}>
-                {loading ? "Creating account..." : "Create Account"}
+            <button className="ogm-primary-btn" disabled={loading} type="submit">
+                {loading ? "Creating account…" : "Create Account"}
             </button>
 
-            {/* ✅ Social Signup */}
             <SocialAuthButtons />
         </form>
     );

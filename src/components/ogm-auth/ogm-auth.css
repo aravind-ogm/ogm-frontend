@@ -1,18 +1,98 @@
 /* =========================================================
-   AUTH PAGE LAYOUT & BACKGROUND
+   ogm-auth.css  –  Design tokens + Auth UI
    ========================================================= */
+
+/* ── Design Tokens ──────────────────────────────────────── */
+:root {
+    --auth-bg-from:         #f8fafc;
+    --auth-bg-to:           #eef2f7;
+    --auth-blob-a:          #c7d2fe;
+    --auth-blob-b:          #fbcfe8;
+
+    --auth-card-bg:         #ffffff;
+    --auth-card-shadow:     0 30px 70px rgba(15,23,42,.14), 0 10px 24px rgba(15,23,42,.10);
+    --auth-card-radius:     26px;
+
+    --auth-brand-sub:       #64748b;
+
+    --auth-tab-bg:          #f1f5f9;
+    --auth-tab-active-bg:   #0f172a;
+    --auth-tab-active-fg:   #ffffff;
+    --auth-tab-inactive-fg: #475569;
+
+    --auth-input-border:    #e5e7eb;
+    --auth-input-focus:     #ff6b81;
+    --auth-input-error-border: #ef4444;
+
+    --auth-link-color:      #2563eb;
+
+    --auth-btn-bg-from:     #ff4d6d;
+    --auth-btn-bg-to:       #ff8fa3;
+    --auth-btn-shadow:      0 18px 42px rgba(255,77,109,.42);
+
+    --auth-divider-color:   #6b7280;
+    --auth-google-border:   #e5e7eb;
+    --auth-google-hover-bg: #f8fafc;
+
+    --auth-error-color:     #ef4444;
+    --auth-success-color:   #16a34a;
+    --auth-otp-resend:      #ff5f6d;
+
+    --auth-field-error-size: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --auth-bg-from:         #0f172a;
+        --auth-bg-to:           #1e293b;
+        --auth-blob-a:          #3730a3;
+        --auth-blob-b:          #9d174d;
+
+        --auth-card-bg:         #1e293b;
+        --auth-card-shadow:     0 30px 70px rgba(0,0,0,.4), 0 10px 24px rgba(0,0,0,.3);
+
+        --auth-brand-sub:       #94a3b8;
+
+        --auth-tab-bg:          #0f172a;
+        --auth-tab-active-bg:   #f8fafc;
+        --auth-tab-active-fg:   #0f172a;
+        --auth-tab-inactive-fg: #94a3b8;
+
+        --auth-input-border:    #334155;
+        --auth-input-focus:     #ff6b81;
+
+        --auth-link-color:      #60a5fa;
+
+        --auth-divider-color:   #475569;
+        --auth-google-border:   #334155;
+        --auth-google-hover-bg: #0f172a;
+    }
+
+    .ogm-auth-card { color: #f1f5f9; }
+
+    .ogm-auth-form input {
+        background: #0f172a;
+        color: #f1f5f9;
+    }
+
+    .ogm-google-btn {
+        color: #f1f5f9;
+    }
+}
+
+/* ── Auth Page Layout ────────────────────────────────────── */
 .ogm-auth-page {
-    min-height: 100vh; /* ✅ FIXED: works with header/footer */
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 60px 24px;
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.96), transparent 60%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+    background:
+        radial-gradient(circle at center, rgba(255,255,255,.96), transparent 60%),
+        linear-gradient(180deg, var(--auth-bg-from) 0%, var(--auth-bg-to) 100%);
     position: relative;
 }
 
-/* Background blobs */
 .ogm-auth-page::before,
 .ogm-auth-page::after {
     content: "";
@@ -23,31 +103,18 @@
     filter: blur(160px);
     opacity: 0.55;
     z-index: 0;
-    pointer-events: none; /* ✅ FIXED: no click blocking */
+    pointer-events: none;
 }
+.ogm-auth-page::before { background: var(--auth-blob-a); top: 18%; left: -60px; }
+.ogm-auth-page::after  { background: var(--auth-blob-b); bottom: 12%; right: -60px; }
 
-.ogm-auth-page::before {
-    background: #c7d2fe;
-    top: 18%;
-    left: -60px;
-}
-
-.ogm-auth-page::after {
-    background: #fbcfe8;
-    bottom: 12%;
-    right: -60px;
-}
-
-/* =========================================================
-   AUTH CARD
-   ========================================================= */
+/* ── Auth Card ───────────────────────────────────────────── */
 .ogm-auth-card {
     width: 520px;
-    background: #ffffff;
+    background: var(--auth-card-bg);
     padding: 48px;
-    border-radius: 26px;
-    box-shadow: 0 30px 70px rgba(15, 23, 42, 0.14),
-    0 10px 24px rgba(15, 23, 42, 0.10);
+    border-radius: var(--auth-card-radius);
+    box-shadow: var(--auth-card-shadow);
     position: relative;
     z-index: 1;
     animation: authFadeIn 0.45s ease;
@@ -57,47 +124,28 @@
     content: "";
     position: absolute;
     inset: -70px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.9), transparent 70%);
+    background: radial-gradient(circle, rgba(255,255,255,.9), transparent 70%);
     border-radius: 36px;
     z-index: -1;
 }
 
 @keyframes authFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(18px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================================
-   BRANDING
-   ========================================================= */
+/* ── Brand ───────────────────────────────────────────────── */
 .ogm-auth-brand {
     text-align: center;
     margin-bottom: 22px;
 }
+.ogm-auth-brand img  { height: 52px; }
+.ogm-auth-brand span { display: block; font-size: 15px; color: var(--auth-brand-sub); margin-top: 8px; }
 
-.ogm-auth-brand img {
-    height: 52px;
-}
-
-.ogm-auth-brand span {
-    display: block;
-    font-size: 15px;
-    color: #64748b;
-    margin-top: 8px;
-}
-
-/* =========================================================
-   LOGIN / SIGNUP TABS
-   ========================================================= */
+/* ── Tabs ────────────────────────────────────────────────── */
 .ogm-auth-tabs {
     display: flex;
-    background: #f1f5f9;
+    background: var(--auth-tab-bg);
     border-radius: 999px;
     padding: 6px;
     margin: 32px 0;
@@ -112,58 +160,88 @@
     font-weight: 600;
     font-size: 15px;
     cursor: pointer;
-    color: #475569;
+    color: var(--auth-tab-inactive-fg);
     transition: all 0.3s ease;
 }
 
 .ogm-auth-tabs .active {
-    background: #0f172a;
-    color: #ffffff;
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28);
+    background: var(--auth-tab-active-bg);
+    color: var(--auth-tab-active-fg);
+    box-shadow: 0 8px 22px rgba(15,23,42,.28);
 }
 
-/* =========================================================
-   FORM
-   ========================================================= */
+/* ── Form ────────────────────────────────────────────────── */
 .ogm-auth-form {
     display: flex;
     flex-direction: column;
     gap: 14px;
 }
 
+/* Field wrapper for inline validation */
+.ogm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .ogm-auth-form input {
     padding: 16px 18px;
     border-radius: 16px;
-    border: 1px solid #e5e7eb;
+    border: 1.5px solid var(--auth-input-border);
     font-size: 16px;
-    background: #ffffff;
+    background: var(--auth-card-bg);
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .ogm-auth-form input:focus {
     outline: none;
-    border-color: #ff6b81;
+    border-color: var(--auth-input-focus);
 }
 
-/* =========================================================
-   ACTION LINKS
-   ========================================================= */
+.ogm-auth-form input.has-error {
+    border-color: var(--auth-input-error-border);
+}
+
+.ogm-field-error {
+    font-size: var(--auth-field-error-size);
+    color: var(--auth-error-color);
+    padding-left: 4px;
+}
+
+/* ── Feedback messages ───────────────────────────────────── */
+.ogm-auth-error {
+    color: var(--auth-error-color);
+    font-size: 13px;
+    text-align: center;
+    margin: 0;
+}
+
+.ogm-auth-success {
+    color: var(--auth-success-color);
+    font-size: 13px;
+    text-align: center;
+    margin: 0;
+}
+
+/* ── Action Links ────────────────────────────────────────── */
 .ogm-auth-actions {
     display: flex;
     justify-content: space-between;
     font-size: 15px;
-    margin-bottom: 22px;
 }
 
-.link {
-    color: #2563eb;
+.ogm-link {
+    color: var(--auth-link-color);
     cursor: pointer;
+    transition: opacity 0.2s;
 }
+.ogm-link:hover { opacity: 0.75; }
 
-/* =========================================================
-   PRIMARY BUTTON
-   ========================================================= */
+/* ── Primary Button ──────────────────────────────────────── */
 .ogm-primary-btn {
-    background: linear-gradient(135deg, #ff4d6d, #ff8fa3);
+    background: linear-gradient(135deg, var(--auth-btn-bg-from), var(--auth-btn-bg-to));
     color: #ffffff;
     border: none;
     padding: 18px;
@@ -171,31 +249,33 @@
     font-weight: 600;
     font-size: 17px;
     cursor: pointer;
-    box-shadow: 0 18px 42px rgba(255, 77, 109, 0.42);
+    box-shadow: var(--auth-btn-shadow);
+    transition: opacity 0.2s;
 }
+.ogm-primary-btn:hover    { opacity: 0.95; }
+.ogm-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.ogm-primary-btn:hover {
-    opacity: 0.95;
-}
-
-.ogm-primary-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* =========================================================
-   DIVIDER
-   ========================================================= */
+/* ── Divider ─────────────────────────────────────────────── */
 .ogm-divider {
     text-align: center;
     margin: 26px 0;
     font-size: 14px;
-    color: #6b7280;
+    color: var(--auth-divider-color);
+    position: relative;
 }
+.ogm-divider::before,
+.ogm-divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 38%;
+    height: 1px;
+    background: var(--auth-google-border);
+}
+.ogm-divider::before { left: 0; }
+.ogm-divider::after  { right: 0; }
 
-/* =========================================================
-   GOOGLE LOGIN
-   ========================================================= */
+/* ── Google Button ───────────────────────────────────────── */
 .ogm-google-btn {
     width: 100%;
     display: flex;
@@ -204,54 +284,43 @@
     gap: 14px;
     padding: 16px;
     border-radius: 18px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
+    border: 1px solid var(--auth-google-border);
+    background: var(--auth-card-bg);
     font-size: 15px;
     cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
 }
-
 .ogm-google-btn:hover {
-    background: #f8fafc;
+    background: var(--auth-google-hover-bg);
     border-color: #d1d5db;
 }
+.ogm-google-btn img { height: 22px; }
 
-.ogm-google-btn img {
-    height: 22px;
-}
-
-/* =========================================================
-   OTP
-   ========================================================= */
+/* ── OTP ─────────────────────────────────────────────────── */
 .ogm-resend-otp {
     text-align: center;
-    margin-top: 16px;
+    margin-top: 4px;
     font-size: 14px;
-    color: #ff5f6d;
+    color: var(--auth-otp-resend);
     cursor: pointer;
+    transition: opacity 0.2s;
 }
-
 .ogm-resend-otp.disabled {
     color: #aaa;
     cursor: not-allowed;
-}
-
-.ogm-error {
-    color: #ff3b3b;
-    font-size: 13px;
-    text-align: center;
 }
 
 .ogm-back-link {
     text-align: center;
     margin-top: 18px;
     font-size: 14px;
-    color: #2563eb;
+    color: var(--auth-link-color);
     cursor: pointer;
+    transition: opacity 0.2s;
 }
+.ogm-back-link:hover { opacity: 0.75; }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+/* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
     .ogm-auth-page::before,
     .ogm-auth-page::after {
@@ -268,4 +337,50 @@
         padding: 32px;
         border-radius: 22px;
     }
+}
+
+/* ── Add these rules to the bottom of ogm-auth.css ── */
+
+/* OTP method tab switcher */
+.ogm-otp-tabs {
+    display: flex;
+    background: var(--auth-tab-bg);
+    border-radius: 999px;
+    padding: 5px;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.ogm-otp-tabs button {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--auth-tab-inactive-fg);
+    transition: all 0.25s ease;
+}
+
+.ogm-otp-tabs button.active {
+    background: var(--auth-tab-active-bg);
+    color: var(--auth-tab-active-fg);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+/* "OTP sent to" confirmation line */
+.ogm-otp-sent-to {
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+    margin: 0;
+}
+
+/* WhatsApp coming soon notice */
+.ogm-otp-notice {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: -6px 0 0 4px;
 }
