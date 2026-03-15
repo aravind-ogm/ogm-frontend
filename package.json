@@ -1,5 +1,6 @@
 {
   "name": "property-frontend",
+  "proxy": "http://localhost:8080",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
@@ -27,6 +28,7 @@
     ]
   },
   "devDependencies": {
+    "eslint-plugin-react-hooks": "^7.0.1",
     "react-scripts": "^5.0.1"
   }
 }
