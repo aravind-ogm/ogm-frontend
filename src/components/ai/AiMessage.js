@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import Icon from "./Icon";
 import AiPropertyCard from "./AiPropertyCard";
 import { formatTime, parseMarkdown } from "./Helpers";
+import { detectRouteIntent } from "./RouteHelper";
 
 function AiMessage({
   msg,
@@ -12,8 +13,9 @@ function AiMessage({
   onCopy,
   onFollowUp,
   onMapView,
+  onRouteView,   // ← NEW: called with (origin, destination) to show route on map
   isMapOpen,
-  userPosition,   // ← FIX: accept and forward to property cards
+  userPosition,
 }) {
   const [editing,  setEditing]  = useState(false);
   const [editText, setEditText] = useState("");
@@ -22,7 +24,13 @@ function AiMessage({
   const isUser = msg.role === "user";
   const isAi   = !isUser;
 
-  /* ── FIX: memoize followUps so they don't recalculate every render ── */
+  /* Detect if THIS user message contains a route/distance intent */
+  const routeIntent = useMemo(() => {
+    if (!isUser) return null;
+    return detectRouteIntent(msg.text);
+  }, [isUser, msg.text]);
+
+  /* Memoize follow-up suggestions */
   const followUps = useMemo(() => {
     if (!isAi || msg.isError || !msg.hasResults || !msg.properties?.length) return [];
     return (
@@ -65,12 +73,30 @@ function AiMessage({
           </>
         ) : (
           <>
+            {/* Message text */}
             {isAi
               ? <div className="msg-text-content" dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} />
               : <div>{msg.text}</div>
             }
 
-            {/* ── Property cards — pass userPosition so distance badge works ── */}
+            {/* ── "Show Route on Map" button for user messages with route intent ── */}
+            {isUser && routeIntent && (
+              <button
+                className="msg-route-btn"
+                onClick={() => onRouteView?.(routeIntent.origin, routeIntent.destination)}
+                title={`Show route: ${routeIntent.origin} → ${routeIntent.destination}`}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="5"  cy="6"  r="2"/>
+                  <circle cx="19" cy="18" r="2"/>
+                  <path d="M5 8v3a2 2 0 0 0 2 2h10a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Show Route on Map
+              </button>
+            )}
+
+            {/* Property cards */}
             {isAi && msg.hasResults && msg.properties?.length > 0 && (
               <div className="ai-property-results-list">
                 {msg.properties.map((property) => (
@@ -79,12 +105,13 @@ function AiMessage({
                     property={property}
                     onMapView={() => onMapView?.(msg.properties)}
                     isMapOpen={isMapOpen}
-                    userPosition={userPosition}   // ← FIX: was never passed before
+                    userPosition={userPosition}
                   />
                 ))}
               </div>
             )}
 
+            {/* Follow-up chips */}
             {followUps.length > 0 && (
               <div className="msg-followups">
                 {followUps.map((s, i) => (
@@ -95,6 +122,7 @@ function AiMessage({
               </div>
             )}
 
+            {/* Meta: time, edit, copy, retry */}
             <div className="msg-meta">
               {msg.timestamp && <span className="msg-time">{formatTime(msg.timestamp)}</span>}
               {msg.edited    && <span className="msg-edited">edited</span>}
@@ -118,6 +146,7 @@ function AiMessage({
               )}
             </div>
 
+            {/* Reactions */}
             {isAi && !msg.isError && (
               <div className="msg-reactions">
                 <button

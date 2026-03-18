@@ -17,6 +17,7 @@ import LocationPermissionModal from "./LocationPermissionModal";
 
 /* ── Utils ── */
 import { uid, truncateWords }            from "./Helpers";
+import { detectRouteIntent }             from "./RouteHelper";
 import { ENDPOINTS, KEYBOARD_SHORTCUTS } from "./Constants";
 
 /* ── Styles ── */
@@ -205,6 +206,11 @@ export default function AiSearchPage() {
         )
       );
 
+      // Detect route/distance intent — if true, suppress property cards
+      // so the map shows the route cleanly without a property list below.
+      const isRouteQuery = !!detectRouteIntent(text);
+      const routeInfo    = isRouteQuery ? detectRouteIntent(text) : null;
+
       setLoading(true);
 
       try {
@@ -216,9 +222,10 @@ export default function AiSearchPage() {
             chatId:           chatId,
             userLatitude:     userLat ?? null,
             userLongitude:    userLng ?? null,
-            // Human-readable location name so Gemini can answer
-            // "what is my location?" with the real place name
             userLocationName: userLat != null ? userLocName : null,
+            // Tell the backend this is a directions query so it skips
+            // property search and returns a plain text distance answer.
+            isRouteQuery:     isRouteQuery,
           }),
         });
 
@@ -226,13 +233,20 @@ export default function AiSearchPage() {
 
         const data = await response.json();
 
+        // For route queries: replace whatever the backend returned with a
+        // clean, focused message — the map already shows the route visually.
+        const routeText = isRouteQuery
+          ? `🗺️ Showing route from **${routeInfo.origin}** to **${routeInfo.destination}** on the map.\n\nUse the travel mode tabs (Drive / Transit / Walk / Cycle) on the right to switch modes and see updated distance and duration.`
+          : (data.message || data.summary || data.reply || "No response received.");
+
         appendMessage(chatId, {
-          id:         uid(),
-          role:       "ai",
-          text:       data.message || data.summary || data.reply || "No response received.",
-          hasResults: data.hasResults  || false,
-          properties: data.properties  || [],
-          followUps:  data.followUps   || [],
+          id:           uid(),
+          role:         "ai",
+          text:         routeText,
+          isRouteQuery: isRouteQuery,
+          hasResults:   isRouteQuery ? false : (data.hasResults  || false),
+          properties:   isRouteQuery ? []    : (data.properties  || []),
+          followUps:    isRouteQuery ? []    : (data.followUps   || []),
         });
       } catch (err) {
         appendMessage(chatId, {
