@@ -1112,3 +1112,204 @@
     cursor: pointer;
     z-index: 100000;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ADD these rules to the bottom of  styles/PropertyDetails.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Real Google Maps canvas — replaces the old iframe */
+.map-wrapper {
+    position: relative;
+    width: 100%;
+    height: 420px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    background: #f1f5f9;
+}
+
+.map-canvas {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+}
+
+/* Loading overlay while SDK initialises */
+.map-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #6b7280;
+    background: #f8fafc;
+    z-index: 2;
+}
+
+.map-spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid #dbeafe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: map-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes map-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Fallback link when Maps SDK fails */
+.map-fallback-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2563eb;
+    text-decoration: none;
+}
+.map-fallback-link:hover { text-decoration: underline; }
+
+/* Copy-link toast */
+.copy-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 9999;
+    pointer-events: none;
+    animation: toast-fade 1.5s ease forwards;
+}
+@keyframes toast-fade {
+    0%  { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    20% { opacity: 1; transform: translateX(-50%) translateY(0);    }
+    80% { opacity: 1; }
+    100%{ opacity: 0; }
+}
+
+
+/* Real Google Maps canvas — replaces the old iframe */
+.map-wrapper {
+    position: relative;
+    width: 100%;
+    height: 420px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    background: #f1f5f9;
+}
+
+.map-canvas {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+}
+
+/* Loading overlay while SDK initialises */
+.map-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #6b7280;
+    background: #f8fafc;
+    z-index: 2;
+}
+
+.map-spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid #dbeafe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: map-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes map-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Fallback link when Maps SDK fails */
+.map-fallback-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2563eb;
+    text-decoration: none;
+}
+.map-fallback-link:hover { text-decoration: underline; }
+
+/* Copy-link toast */
+.copy-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 9999;
+    pointer-events: none;
+    animation: toast-fade 1.5s ease forwards;
+}
+@keyframes toast-fade {
+    0%  { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    20% { opacity: 1; transform: translateX(-50%) translateY(0);    }
+    80% { opacity: 1; }
+    100%{ opacity: 0; }
+}
+
+/* ── "Click to open" hover tooltip on the location map ── */
+.map-wrapper {
+    cursor: pointer;
+}
+
+.map-wrapper:hover::after {
+    content: "Click map to open in Google Maps";
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.82);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+    animation: map-tooltip-in 0.2s ease;
+}
+
+@keyframes map-tooltip-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+
