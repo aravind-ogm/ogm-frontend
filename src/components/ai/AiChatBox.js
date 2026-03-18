@@ -223,11 +223,22 @@ export default function AiChatBox({
 
     map.panTo(marker.getPosition());
     map.setZoom(15);
+    const pos1  = marker.getPosition();
+    const mUrl1 = pos1
+      ? `https://www.google.com/maps/search/?api=1&query=${pos1.lat()},${pos1.lng()}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((prop.location ?? "") + ", India")}`;
+
     iw.setContent(
-      `<div style="font-family:sans-serif;min-width:200px;padding:4px 2px;">
+      `<div style="font-family:sans-serif;min-width:210px;padding:4px 2px;">
          <strong style="font-size:14px;display:block;margin-bottom:4px;">${prop.title ?? ""}</strong>
          <span style="color:#6b7280;font-size:12px;">${prop.location ?? ""}</span><br/>
          <span style="color:#2563eb;font-weight:700;font-size:14px;">${formatPrice(prop.price)}</span>
+         <a href="${mUrl1}" target="_blank" rel="noopener noreferrer"
+            style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+                   color:#2563eb;font-size:12px;font-weight:600;text-decoration:none;
+                   background:#eff6ff;padding:4px 12px;border-radius:20px;border:1px solid #bfdbfe;">
+           🗺 Open in Google Maps →
+         </a>
        </div>`
     );
     iw.open(map, marker);
@@ -272,6 +283,19 @@ export default function AiChatBox({
     });
     mapInstanceRef.current = map;
 
+    /* Clicking the map background opens Google Maps centred on current view */
+    map.addListener("click", (e) => {
+      // Only fire if user clicked the background, not a marker
+      // (marker clicks call stopPropagation automatically via the Marker API)
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      window.open(
+        `https://www.google.com/maps/@${lat},${lng},15z`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    });
+
     const infoWindow = new G.InfoWindow();
     infoWindowRef.current = infoWindow;
 
@@ -301,12 +325,23 @@ export default function AiChatBox({
       });
 
       marker.addListener("click", () => {
+        const mPos = marker.getPosition();
+        const mUrl = mPos
+          ? `https://www.google.com/maps/search/?api=1&query=${mPos.lat()},${mPos.lng()}`
+          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((prop.location ?? "") + ", India")}`;
+
         infoWindow.setContent(
-          `<div style="font-family:sans-serif;min-width:200px;padding:4px 2px;">
+          `<div style="font-family:sans-serif;min-width:210px;padding:4px 2px;">
              <strong style="font-size:14px;display:block;margin-bottom:4px;">${prop.title ?? ""}</strong>
              <span style="color:#6b7280;font-size:12px;">${prop.location ?? ""}</span><br/>
              <span style="color:#2563eb;font-weight:700;font-size:14px;">${formatPrice(prop.price)}</span>
              ${approximate ? '<br/><em style="font-size:11px;color:#9ca3af;">Approximate location</em>' : ""}
+             <a href="${mUrl}" target="_blank" rel="noopener noreferrer"
+                style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+                       color:#2563eb;font-size:12px;font-weight:600;text-decoration:none;
+                       background:#eff6ff;padding:4px 12px;border-radius:20px;border:1px solid #bfdbfe;">
+               🗺 Open in Google Maps →
+             </a>
            </div>`
         );
         infoWindow.open(map, marker);
