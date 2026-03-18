@@ -180,3 +180,126 @@
   .msg-bubble { max-width: 92%; }
   .msg-bubble.wide { max-width: 100%; }
 }
+
+/* ── Map search bar ─────────────────────────────────────────────────
+   Sits between the map header and the map canvas.
+   The <input> inside is wired to google.maps.places.Autocomplete.   */
+
+.ai-map-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  background: var(--surface, #fff);
+  flex-shrink: 0;
+}
+
+.ai-map-search-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.ai-map-search-input {
+  flex: 1;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 13px;
+  color: var(--text-primary, #111827);
+  background: var(--bg-input, #f9fafb);
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.ai-map-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.ai-map-search-input:focus {
+  border-color: #2563eb;
+  background: #fff;
+}
+
+/* Google autocomplete dropdown — keep it on top of the map */
+.pac-container {
+  z-index: 9999 !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #e5e7eb !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10) !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  margin-top: 4px !important;
+}
+
+.pac-item {
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background: #eff6ff !important;
+}
+
+.pac-item-query {
+  font-size: 13px !important;
+  color: #111827 !important;
+}
+
+.pac-matched {
+  color: #2563eb !important;
+  font-weight: 600 !important;
+}
+
+
+/* ── Clickable list items ────────────────────────────────────────────
+   Each row in the property list below the map is now a button that
+   pans the map and opens the InfoWindow for that property.           */
+.ai-map-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+  outline: none;
+}
+
+.ai-map-item:last-child {
+  border-bottom: none;
+}
+
+.ai-map-item:hover {
+  background: #eff6ff;
+}
+
+/* Active = the item whose marker is currently shown / open */
+.ai-map-item.active {
+  background: #dbeafe;
+  border-left: 3px solid #2563eb;
+}
+
+.ai-map-item.active .ai-map-item-marker {
+  background: #2563eb;
+}
+
+.ai-map-item.active .ai-map-item-title {
+  color: #1e40af;
+  font-weight: 700;
+}
+
+/* Keyboard focus ring */
+.ai-map-item:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+/* Title underline hint on hover */
+.ai-map-item:hover .ai-map-item-title {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

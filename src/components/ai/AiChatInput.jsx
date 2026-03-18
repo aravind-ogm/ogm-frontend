@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import useGeolocation, { detectNearMeIntent } from "./useGeolocation";
+import useGeolocation, { detectNearMeIntent } from "./Usegeolocation";   // FIX: was "./useGeolocation" — case mismatch
 import LocationPermissionModal from "./LocationPermissionModal";
 
 /**
@@ -7,10 +7,10 @@ import LocationPermissionModal from "./LocationPermissionModal";
  *
  * Drop-in replacement for the plain text input at the bottom of the chat.
  *
- * New behaviour vs the old input:
+ * Behaviour:
  *  1. Detects "near me" / "my current location" / "nearby" in the query
  *  2. If detected and location NOT granted → shows LocationPermissionModal
- *  3. If detected and location IS granted → attaches lat/lng to the request
+ *  3. If detected and location IS granted  → attaches lat/lng to the request
  *  4. Shows a live "📍 Using your location" indicator when position is active
  *  5. Manual location pin button so users can trigger permission any time
  *
@@ -21,48 +21,24 @@ import LocationPermissionModal from "./LocationPermissionModal";
  */
 export default function AiChatInput({
   onSend,
-  disabled = false,
+  disabled    = false,
   placeholder = "Ask anything — find, compare, and locate properties",
 }) {
-  const [text,          setText]          = useState("");
-  const [modalOpen,     setModalOpen]     = useState(false);
-  const [pendingQuery,  setPendingQuery]  = useState("");  // query waiting for location
+  const [text,         setText]         = useState("");
+  const [modalOpen,    setModalOpen]    = useState(false);
+  const [pendingQuery, setPendingQuery] = useState("");
   const inputRef = useRef(null);
 
   const {
     position,
-    permissionStatus,
     isRequesting,
     requestLocation,
     isGranted,
     isDenied,
   } = useGeolocation();
 
-  // ── Submit handler ─────────────────────────────────────────────────────────
-  const handleSubmit = useCallback(async () => {
-    const question = text.trim();
-    if (!question || disabled) return;
-
-    const needsLocation = detectNearMeIntent(question);
-
-    if (needsLocation) {
-      if (isGranted && position) {
-        // Already have location — send immediately
-        dispatchMessage(question, position);
-      } else if (isDenied) {
-        // Can't get location — still send, backend will handle gracefully
-        dispatchMessage(question, null);
-      } else {
-        // Need to ask — hold the query and open the modal
-        setPendingQuery(question);
-        setModalOpen(true);
-      }
-    } else {
-      dispatchMessage(question, position); // attach position if we already have it
-    }
-  }, [text, disabled, isGranted, isDenied, position]);
-
-  const dispatchMessage = (question, pos) => {
+  /* ── Dispatch a message payload ── */
+  const dispatchMessage = useCallback((question, pos) => {
     setText("");
     onSend?.({
       question,
@@ -70,40 +46,58 @@ export default function AiChatInput({
       userLongitude: pos?.longitude ?? null,
     });
     inputRef.current?.focus();
-  };
+  }, [onSend]);
 
-  // ── Location granted from modal ────────────────────────────────────────────
-  const handleLocationGranted = (pos) => {
+  /* ── Submit handler ── */
+  const handleSubmit = useCallback(() => {
+    const question = text.trim();
+    if (!question || disabled) return;
+
+    const needsLocation = detectNearMeIntent(question);
+
+    if (needsLocation) {
+      if (isGranted && position) {
+        dispatchMessage(question, position);
+      } else if (isDenied) {
+        // Can't get location — send anyway, backend handles gracefully
+        dispatchMessage(question, null);
+      } else {
+        setPendingQuery(question);
+        setModalOpen(true);
+      }
+    } else {
+      dispatchMessage(question, position); // attach position if already available
+    }
+  }, [text, disabled, isGranted, isDenied, position, dispatchMessage]);
+
+  /* ── Location granted from modal ── */
+  const handleLocationGranted = useCallback((pos) => {
     if (pendingQuery) {
       dispatchMessage(pendingQuery, pos);
       setPendingQuery("");
     }
-  };
+  }, [pendingQuery, dispatchMessage]);
 
-  // ── Manual location pin button ─────────────────────────────────────────────
-  const handleManualLocation = async () => {
-    if (isGranted) return; // already have it
+  /* ── Manual location pin button ── */
+  const handleManualLocation = useCallback(async () => {
+    if (isGranted) return;
     try {
       await requestLocation();
     } catch {
-      // user denied — modal will show error
-      setModalOpen(true);
+      setModalOpen(true); // show error state inside modal
     }
-  };
+  }, [isGranted, requestLocation]);
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
   };
 
-  const hasText = text.trim().length > 0;
+  const hasText       = text.trim().length > 0;
   const isNearMeQuery = detectNearMeIntent(text);
 
   return (
     <>
-      {/* ── Location Permission Modal ─────────────────────────────── */}
+      {/* ── Location Permission Modal ── */}
       <LocationPermissionModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); setPendingQuery(""); }}
@@ -111,7 +105,7 @@ export default function AiChatInput({
         queryText={pendingQuery}
       />
 
-      {/* ── Input Container ───────────────────────────────────────── */}
+      {/* ── Input Container ── */}
       <div style={styles.wrapper}>
 
         {/* Live location indicator */}
@@ -119,13 +113,11 @@ export default function AiChatInput({
           <div style={styles.locationBanner}>
             <span style={styles.locationDot} />
             <span>Using your current location</span>
-            <span style={styles.accuracy}>
-              ±{Math.round(position.accuracy || 0)}m
-            </span>
+            <span style={styles.accuracy}>±{Math.round(position.accuracy || 0)}m</span>
           </div>
         )}
 
-        {/* "Near me" hint — shown when user types a proximity query */}
+        {/* "Near me" hint */}
         {isNearMeQuery && !isGranted && !isDenied && (
           <div style={styles.hintBanner}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -151,14 +143,14 @@ export default function AiChatInput({
           <button
             style={{
               ...styles.pinBtn,
-              color:      isGranted ? "#2563eb" : isDenied ? "#ef4444" : "#9ca3af",
-              background: isGranted ? "#eff6ff" : "transparent",
+              color:      isGranted   ? "#2563eb" : isDenied ? "#ef4444" : "#9ca3af",
+              background: isGranted   ? "#eff6ff" : "transparent",
             }}
             onClick={handleManualLocation}
             title={
-              isGranted  ? "Location active"       :
-              isDenied   ? "Location blocked"       :
-              isRequesting ? "Getting location…"   :
+              isGranted    ? "Location active"   :
+              isDenied     ? "Location blocked"  :
+              isRequesting ? "Getting location…" :
               "Share your location"
             }
             type="button"
@@ -198,7 +190,7 @@ export default function AiChatInput({
   );
 }
 
-// ─── Icon components ──────────────────────────────────────────────────────────
+/* ─── Icon components ──────────────────────────────────────────────────────── */
 function PinIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -229,7 +221,7 @@ function SendIcon() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+/* ─── Styles ────────────────────────────────────────────────────────────────── */
 const styles = {
   wrapper: {
     display: "flex", flexDirection: "column", gap: 6,
@@ -287,10 +279,13 @@ const styles = {
   },
 };
 
-// Inject pulse animation
+/* Inject animations once */
 if (typeof document !== "undefined" && !document.getElementById("ogm-chat-anim")) {
   const s = document.createElement("style");
   s.id = "ogm-chat-anim";
-  s.textContent = `@keyframes ogm-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`;
+  s.textContent = `
+    @keyframes ogm-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    @keyframes ogm-spin   { to { transform: rotate(360deg) } }
+  `;
   document.head.appendChild(s);
 }

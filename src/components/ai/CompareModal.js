@@ -1,12 +1,10 @@
 import React, { useEffect } from "react";
-import { formatPrice } from "../../utils/helpers";
+import { formatPrice } from "./Helpers";   // FIX: was "../../utils/helpers" — wrong path
 import "../../styles/ai/ai-compare.css";
 
 export default function CompareModal({ properties = [], onClose = () => {} }) {
   useEffect(() => {
-    const handler = (e) => {
-      if (e.key === "Escape") onClose();
-    };
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
@@ -14,12 +12,12 @@ export default function CompareModal({ properties = [], onClose = () => {} }) {
   if (!properties.length) return null;
 
   const rows = [
-    { label: "Location", key: "location" },
-    { label: "Price", key: "price", format: formatPrice },
-    { label: "Type", key: "type" },
+    { label: "Location",    key: "location" },
+    { label: "Price",       key: "price",       format: formatPrice },
+    { label: "Type",        key: "type" },
     { label: "Size (Sqft)", key: "sqft" },
-    { label: "RERA", key: "reraApproved", format: (v) => (v ? "Approved" : "Not Approved") },
-    { label: "Status", key: "soldOut", format: (v) => (v ? "Sold Out" : "Available") },
+    { label: "RERA",        key: "reraApproved", format: (v) => (v ? "Approved"    : "Not Approved") },
+    { label: "Status",      key: "soldOut",      format: (v) => (v ? "Sold Out"    : "Available") },
   ];
 
   return (
@@ -30,13 +28,11 @@ export default function CompareModal({ properties = [], onClose = () => {} }) {
         </button>
 
         <div className="compare-grid">
-          {/* Header */}
+          {/* Header row */}
           <div className="compare-row header">
             <div className="compare-label" />
             {properties.map((p) => (
-              <div key={p.id} className="compare-cell title">
-                {p.title}
-              </div>
+              <div key={p.id} className="compare-cell title">{p.title}</div>
             ))}
           </div>
 
