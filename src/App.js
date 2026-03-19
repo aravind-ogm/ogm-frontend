@@ -21,23 +21,31 @@ import PropertyDetails from "./pages/PropertyDetails";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AiSearchPage from "./components/ai/AiSearchPage";
+
+// Agent Admin Dashboard
+import AgentAdminApp from "./components/admindashboard/Agentadminapp";
+
 import "./styles/App.css";
 
-/* ================= META PIXEL ROUTE TRACKER ================= */
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const BASE_URL = process.env.REACT_APP_API_BASE || "http://localhost:8080";
+
+const HIDE_FOOTER_ROUTES = ["/ai-search", "/dashboard", "/admin", "/agent-admin"];
+
+// ─── Meta Pixel Tracker ──────────────────────────────────────────────────────
 
 function MetaPixelTracker() {
     const location = useLocation();
 
     useEffect(() => {
-        if (window.fbq) {
-            window.fbq("track", "PageView");
-        }
+        window.fbq?.("track", "PageView");
     }, [location.pathname]);
 
     return null;
 }
 
-/* ================= MAIN APP ================= */
+// ─── Root App ────────────────────────────────────────────────────────────────
 
 function App() {
     return (
@@ -47,71 +55,81 @@ function App() {
     );
 }
 
-/* ================= APP CONTENT (NO LOGIC CHANGED) ================= */
+// ─── App Content ─────────────────────────────────────────────────────────────
 
 function AppContent() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [properties, setProperties] = useState([]);
-    const [searchMode, setSearchMode] = useState("default");
+    const [properties, setProperties]       = useState([]);
+    const [searchMode, setSearchMode]       = useState("default");
     const [isAuthenticated, setIsAuthenticated] = useState(
-        Boolean(localStorage.getItem("token"))
+        () => Boolean(localStorage.getItem("token"))
     );
 
-    const baseUrl = "http://localhost:8080";
+    const isAgentAdmin = location.pathname.startsWith("/agent-admin");
+    const shouldHideFooter = HIDE_FOOTER_ROUTES.includes(location.pathname);
 
-    /* ================= DATA LOADING ================= */
+    // ─── Data Loading ────────────────────────────────────────────────────────
 
     const loadProperties = useCallback(async (query = "") => {
         try {
-            const url = query
-                ? `${baseUrl}/api/properties?q=${encodeURIComponent(query)}&page=0&size=50`
-                : `${baseUrl}/api/properties?page=0&size=50`;
-
-            const res = await fetch(url);
+            const params = new URLSearchParams({ page: 0, size: 50 });
+            if (query) params.set("q", query);
+            const res  = await fetch(`${BASE_URL}/api/properties?${params}`);
             const data = await res.json();
             setProperties(data?.content || []);
         } catch (err) {
-            console.error("Failed to fetch properties", err);
+            console.error("Failed to fetch properties:", err);
             setProperties([]);
         }
-    }, [baseUrl]);
+    }, []);
 
-    /* ================= SEARCH HANDLER ================= */
+    useEffect(() => {
+        if (!isAgentAdmin) loadProperties();
+    }, [loadProperties, isAgentAdmin]);
 
-    const handleSearch = (data) => {
+    // ─── Search Handler ──────────────────────────────────────────────────────
+
+    const handleSearch = useCallback((data) => {
         if (data === null) {
             setSearchMode("default");
             loadProperties();
             return;
         }
-
         if (Array.isArray(data)) {
             setProperties(data);
             setSearchMode("ai");
             return;
         }
-
         setSearchMode("normal");
         loadProperties(data);
-    };
-
-    useEffect(() => {
-        loadProperties();
     }, [loadProperties]);
 
-    /* ================= FOOTER HIDE LOGIC ================= */
+    // ─── Auth Handlers ───────────────────────────────────────────────────────
 
-    const hideFooterRoutes = [
-        "/ai-search",
-        "/dashboard",
-        "/admin"
-    ];
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem("token");
+        setIsAuthenticated(false);
+        navigate("/");
+    }, [navigate]);
 
-    const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
+    const handleAuthSuccess = useCallback(() => {
+        setIsAuthenticated(true);
+    }, []);
 
-    /* ================= RENDER ================= */
+    // ─── Agent admin renders standalone (no header/footer) ───────────────────
+
+    if (isAgentAdmin) {
+        return (
+            <>
+                <MetaPixelTracker />
+                <AgentAdminApp />
+            </>
+        );
+    }
+
+    // ─── Main App ────────────────────────────────────────────────────────────
 
     return (
         <>
@@ -121,74 +139,45 @@ function AppContent() {
                 <Header
                     onSearch={handleSearch}
                     isAuthenticated={isAuthenticated}
-                    onLogout={() => {
-                        localStorage.removeItem("token");
-                        setIsAuthenticated(false);
-                    }}
+                    onLogout={handleLogout}
                 />
 
                 <Routes>
                     <Route
                         path="/"
                         element={
-                            <main className="main-section">
-                                {searchMode === "ai" && (
-                                    <div className="ai-suggestions premium">
-                                        <div className="ai-suggestion-card">
-                                            ✨ <strong>Refine your search</strong>
-                                            <p>Find <b>2 BHKs under ₹2 Cr</b> in <b>Sarjapur Road</b></p>
-                                        </div>
-                                        <div className="ai-suggestion-card">
-                                            📊 <strong>Compare smarter</strong>
-                                            <p>Add properties to your <b>watchlist</b> and compare easily.</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {searchMode !== "ai" && (
-                                    <SearchBarContainer onSearch={handleSearch} />
-                                )}
-
-                                <h2 className="section-title">
-                                    {searchMode === "default" && "Popular Homes in Bengaluru"}
-                                    {searchMode === "ai" && "AI Curated Properties"}
-                                    {searchMode === "normal" && "Search Results"}
-                                </h2>
-
-                                <PropertyList
-                                    properties={properties}
-                                    searchMode={searchMode}
-                                />
-                            </main>
+                            <HomePage
+                                properties={properties}
+                                searchMode={searchMode}
+                                onSearch={handleSearch}
+                            />
                         }
                     />
-
                     <Route path="/property/:slug" element={<PropertyDetails />} />
-                    <Route path="/about" element={<About />} />
+                    <Route path="/about"          element={<About />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/ai-search" element={<AiSearchPage />} />
+                    <Route path="/contact"        element={<Contact />} />
+                    <Route path="/ai-search"      element={<AiSearchPage />} />
                     <Route
                         path="/auth"
-                        element={<AuthContainer onAuthSuccess={() => setIsAuthenticated(true)} />}
+                        element={<AuthContainer onAuthSuccess={handleAuthSuccess} />}
                     />
                 </Routes>
 
                 <FloatingWhatsapp />
-
                 {!shouldHideFooter && <Footer />}
             </div>
         </>
     );
 }
 
-/* ================= HEADER ================= */
+// ─── Header ──────────────────────────────────────────────────────────────────
 
 function Header({ onSearch, isAuthenticated, onLogout }) {
     const navigate = useNavigate();
 
     const handleLogoClick = () => {
-        onSearch && onSearch(null);
+        onSearch?.(null);
         navigate("/", { replace: true });
     };
 
@@ -214,10 +203,43 @@ function Header({ onSearch, isAuthenticated, onLogout }) {
     );
 }
 
-/* ================= PROPERTY LIST ================= */
+// ─── Home Page ───────────────────────────────────────────────────────────────
+
+function HomePage({ properties, searchMode, onSearch }) {
+    return (
+        <main className="main-section">
+            {searchMode === "ai" && (
+                <div className="ai-suggestions premium">
+                    <div className="ai-suggestion-card">
+                        ✨ <strong>Refine your search</strong>
+                        <p>Find <b>2 BHKs under ₹2 Cr</b> in <b>Sarjapur Road</b></p>
+                    </div>
+                    <div className="ai-suggestion-card">
+                        📊 <strong>Compare smarter</strong>
+                        <p>Add properties to your <b>watchlist</b> and compare easily.</p>
+                    </div>
+                </div>
+            )}
+
+            {searchMode !== "ai" && (
+                <SearchBarContainer onSearch={onSearch} />
+            )}
+
+            <h2 className="section-title">
+                {searchMode === "default" && "Popular Homes in Bengaluru"}
+                {searchMode === "ai"      && "AI Curated Properties"}
+                {searchMode === "normal"  && "Search Results"}
+            </h2>
+
+            <PropertyList properties={properties} searchMode={searchMode} />
+        </main>
+    );
+}
+
+// ─── Property List ───────────────────────────────────────────────────────────
 
 function PropertyList({ properties, searchMode }) {
-    if (!properties || properties.length === 0) {
+    if (!properties?.length) {
         return (
             <div className="no-results-container">
                 <div className="no-results-content">
@@ -238,11 +260,9 @@ function PropertyList({ properties, searchMode }) {
     return (
         <div className={searchMode === "ai" ? "ai-results" : "property-grid"}>
             {properties.map((prop) =>
-                searchMode === "ai" ? (
-                    <AIResultCard key={prop.id} property={prop} />
-                ) : (
-                    <PropertyCard key={prop.id} property={prop} />
-                )
+                searchMode === "ai"
+                    ? <AIResultCard  key={prop.id} property={prop} />
+                    : <PropertyCard  key={prop.id} property={prop} />
             )}
         </div>
     );

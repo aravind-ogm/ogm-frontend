@@ -1,14 +1,13 @@
 /* ============================================
    APP LAYOUT
-   (Global styles live in global.css)
 ============================================ */
 
 .app-container {
     width: 100%;
-    max-width: 1750px;
-    margin: 0 auto;
-    padding: 0 16px;
-    background: #ffffff;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #f4f6fb;
 }
 
 /* ============================================
@@ -19,29 +18,30 @@
     position: sticky;
     top: 0;
     z-index: 50;
-
     width: 100%;
-    padding: 20px;
-
+    padding: 0 28px;
+    height: 68px;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-
-    background: #ffffff;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+    box-shadow: 0 1px 12px rgba(15, 23, 42, 0.05);
 }
 
-/* Logo + title container */
 .header-content {
     text-decoration: none;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
 
-/* Logo */
 .logo-img {
-    height: 55px;
+    height: 42px;
     transition: 0.25s ease;
     cursor: pointer;
 }
@@ -50,45 +50,46 @@
     transform: scale(1.05);
 }
 
-/* Title */
 .header-title {
     margin: 0;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 17px;
+    font-weight: 800;
     color: #0f172a;
-    text-align: center;
+    letter-spacing: -0.3px;
 }
 
-/* Remove underline */
 .header-content:link,
 .header-content:visited {
     text-decoration: none;
     color: inherit;
 }
 
-/* Contact button wrapper */
 .header-actions {
-    position: absolute;
-    right: 40px;
-    top: 26px;
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* Contact button */
 .contact {
-    background: linear-gradient(135deg, #0b63e5, #004bbd);
+    background: #0f172a;
     color: #ffffff;
-    padding: 10px 22px;
-    border-radius: 30px;
-    font-weight: 600;
+    padding: 9px 22px;
+    border-radius: 10px;
+    font-weight: 700;
     text-decoration: none;
-    font-size: 14px;
-    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.15);
-    transition: 0.2s ease;
+    font-size: 13.5px;
+    letter-spacing: 0.1px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
 }
 
 .contact:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.22);
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
 }
 
 /* ============================================
@@ -98,74 +99,101 @@
 .section-title {
     width: 100%;
     padding: 0 20px;
-    margin: 20px 0 14px;
-    font-size: 24px;
-    font-weight: 700;
+    margin: 28px 0 16px;
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    font-family: 'Inter', 'Sora', sans-serif;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, #e2e8f0, transparent);
+    margin-left: 4px;
+}
+
+/* ✅ 5 cards per row, full width */
 .property-grid {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
-    padding: 0 12px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
+/* ✅ Cards fill their column */
 .property-card {
-    max-width: 360px;
     width: 100%;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
 }
 
 /* ============================================
-   RESPONSIVE — TABLET
+   RESPONSIVE BREAKPOINTS
 ============================================ */
+
+@media (max-width: 1400px) {
+    .property-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: 1100px) {
+    .property-grid { grid-template-columns: repeat(3, 1fr); }
+}
 
 @media (max-width: 768px) {
     .property-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+        padding: 0 12px;
     }
+
+    .topbar { padding: 0 16px; }
+    .header-title { font-size: 14px; }
+    .section-title { padding: 0 12px; font-size: 20px; }
+    .section-title::after { display: none; }
+
+    .ai-suggestions.premium {
+        flex-direction: column;
+        max-width: 100%;
+    }
+
+    .search-pill {
+        width: 100%;
+        max-width: 100%;
+        padding-right: 52px;
+    }
+
+    .pill-btn { right: 10px; }
+    .whatsapp-float { bottom: 16px; right: 12px; }
+}
+
+@media (max-width: 480px) {
+    .property-grid {
+        grid-template-columns: 1fr;
+        padding: 0 12px;
+    }
+
+    .topbar { padding: 0 14px; height: 58px; }
+    .logo-img { height: 34px; }
+    .header-title { font-size: 13px; }
+    .contact { padding: 7px 16px; font-size: 12.5px; }
+    .section-title { font-size: 18px; }
+    .ai-bottom-search { padding: 12px 8px 10px; }
+    .ai-bottom-search .search-wrap { max-width: 100%; padding: 0 8px; }
+    .ai-bottom-search .search-pill.ai { max-width: 100%; }
 }
 
 /* ============================================
-   RESPONSIVE — MOBILE
+   AI SUGGESTIONS
 ============================================ */
-
-@media (max-width: 480px) {
-
-    .topbar {
-        padding: 12px 16px;
-        align-items: center;
-    }
-
-    /* KEY FIX: remove absolute positioning on mobile */
-    .header-actions {
-        position: static;
-        margin-top: 10px;
-        align-self: center;
-    }
-
-    .logo-img {
-        height: 44px;
-    }
-
-    .header-title {
-        font-size: 15px;
-    }
-
-    .contact {
-        padding: 8px 18px;
-        font-size: 13px;
-    }
-
-    .section-title {
-        font-size: 20px;
-    }
-
-    .property-card {
-        max-width: 100%;
-    }
-}
 
 .ai-suggestions.premium {
     display: flex;
@@ -188,9 +216,9 @@
     color: #444;
 }
 
-/* ===============================
-   AI BOTTOM SEARCH – PREMIUM OVERRIDE
-================================ */
+/* ============================================
+   AI BOTTOM SEARCH
+============================================ */
 
 .ai-bottom-search {
     position: sticky;
@@ -202,126 +230,33 @@
     z-index: 50;
 }
 
-/* Center & widen */
-.ai-bottom-search .search-wrap {
-    max-width: 960px;
-    margin: 0 auto;
-}
+.ai-bottom-search .search-wrap { max-width: 960px; margin: 0 auto; }
+.ai-bottom-search .dual-search-bar { justify-content: center; }
 
-/* Remove dual look – single AI bar feel */
-.ai-bottom-search .dual-search-bar {
-    justify-content: center;
-}
-
-/* Make AI pill dominant */
 .ai-bottom-search .search-pill.ai {
     width: 100%;
     max-width: 960px;
     border-radius: 18px;
     padding: 6px;
-    background: #ffffff;
+    background: #f8fafc;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
 
-/* Bigger input for refinement */
-.ai-bottom-search .search-pill.ai .pill-input {
-    font-size: 15px;
-    padding: 14px 16px;
-}
+.ai-bottom-search .search-pill.ai .pill-input { font-size: 15px; padding: 14px 16px; }
+.ai-bottom-search .pill-btn.ai { width: 44px; height: 44px; border-radius: 50%; font-size: 18px; }
+.ai-bottom-search .search-pill:not(.ai) { display: none; }
 
-/* Softer AI button */
-.ai-bottom-search .pill-btn.ai {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    font-size: 18px;
-}
+.ai-refine-hint { text-align: center; font-size: 13px; color: #666; margin-bottom: 10px; }
 
-/* Hide any accidental normal pill (safety) */
-.ai-bottom-search .search-pill:not(.ai) {
-    display: none;
-}
-
-.ai-refine-hint {
-    text-align: center;
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 10px;
-}
-
-@media (max-width: 768px) {
-    .ai-suggestions.premium {
-        flex-direction: column;
-        max-width: 100%;
-    }
-}
-
-@media (max-width: 480px) {
-    .ai-bottom-search {
-        padding: 12px 8px 10px;
-    }
-
-    .ai-bottom-search .search-wrap {
-        max-width: 100%;
-        padding: 0 8px;
-    }
-
-    .ai-bottom-search .search-pill.ai {
-        max-width: 100%;
-    }
-}
-
-@media (max-width: 768px) {
-    .topbar {
-        align-items: center;
-        text-align: center;
-    }
-
-    .header-content {
-        align-items: center;
-    }
-
-    .header-actions {
-        position: static;
-        margin-top: 12px;
-    }
-}
-
-@media (max-width: 768px) {
-    .search-pill {
-        width: 100%;
-        max-width: 100%;
-        padding-right: 52px; /* space for icon */
-    }
-
-    .pill-btn {
-        right: 10px;
-    }
-}
-
-@media (max-width: 768px) {
-    .section-title {
-        padding: 0 12px;
-    }
-}
-
-@media (max-width: 768px) {
-    .whatsapp-float {
-        bottom: 16px;
-        right: 12px;
-    }
-}
-
-
-/* ============================================================
-   NO RESULTS (EMPTY STATE) STYLING
-   ============================================================ */
+/* ============================================
+   NO RESULTS (EMPTY STATE)
+============================================ */
 
 .no-results-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 400px; /* Ensures the area is large enough to feel intentional */
+    min-height: 400px;
     width: 100%;
     padding: 40px 20px;
     text-align: center;
@@ -330,37 +265,21 @@
 
 .no-results-content {
     max-width: 450px;
-    background: #ffffff;
+    background: #f8fafc;
     padding: 40px;
     border-radius: 24px;
     border: 1px solid #f1f5f9;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
-.no-results-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-    display: block;
-    filter: grayscale(1); /* Keeps it subtle */
-    opacity: 0.5;
-}
+.no-results-icon { font-size: 64px; margin-bottom: 20px; display: block; filter: grayscale(1); opacity: 0.5; }
 
-.no-results-content h3 {
-    font-size: 24px;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 12px;
-}
+.no-results-content h3 { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
 
-.no-results-content p {
-    font-size: 16px;
-    color: #64748b;
-    line-height: 1.6;
-    margin-bottom: 30px;
-}
+.no-results-content p { font-size: 16px; color: #64748b; line-height: 1.6; margin-bottom: 30px; }
 
 .reset-search-btn {
-    background: #0f172a; /* Dark elegant button */
+    background: #0f172a;
     color: white;
     border: none;
     padding: 12px 32px;
@@ -371,27 +290,21 @@
 }
 
 .reset-search-btn:hover {
-    background: #ff385c; /* Brand color on hover */
+    background: #ff385c;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 56, 92, 0.2);
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Ensure the main section expands to push the footer down */
+/* ============================================
+   MAIN SECTION
+============================================ */
+
 .main-section {
     min-height: 70vh;
+    width: 100%;
 }
-
-
-
-
