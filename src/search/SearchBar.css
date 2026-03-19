@@ -1,201 +1,338 @@
 /* ============================================================
-   1. CONTAINER & GLOBAL LAYOUT
+   SEARCH BAR — LUXURY REAL ESTATE
+   Premium glass-morphism with refined navy / gold palette
    ============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:wght@500;600&display=swap');
+
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --sb-navy:       #0f1f3d;
+  --sb-accent:     #e63a56;
+  --sb-gold:       #c9a84c;
+  --sb-glass:      rgba(255, 255, 255, 0.97);
+  --sb-border:     rgba(200, 215, 235, 0.75);
+  --sb-divider:    rgba(15, 31, 61, 0.11);
+  --sb-muted:      #8896aa;
+  --sb-font:       'DM Sans', sans-serif;
+  --sb-radius:     22px;
+  --sb-shadow:
+    0 2px 4px rgba(15,31,61,0.04),
+    0 8px 24px rgba(15,31,61,0.08),
+    0 24px 56px rgba(15,31,61,0.09);
+  --sb-shadow-up:
+    0 4px 8px rgba(15,31,61,0.06),
+    0 16px 40px rgba(15,31,61,0.13),
+    0 40px 80px rgba(15,31,61,0.11);
+}
+
+/* ============================================================
+   WRAPPER
+   ============================================================ */
 .search-wrap {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin: 40px auto;
-    padding: 0 16px;
-    box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+  margin: 36px auto 44px;
+  box-sizing: border-box;
+  font-family: var(--sb-font);
 }
 
+/* Optional serif headline above bar */
+.search-headline {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(20px, 3vw, 32px);
+  font-weight: 600;
+  color: var(--sb-navy);
+  letter-spacing: -0.4px;
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.25;
+}
+.search-headline em {
+  font-style: italic;
+  color: var(--sb-accent);
+}
+
+/* ============================================================
+   BAR
+   ============================================================ */
 .dual-search-bar {
-    display: flex;
-    width: 100%;
-    max-width: 1100px;
-    background: #ffffff;
-    border-radius: 999px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
-    overflow: hidden; /* Clips internal pills to the bar's rounded corners */
+  display: flex;
+  width: 100%;
+  max-width: 1060px;
+  background: var(--sb-glass);
+  border-radius: var(--sb-radius);
+  border: 1.5px solid var(--sb-border);
+  box-shadow: var(--sb-shadow);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
+  position: relative;
+}
+.dual-search-bar:hover,
+.dual-search-bar:focus-within {
+  box-shadow: var(--sb-shadow-up);
+  border-color: rgba(15,31,61,0.2);
+  transform: translateY(-2px);
 }
 
 /* ============================================================
-   2. SEARCH PILL — BASE STYLES
+   PILL
    ============================================================ */
-
 .search-pill {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    padding: 10px 14px 10px 22px;
-    position: relative;
-    transition: background-color 0.2s ease;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px 14px 24px;
+  position: relative;
+  transition: background 0.2s ease;
+  min-width: 0;
+}
+.search-pill:hover { background: rgba(15,31,61,0.018); }
+
+/* Icon badge */
+.pill-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  background: rgba(15,31,61,0.06);
+  transition: background 0.2s ease;
+}
+.search-pill:hover .pill-icon,
+.search-pill:focus-within .pill-icon { background: rgba(15,31,61,0.10); }
+
+.pill-icon.ai-icon {
+  background: linear-gradient(135deg, rgba(230,58,86,0.12), rgba(201,168,76,0.10));
+}
+.search-pill:hover .pill-icon.ai-icon,
+.search-pill:focus-within .pill-icon.ai-icon {
+  background: linear-gradient(135deg, rgba(230,58,86,0.20), rgba(201,168,76,0.15));
 }
 
-.search-pill:hover {
-    background-color: #fcfcfc;
-}
-
-/* Vertical Divider (Desktop Only) */
+/* Divider between pills */
 .search-pill.ai::before {
-    content: "";
-    width: 1px;
-    height: 40px;
-    background: #e2e8f0;
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+  content: "";
+  width: 1px;
+  height: 44px;
+  background: var(--sb-divider);
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* ============================================================
-   3. PILL CONTENT, INPUTS & CLEAR BUTTON
+   PILL CONTENT
    ============================================================ */
-
 .pill-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .pill-title {
-    font-size: 12px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #0f172a;
-    margin-bottom: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--sb-navy);
+  opacity: 0.5;
+  user-select: none;
+  line-height: 1;
+}
+/* Gold gradient label for AI pill */
+.search-pill.ai .pill-title {
+  background: linear-gradient(90deg, var(--sb-accent), var(--sb-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 1;
 }
 
 .input-wrapper {
-    display: flex;
-    align-items: center;
-    position: relative;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 
 .pill-input {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 14px;
-    color: #334155;
-    width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--sb-font);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--sb-navy);
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+  caret-color: var(--sb-accent);
 }
+.pill-input::placeholder { color: var(--sb-muted); font-weight: 400; }
+.pill-input:disabled     { color: var(--sb-muted); cursor: not-allowed; }
 
-.pill-input::placeholder {
-    color: #94a3b8;
-    font-weight: 400;
-}
-
+/* Clear button */
 .clear-btn {
-    background: #f1f5f9;
-    border: none;
-    color: #94a3b8;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    font-size: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 8px;
-    transition: all 0.2s ease;
+  background: rgba(15,31,61,0.07);
+  border: none;
+  color: var(--sb-muted);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 10px;
+  transition: background 0.15s, color 0.15s;
 }
-
-.clear-btn:hover {
-    background: #e2e8f0;
-    color: #475569;
-}
+.clear-btn:hover { background: rgba(15,31,61,0.14); color: var(--sb-navy); }
 
 /* ============================================================
-   4. ACTION BUTTONS & ANIMATIONS
+   ACTION BUTTONS
    ============================================================ */
-
 .pill-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background: #ff385c;
-    color: white;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: var(--sb-navy);
+  color: #fff;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 2px;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+    box-shadow 0.2s ease;
 }
+
+/* Shimmer sweep */
+.pill-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.45s ease;
+}
+.pill-btn:hover:not(:disabled)::after { transform: translateX(100%); }
 
 .pill-btn:hover:not(:disabled) {
-    transform: scale(1.08);
-    box-shadow: 0 4px 12px rgba(255, 56, 92, 0.3);
+  transform: scale(1.08) translateY(-1px);
+  box-shadow: 0 6px 20px rgba(15,31,61,0.28);
 }
+.pill-btn:active:not(:disabled) { transform: scale(0.96); }
+.pill-btn:focus-visible { outline: 2px solid var(--sb-navy); outline-offset: 3px; }
 
-.pill-btn:active:not(:disabled) {
-    transform: scale(0.95);
-}
-
+/* AI gradient button */
 .pill-btn.ai {
-    background: linear-gradient(135deg, #ff385c, #e61e4d);
+  background: linear-gradient(135deg, #e63a56 0%, #c9273f 55%, #b8860b 100%);
+  background-size: 200% 200%;
+  animation: ai-grad 4s ease infinite;
+}
+@keyframes ai-grad {
+  0%   { background-position: 0% 50%;   }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%;   }
+}
+.pill-btn.ai:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(230,58,86,0.42);
 }
 
-/* Loading States */
+/* Disabled */
 .pill-btn:disabled {
-    background: #cbd5e1;
-    cursor: not-allowed;
+  background: #dde3ec;
+  color: #a0aec0;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
-.loading-active {
-    animation: pulse-glow 1.5s infinite;
-    cursor: wait;
-    opacity: 0.8;
-}
-
+/* Loading */
+.loading-active { animation: pulse-ring 1.4s infinite !important; cursor: wait; }
 .loader-dots {
-    display: inline-block;
-    font-weight: bold;
-    animation: pulse-text 1s infinite;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 3px;
+  animation: dot-fade 0.9s infinite ease-in-out;
+}
+@keyframes dot-fade { 0%,100%{opacity:1} 50%{opacity:0.2} }
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(230,58,86,0.55); }
+  70%  { box-shadow: 0 0 0 12px rgba(230,58,86,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(230,58,86,0);    }
 }
 
-@keyframes pulse-text {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+/* Live gold dot on AI button */
+.ai-badge {
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 13px; height: 13px;
+  background: var(--sb-gold);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  animation: badge-pulse 2.5s ease-in-out infinite;
 }
-
-@keyframes pulse-glow {
-    0% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 56, 92, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0); }
+@keyframes badge-pulse {
+  0%,100%{ transform:scale(1);    opacity:1; }
+  50%    { transform:scale(1.3);  opacity:0.65; }
 }
 
 /* ============================================================
-   5. RESPONSIVE DESIGN (Mobile)
+   MOBILE
    ============================================================ */
+@media (max-width: 860px) {
+  .search-wrap { margin: 20px auto 30px; }
+  .search-headline { font-size: 20px; margin-bottom: 14px; }
 
-@media (max-width: 900px) {
-    .dual-search-bar {
-        flex-direction: column;
-        background: transparent;
-        border: none;
-        box-shadow: none;
-        gap: 12px;
-        overflow: visible;
-    }
+  .dual-search-bar {
+    flex-direction: column;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    gap: 10px;
+    overflow: visible;
+    border-radius: 0;
+    transform: none !important;
+  }
+  .dual-search-bar:hover,
+  .dual-search-bar:focus-within {
+    transform: none !important;
+    box-shadow: none;
+    border-color: transparent;
+  }
 
-    .search-pill {
-        background: white;
-        border-radius: 999px !important;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
+  .search-pill {
+    background: var(--sb-glass);
+    border-radius: 999px;
+    border: 1.5px solid var(--sb-border);
+    box-shadow: 0 2px 12px rgba(15,31,61,0.07);
+  }
+  .search-pill:hover { background: var(--sb-glass); }
+  .search-pill.ai::before { display: none; }
+}
 
-    .search-pill.ai::before {
-        display: none;
-    }
+@media (max-width: 400px) {
+  .search-headline { font-size: 18px; }
+  .pill-title      { display: none; }
+  .pill-icon       { width: 30px; height: 30px; font-size: 14px; border-radius: 8px; }
 }
