@@ -5,9 +5,9 @@ import VideoModal       from "../components/VideoModal";
 import Amenities        from "../components/Amenities";
 import ImageZoomModal   from "../components/ImageZoomModal";
 import NearbyLocations  from "../components/NearbyLocations";
-import LiveTourButton   from "../components/LiveTourButton";
 import { BadgeCheck, Share2, Heart, Download } from "lucide-react";
 import "../styles/PropertyDetails.css";
+import AskDiscoverWidget from "./AskDiscoverWidget";
 
 /* ─── API base — never hardcode localhost in component code ─────────────────
    Set  REACT_APP_API_BASE=http://localhost:8080  in your .env.development
@@ -56,6 +56,44 @@ function loadGoogleMaps() {
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 
+
+/* ─── Jitsi helper — mounts when joined ─────────────────────────────────── */
+function LiveJitsi({ containerRef, apiRef, name, roomName }) {
+  useEffect(() => {
+    const load = () => {
+      if (!containerRef.current) return;
+      apiRef.current = new window.JitsiMeetExternalAPI("meet.jit.si", {
+        roomName,
+        parentNode: containerRef.current,
+        userInfo: { displayName: name || "Guest" },
+        configOverwrite: {
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          prejoinPageEnabled: false,
+          prejoinConfig: { enabled: false },
+          disableDeepLinking: true,
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_BRAND_WATERMARK: false,
+          SHOW_POWERED_BY: false,
+          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+          TOOLBAR_ALWAYS_VISIBLE: true,
+        },
+      });
+    };
+    if (!window.JitsiMeetExternalAPI) {
+      const s = document.createElement("script");
+      s.src = "https://meet.jit.si/external_api.js";
+      s.async = true;
+      s.onload = load;
+      document.body.appendChild(s);
+    } else { load(); }
+    return () => { apiRef.current?.dispose(); };
+  }, []);
+  return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
+}
+
 export default function PropertyDetails() {
   const { slug } = useParams();
   const navigate  = useNavigate();
@@ -64,6 +102,11 @@ export default function PropertyDetails() {
   const [property,          setProperty]          = useState(null);
   const [loading,           setLoading]           = useState(true);
   const [isVideoOpen,       setIsVideoOpen]       = useState(false);
+  const [liveTourOpen,      setLiveTourOpen]      = useState(false);
+  const [liveTourName,      setLiveTourName]      = useState("");
+  const [liveTourJoined,    setLiveTourJoined]    = useState(false);
+  const liveTourJitsiRef = useRef(null);
+  const liveTourApiRef   = useRef(null);
   const [copyToast,         setCopyToast]         = useState(false);
   const [zoomOpen,          setZoomOpen]          = useState(false);
   const [zoomImage,         setZoomImage]         = useState("");
@@ -337,161 +380,81 @@ export default function PropertyDetails() {
   return (
     <div className="details-container">
 
-      <Link to="/" className="back-btn">← Back to Listings</Link>
-
-      {/* ── HEADER ── */}
-      <div className="details-header-row">
-        <div>
-          <h1 className="details-title">{property.title}</h1>
-          <p className="details-location">📍 {property.location}</p>
-          <div className="no-brokerage">
-            <BadgeCheck className="no-brokerage-icon" />
-            No Brokerage
-          </div>
-        </div>
-
-        <div className="top-actions">
-
-          {/* Book Live Tour */}
+      {/* ── TOP ROW: Back + Icon actions (top-right) ── */}
+      <div className="details-topbar">
+        <Link to="/" className="back-btn">← Back to Listings</Link>
+        <div className="icon-actions">
+          {/* Call */}
           <div className="tooltip-wrapper">
-            <button
-              className="action-btn"
-              onClick={() => navigate(`/book/${slug}`)}
-              style={{ background: "linear-gradient(135deg,#0b63e5,#004bbd)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", width: 44, height: 44 }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8"  y1="2" x2="8"  y2="6"/>
-                <line x1="3"  y1="10" x2="21" y2="10"/>
-                <line x1="12" y1="15" x2="12" y2="19"/>
-                <line x1="10" y1="17" x2="14" y2="17"/>
-              </svg>
-            </button>
-            <span className="tooltip">Book Live Tour</span>
-          </div>
-
-          {/* Book Meeting */}
-          <div className="tooltip-wrapper">
-            <a
-              href="https://calendly.com/hemanth-ogm/30min"
-              target="_blank"
-              rel="noreferrer"
-              className="action-btn"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                fill="none" stroke="#2563eb" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8"  y1="2" x2="8"  y2="6"/>
-                <line x1="3"  y1="10" x2="21" y2="10"/>
-              </svg>
-            </a>
-            <span className="tooltip">Book a Meeting</span>
-          </div>
-
-          {/* Call Now */}
-          <div className="tooltip-wrapper">
-            <a href="tel:+918309120616" className="action-btn call-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                fill="none" stroke="#059669" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 0111.19 18a19.5
-                  19.5 0 01-6-6A19.79 19.79 0 012.1 4.18 2 2 0 014.11 2h3a2 2 0
-                  012 1.72c.07.96.26 1.9.56 2.81a2 2 0 01-.45 2.11L8.09 10a16 16
-                  0 006 6l1.36-1.27a2 2 0 012.11-.45c.91.3 1.85.49 2.81.7A2 2 0
-                  0122 16.92z"/>
+            <a href="tel:+918309120616" className="action-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 0111.19 18a19.5 19.5 0 01-6-6A19.79 19.79 0 012.1 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.07.96.26 1.9.56 2.81a2 2 0 01-.45 2.11L8.09 10a16 16 0 006 6l1.36-1.27a2 2 0 012.11-.45c.91.3 1.85.49 2.81.7A2 2 0 0122 16.92z"/>
               </svg>
             </a>
             <span className="tooltip">Call Now</span>
           </div>
-
-          {/* Download Brochure */}
+          {/* Download */}
           <div className="tooltip-wrapper">
             <button className="action-btn" onClick={openBrochure}>
-              <Download className="share-icon" strokeWidth={2} size={24} />
+              <Download strokeWidth={2} size={20} />
             </button>
-            <span className="tooltip">Download Brochure</span>
+            <span className="tooltip">Brochure</span>
           </div>
-
           {/* Share */}
           <div className="tooltip-wrapper">
             <button className="action-btn" onClick={handleShare}>
-              <Share2 className="share-icon" strokeWidth={2} size={24} />
+              <Share2 strokeWidth={2} size={20} />
             </button>
             <span className="tooltip">Share</span>
           </div>
-
           {/* Favorite */}
           <div className="tooltip-wrapper">
             <button className="action-btn" onClick={toggleFavorite}>
-              <Heart
-                className="share-icon"
-                size={24}
-                strokeWidth={2}
-                color={favorite ? "red" : "#0ea5e9"}
-                fill={favorite  ? "red" : "none"}
-              />
+              <Heart size={20} strokeWidth={2}
+                color={favorite ? "red" : "#64748b"}
+                fill={favorite ? "red" : "none"} />
             </button>
-            <span className="tooltip">
-              {favorite ? "Remove from Wishlist" : "Add to Wishlist"}
-            </span>
+            <span className="tooltip">{favorite ? "Wishlisted" : "Wishlist"}</span>
           </div>
-
         </div>
+      </div>
+
+      {/* ── HEADER: Title + Live Tour button ── */}
+      <div className="details-header-row">
+        <div className="details-header-left">
+          <h1 className="details-title">{property.title}</h1>
+          <p className="details-location">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="#f97316" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            {property.location}
+          </p>
+          <div className="header-badges">
+            <span className="no-brokerage-badge">
+              <BadgeCheck size={14} strokeWidth={2} />
+              No Brokerage
+            </span>
+            {property.reraApproved && (
+              <span className="rera-header-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                RERA Approved
+              </span>
+            )}
+            {/* Price inline with badges */}
+            <span className="details-price-inline">{formatIndianPrice(property.price)}</span>
+          </div>
+        </div>
+
+        {/* ── LIVE TOUR big orange button ── */}
+        <button className="live-tour-header-btn" onClick={() => setLiveTourOpen(true)}>
+          <span className="live-tour-header-dot" />
+          Live Tour
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
       </div>
 
       {/* Copy toast */}
-      {copyToast && (
-        <div className="copy-toast">Link copied to clipboard!</div>
-      )}
-
-      {/* ── PRICE ── */}
-      <div className="details-top-info">
-        <span className="details-price">{formatIndianPrice(property.price)}</span>
-        {property.reraApproved && <span className="rera-tag">RERA Approved</span>}
-      </div>
-
-      {/* ── BOOK LIVE TOUR CTA ── */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 14,
-        margin: "16px 0 24px",
-        padding: "18px 22px",
-        background: "linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)",
-        borderRadius: 16,
-        border: "1.5px solid #bfdbfe",
-      }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: 16, color: "#0f172a", marginBottom: 4 }}>
-            📹 Book a Live Property Tour
-          </div>
-          <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
-            See the property live with our agent via video call — pick your preferred date & time.
-          </div>
-        </div>
-        <button
-          onClick={() => navigate(`/book/${slug}`)}
-          style={{
-            flexShrink: 0,
-            padding: "12px 24px",
-            borderRadius: 12,
-            border: "none",
-            background: "linear-gradient(135deg, #0b63e5, #004bbd)",
-            color: "#fff",
-            fontWeight: 800,
-            fontSize: 14,
-            cursor: "pointer",
-            boxShadow: "0 4px 16px rgba(11,99,229,0.3)",
-            transition: "all 0.2s",
-            whiteSpace: "nowrap",
-          }}
-          onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-          onMouseLeave={e => e.currentTarget.style.transform = ""}
-        >
-          Book Tour →
-        </button>
-      </div>
+      {copyToast && <div className="copy-toast">Link copied to clipboard!</div>}
 
       {/* ── MEDIA: GALLERY + VIDEO ── */}
       <div className="media-wrapper">
@@ -519,34 +482,103 @@ export default function PropertyDetails() {
         onClose={() => setZoomOpen(false)}
       />
 
-      {/* ── SPECS ── */}
+      {/* ── BOOK VIRTUAL BRIEFING STRIP ── */}
+      <div className="briefing-strip">
+        <div className="briefing-strip-left">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8"  y1="2" x2="8"  y2="6"/>
+            <line x1="3"  y1="10" x2="21" y2="10"/>
+          </svg>
+          <div>
+            <span className="briefing-strip-title">Book Virtual Briefing</span>
+            <span className="briefing-strip-desc"> — Pick a slot that best suits your schedule and avoid unexpected calls</span>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button className="briefing-strip-btn" onClick={() => navigate(`/book/${slug}`)}>
+            Schedule Now →
+          </button>
+          <button className="briefing-calendar-icon" onClick={() => navigate(`/book/${slug}`)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8"  y1="2" x2="8"  y2="6"/>
+              <line x1="3"  y1="10" x2="21" y2="10"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* ── SPECS — horizontal layout ── */}
       <div className="spec-grid">
-        <div className="spec-box"><b>{property.bedrooms}</b>  Bedrooms</div>
-        <div className="spec-box"><b>{property.bathrooms}</b> Bathrooms</div>
-        <div className="spec-box"><b>{property.landArea}</b>  Land Area</div>
-        <div className="spec-box"><b>{property.parking}</b>   Parking</div>
+        <div className="spec-box">
+          <div className="spec-icon spec-icon-blue">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v13"/><path d="M21 7v13"/><path d="M3 14h18"/><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2"/><path d="M5 12V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v3"/><path d="M13 12V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v3"/></svg>
+          </div>
+          <div className="spec-text">
+            <b>{property.bedrooms}</b>
+            <span>Bedrooms</span>
+          </div>
+          <div className="spec-underline" />
+        </div>
+        <div className="spec-box">
+          <div className="spec-icon spec-icon-orange">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11h18"/><path d="M3 11V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6"/><path d="M3 11v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M7 11V9"/></svg>
+          </div>
+          <div className="spec-text">
+            <b>{property.bathrooms}</b>
+            <span>Bathrooms</span>
+          </div>
+          <div className="spec-underline spec-underline-orange" />
+        </div>
+        <div className="spec-box">
+          <div className="spec-icon spec-icon-green">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 3H3v18h18V3z"/><path d="M9 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M15 3v18"/></svg>
+          </div>
+          <div className="spec-text">
+            <b>{property.sqft || property.landArea}</b>
+            <span>Land Area</span>
+          </div>
+          <div className="spec-underline spec-underline-green" />
+        </div>
+        <div className="spec-box">
+          <div className="spec-icon spec-icon-blue">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+          </div>
+          <div className="spec-text">
+            <b>{property.parking}</b>
+            <span>Parking</span>
+          </div>
+          <div className="spec-underline" />
+        </div>
       </div>
 
       {/* ── PROPERTY DETAILS ── */}
       <div className="details-section">
         <h2>Property Details</h2>
-        <div className="details-table">
-          <div><span>Type:</span>        <b>{property.type}</b></div>
-          <div><span>Built-up Area:</span><b>{property.builtupArea}</b></div>
-          <div><span>Facing:</span>      <b>{property.facing}</b></div>
-          <div><span>Furnishing:</span>  <b>{property.furnishing}</b></div>
-          <div><span>Maintenance:</span> <b>{property.maintenance}</b></div>
+        <div className="pd-table">
+          {[
+            ["Type",         property.type],
+            ["Built-up Area",property.builtupArea],
+            ["Facing",       property.facing],
+            ["Furnishing",   property.furnishing],
+            ["Maintenance",  property.maintenance],
+            ["Carpet Area",  property.carpetArea],
+          ].filter(([,v]) => v).map(([label, value]) => (
+            <div key={label} className="pd-row">
+              <span className="pd-label">{label}</span>
+              <b className="pd-value">{value}</b>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* ── OVERVIEW ── */}
-      <div className="premium-description">
-        <div className="desc-left">
-          <h2>Property Overview</h2>
-        </div>
-        <div className="desc-right">
-          <p>{property.description}</p>
-        </div>
+      <div className="details-section">
+        <h2>Property Overview</h2>
+        <p className="property-overview-text">{property.description}</p>
       </div>
 
       {/* ── NEARBY LOCATIONS (includes its own Google Map) ── */}
@@ -666,7 +698,45 @@ export default function PropertyDetails() {
         </div>
       )}
 
-      <LiveTourButton property={property} variant="netflix" />
+      {/* AskDiscoverWidget — rendered at body level to avoid stacking context issues */}
+      <AskDiscoverWidget property={property} />
+
+      {/* ── LIVE TOUR MODAL ── */}
+      {liveTourOpen && (
+        <div className="live-modal-overlay" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourOpen(false); }}>
+          <div className="live-modal-box" onClick={e => e.stopPropagation()}>
+            {!liveTourJoined ? (
+              <div className="live-prejoin">
+                <img src={property.mainImages?.[0] || property.images?.[0]} alt="" className="live-prejoin-bg" />
+                <div className="live-prejoin-overlay" />
+                <div className="live-prejoin-content">
+                  <div className="live-prejoin-dot" />
+                  <h2>Join Live Tour</h2>
+                  <p>{property.title}</p>
+                  <input
+                    type="text"
+                    placeholder="Enter your name"
+                    value={liveTourName}
+                    onChange={e => setLiveTourName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && liveTourName && setLiveTourJoined(true)}
+                    className="live-name-input"
+                    autoFocus
+                  />
+                  <button className="live-join-btn" onClick={() => setLiveTourJoined(true)} disabled={!liveTourName}>
+                    Join Live Now →
+                  </button>
+                  <button className="live-cancel-btn" onClick={() => setLiveTourOpen(false)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button className="live-close-btn" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourOpen(false); }}>✕</button>
+                <LiveJitsi containerRef={liveTourJitsiRef} apiRef={liveTourApiRef} name={liveTourName} roomName={`ogm-live-${property?.id}`} />
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

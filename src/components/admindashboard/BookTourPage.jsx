@@ -102,13 +102,13 @@ export default function BookTourPage() {
         nav:         { background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "0 28px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" },
         navLogo:     { fontWeight: 800, fontSize: 18, color: "#0f172a", textDecoration: "none" },
         back:        { fontSize: 13, color: "#64748b", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 },
-        container:   { maxWidth: 1000, margin: "0 auto", padding: "36px 20px", display: "grid", gridTemplateColumns: "1fr 380px", gap: 28, alignItems: "start" },
+        container:   { maxWidth: 1100, margin: "0 auto", padding: "36px 40px", display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 24, alignItems: "start" },
         card:        { background: "#fff", borderRadius: 20, boxShadow: "0 2px 20px rgba(15,23,42,0.07)", overflow: "hidden" },
-        propImg:     { width: "100%", height: 200, objectFit: "cover", display: "block" },
-        propInfo:    { padding: "18px 22px" },
-        propTitle:   { fontWeight: 800, fontSize: 17, color: "#0f172a", margin: "0 0 6px" },
-        propMeta:    { fontSize: 13, color: "#64748b", margin: "0 0 10px" },
-        propPrice:   { fontWeight: 800, fontSize: 18, color: "#0b63e5" },
+        propImg:     { width: "100%", height: 180, objectFit: "cover", display: "block" },
+        propInfo:    { padding: "16px 18px" },
+        propTitle:   { fontWeight: 800, fontSize: 15, color: "#0f172a", margin: "0 0 5px" },
+        propMeta:    { fontSize: 12, color: "#64748b", margin: "0 0 8px" },
+        propPrice:   { fontWeight: 800, fontSize: 17, color: "#0b63e5" },
         sectionHead: { padding: "20px 22px 14px", borderBottom: "1px solid #f1f5f9" },
         sectionTitle:{ fontWeight: 800, fontSize: 16, color: "#0f172a", margin: 0 },
         sectionSub:  { fontSize: 13, color: "#94a3b8", margin: "4px 0 0" },
@@ -176,10 +176,13 @@ export default function BookTourPage() {
         <div style={s.page}>
             {/* Nav */}
             <nav style={s.nav}>
-                <Link to="/" style={s.navLogo}>🏠 OGM</Link>
-                <Link to={`/property/${slug}`} style={s.back}>
-                    ← Back to property
-                </Link>
+                <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                    <Link to="/" style={s.navLogo}>🏠 OGM</Link>
+                    <div style={{ width: 1, height: 20, background: "#e2e8f0" }} />
+                    <Link to={`/property/${slug}`} style={s.back}>
+                        ← Back to property
+                    </Link>
+                </div>
             </nav>
 
             <div style={s.container}>
