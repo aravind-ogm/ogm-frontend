@@ -230,15 +230,25 @@ function PlacePanel({ place, number, onClose }) {
 
 /* ── isNearby helpers ── */
 function isNearbyQuery(q) {
-  return /hospital|school|college|mall|restaurant|park|metro|station|supermarket|pharmacy|gym|temple|church|mosque|clinic|market|bank|atm|airport|office|tech park|it park|nearby|near|close to|around/i.test(q);
+  return /hotel|resort|stay|accommodation|hospital|school|college|mall|restaurant|food|dine|cafe|park|metro|station|supermarket|pharmacy|gym|fitness|temple|church|mosque|gurudwara|clinic|market|bank|atm|airport|office|tech park|it park|cinema|theatre|petrol|fuel|nearby|near|close to|around/i.test(q);
 }
 function extractNearbyType(q) {
   const types = {
-    hospital:"hospital", clinic:"hospital", school:"school", college:"school",
-    restaurant:"restaurant", cafe:"cafe", mall:"shopping_mall", supermarket:"supermarket",
-    park:"park", pharmacy:"pharmacy", gym:"gym", bank:"bank",
-    temple:"hindu_temple", church:"church", mosque:"mosque",
-    metro:"subway_station", station:"transit_station",
+    hotel:"lodging", resort:"lodging", stay:"lodging", accommodation:"lodging",
+    hospital:"hospital", clinic:"hospital", healthcare:"hospital",
+    school:"school", college:"school", university:"school",
+    restaurant:"restaurant", food:"restaurant", dine:"restaurant", eating:"restaurant",
+    cafe:"cafe", coffee:"cafe",
+    mall:"shopping_mall", shop:"shopping_mall", supermarket:"supermarket", grocery:"supermarket",
+    park:"park", garden:"park", playground:"park",
+    pharmacy:"pharmacy", medical:"pharmacy", chemist:"pharmacy",
+    gym:"gym", fitness:"gym", workout:"gym",
+    bank:"bank", atm:"atm",
+    temple:"hindu_temple", church:"church", mosque:"mosque", gurudwara:"place_of_worship",
+    metro:"subway_station", station:"transit_station", bus:"bus_station",
+    "it park":"premise", "tech park":"premise", office:"premise",
+    cinema:"movie_theater", theatre:"movie_theater",
+    petrol:"gas_station", fuel:"gas_station",
   };
   const lq = q.toLowerCase();
   for (const [k,v] of Object.entries(types)) { if (lq.includes(k)) return { keyword:k, type:v }; }
@@ -253,10 +263,12 @@ const DEFAULT_SUGGESTIONS = [
   "How do I book a site visit?",
 ];
 const POST_QUERY_SUGGESTIONS = [
-  "What's the distance to Whitefield?",
+  "Are there good restaurants nearby?",
+  "Show hotels near this property",
   "Are there good hospitals nearby?",
-  "What is the current resale value?",
-  "Can I schedule a live tour?",
+  "What gyms are close by?",
+  "Show temples nearby",
+  "What's the distance to Whitefield?",
 ];
 
 /* ════════════════════
