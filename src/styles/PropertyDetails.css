@@ -58,7 +58,9 @@
 .action-btn {
   width: 42px;
   height: 42px;
+  min-width: 42px;
   border-radius: 50%;
+  overflow: hidden;
   background: #f8fafc;
   border: 1.5px solid #e2e8f0;
   display: flex;
@@ -180,13 +182,13 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  padding: 13px 26px;
+  padding: 11px 24px;
   border-radius: 50px;
   border: none;
   background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
   box-shadow: 0 6px 22px rgba(249,115,22,0.4);
   transition: all 0.22s;
@@ -298,13 +300,13 @@
 .briefing-strip-desc  { font-size: 12.5px; color: #64748b; }
 .briefing-strip-btn {
   flex-shrink: 0;
-  padding: 9px 20px;
-  border-radius: 30px;
+  padding: 11px 24px;
+  border-radius: 50px;
   border: none;
   background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 800;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;

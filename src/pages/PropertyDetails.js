@@ -387,8 +387,8 @@ export default function PropertyDetails() {
           {/* Call */}
           <div className="tooltip-wrapper">
             <a href="tel:+918309120616" className="action-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 0111.19 18a19.5 19.5 0 01-6-6A19.79 19.79 0 012.1 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.07.96.26 1.9.56 2.81a2 2 0 01-.45 2.11L8.09 10a16 16 0 006 6l1.36-1.27a2 2 0 012.11-.45c.91.3 1.85.49 2.81.7A2 2 0 0122 16.92z"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.6 3.27 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
             </a>
             <span className="tooltip">Call Now</span>
@@ -446,7 +446,7 @@ export default function PropertyDetails() {
         {/* ── LIVE TOUR big orange button ── */}
         <button className="live-tour-header-btn" onClick={() => setLiveTourOpen(true)}>
           <span className="live-tour-header-dot" />
-          Live Tour
+          Live Video Tour
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6"/>
           </svg>

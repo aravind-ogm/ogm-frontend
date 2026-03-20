@@ -28,8 +28,8 @@
 
 /* ── Robot circle — FIXED right anchor ── */
 .ask-pill-robot-wrap {
-  width: 72px;
-  height: 72px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f97316, #ea580c);
   box-shadow: 0 8px 28px rgba(249,115,22,0.55),
@@ -56,7 +56,7 @@
 /* Green online dot */
 .ask-online-dot {
   position: absolute;
-  top: 4px; right: 4px;
+  top: 3px; right: 3px;
   width: 11px; height: 11px;
   background: #22c55e;
   border-radius: 50%;
@@ -68,8 +68,8 @@
 }
 
 .ask-pill-robot {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
   animation: ask-robot-float 3.5s ease-in-out infinite;
@@ -81,7 +81,8 @@
 
 /* ── Text pill — expands to the LEFT from the circle ── */
 .ask-pill-text-wrap {
-  height: 56px;
+  height: 46px;
+  overflow: visible;
   max-width: 0;
   overflow: hidden;
   border-radius: 28px 0 0 28px;  /* rounded only on left */
@@ -90,8 +91,8 @@
   align-items: center;
   white-space: nowrap;
   /* overlap with circle on the right */
-  margin-right: -28px;
-  padding-right: 28px;
+  margin-right: -29px;
+  padding-right: 29px;
 
   /* SLOW expand/collapse */
   transition:
