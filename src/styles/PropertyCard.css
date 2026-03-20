@@ -1,252 +1,237 @@
 /* ============================================
-   PROPERTY CARD — Ultra Premium
+   PROPERTY CARD — Premium Redesign
+   Matches OGM brand: #1B3A6B navy, #f97316 orange
 ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
-.property-card {
-    display: flex;
-    flex-direction: column;
-    border-radius: 20px;
-    overflow: hidden;
-    background: #ffffff;
-    box-shadow:
-        0 1px 3px rgba(15, 23, 42, 0.05),
-        0 6px 24px rgba(15, 23, 42, 0.07);
-    transition:
-        transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1),
-        box-shadow 0.3s ease;
-    cursor: pointer;
-    text-decoration: none;
-    color: inherit;
-    height: 100%;
-    position: relative;
-    isolation: isolate;
+/* ── Card shell ── */
+.pc {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+  position: relative;
+  isolation: isolate;
+  border: 1.5px solid #f1f5f9;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.3, 0.64, 1),
+    box-shadow 0.3s ease,
+    border-color 0.2s ease;
 }
 
-.property-card:hover {
-    transform: translateY(-8px);
-    box-shadow:
-        0 2px 4px rgba(15, 23, 42, 0.04),
-        0 22px 52px rgba(15, 23, 42, 0.14),
-        0 0 0 1.5px rgba(15, 23, 42, 0.1);
+.pc:hover {
+  transform: translateY(-8px);
+  border-color: #e2e8f0;
+  box-shadow:
+    0 4px 6px rgba(15,23,42,0.04),
+    0 20px 48px rgba(15,23,42,0.12);
 }
 
-/* ── Image ───────────────────────────────── */
-
-.img-wrapper {
-    position: relative;
-    overflow: hidden;
-    height: 210px;
-    flex-shrink: 0;
-    background: #f1f5f9;
+/* ── Image ── */
+.pc-img-wrap {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  background: #f1f5f9;
+  flex-shrink: 0;
 }
 
-.property-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    display: block;
+.pc-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.property-card:hover .property-img {
-    transform: scale(1.08);
+.pc:hover .pc-img {
+  transform: scale(1.07);
 }
 
-/* Bottom gradient for price readability */
-.img-overlay-bottom {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 100px;
-    background: linear-gradient(
-        to top,
-        rgba(0,0,0,0.68) 0%,
-        rgba(0,0,0,0.2) 65%,
-        transparent 100%
-    );
-    z-index: 1;
-    pointer-events: none;
+.pc-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
 }
 
-/* Price — bottom left of image */
-.img-price {
-    position: absolute;
-    bottom: 13px;
-    left: 14px;
-    z-index: 2;
-    font-family: 'Inter', sans-serif;
-    font-size: 19px;
-    font-weight: 900;
-    color: #ffffff;
-    letter-spacing: -0.5px;
-    line-height: 1;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+/* ── Gradient overlay ── */
+.pc-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(10, 15, 35, 0.82) 0%,
+    rgba(10, 15, 35, 0.25) 45%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
-/* ── Image placeholder ─────────────────── */
-
-.img-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-    color: #94a3b8;
-    font-size: 40px;
+/* ── Price ── */
+.pc-price {
+  position: absolute;
+  bottom: 13px;
+  left: 14px;
+  z-index: 2;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.4px;
+  line-height: 1;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.4);
 }
 
-/* ── RERA badge ──────────────────────────── */
-
-.rera-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 4px 10px;
-    border-radius: 30px;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    color: #0f172a;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.14);
-    z-index: 3;
+/* ── RERA badge ── */
+.pc-rera {
+  position: absolute;
+  top: 11px;
+  left: 11px;
+  z-index: 3;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+  color: #0f172a;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-/* ── Sold Out ────────────────────────────── */
-
-.sold-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: linear-gradient(135deg, #ef4444, #b91c1c);
-    color: #ffffff;
-    padding: 4px 12px;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    border-radius: 30px;
-    box-shadow: 0 4px 14px rgba(185,28,28,0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    z-index: 3;
+/* ── Sold Out badge ── */
+.pc-sold {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  z-index: 3;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 3px 11px;
+  border-radius: 20px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  box-shadow: 0 3px 10px rgba(185,28,28,0.4);
 }
 
-/* ── Favourite ───────────────────────────── */
-
-.fav-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 33px;
-    height: 33px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease;
-    z-index: 3;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+/* ── Fav button ── */
+.pc-fav {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, background 0.2s;
+}
+.pc-fav:hover {
+  transform: scale(1.18);
+  background: #fff;
 }
 
-.fav-btn:hover {
-    transform: scale(1.2);
-    background: #ffffff;
-}
-
-.heart-icon { width: 16px; height: 16px; transition: fill 0.2s ease, color 0.2s ease; }
-.heart-inactive { fill: rgba(15,23,42,0.45); color: rgba(15,23,42,0.45); }
-.heart-active   { fill: #ef4444; color: #ef4444; }
-
-/* ── Card body ───────────────────────────── */
-
-.property-info {
-    padding: 13px 15px 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-    background: #ffffff;
+/* ── Card body ── */
+.pc-body {
+  padding: 14px 15px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
 }
 
 /* Title */
-.property-title {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    letter-spacing: -0.1px;
+.pc-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -0.1px;
 }
 
-/* Location — styled as a pill exactly like type tag but slate/gray */
-.property-location-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    align-self: flex-start;
-    background: #eff6ff;
-    border: 1px solid #dbeafe;
-    padding: 4px 10px 4px 8px;
-    border-radius: 30px;
-    font-family: 'Inter', sans-serif;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #0b63e5;
-    max-width: 100%;
-    overflow: hidden;
+/* Location */
+.pc-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 8px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 20px;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
 }
 
-.property-location-pill span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.pc-location span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1B3A6B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ── Footer ──────────────────────────────── */
-
-.property-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: auto;
-    padding-top: 8px;
-    border-top: 1px solid #f1f5f9;
+/* ── Footer row ── */
+.pc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  margin-top: auto;
+  border-top: 1px solid #f1f5f9;
 }
 
-/* sqft */
-.property-sqft {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
+.pc-sqft {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
 }
 
-/* Type tag — blue pill, same row as sqft */
-.property-type-tag {
-    font-family: 'Inter', sans-serif;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #0b63e5;
-    background: #eff6ff;
-    border: 1px solid #dbeafe;
-    padding: 3px 10px;
-    border-radius: 30px;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
+.pc-type {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #1B3A6B;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .pc-img-wrap { height: 175px; }
+  .pc-price    { font-size: 16px; }
 }

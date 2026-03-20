@@ -1,102 +1,104 @@
 import React, { useState, useCallback, memo } from "react";
-import { Heart, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import "../styles/PropertyCard.css";
 
 const formatPrice = (price) => {
-    const num = Number(price);
-    if (!price || isNaN(num)) return "Price on request";
-    if (num >= 10_000_000) return `₹ ${(num / 10_000_000).toFixed(2)} Cr`;
-    if (num >= 100_000)    return `₹ ${(num / 100_000).toFixed(2)} Lakhs`;
-    return `₹ ${num.toLocaleString("en-IN")}`;
+  const n = Number(price);
+  if (!price || isNaN(n)) return "Price on request";
+  if (n >= 10_000_000) return `₹ ${(n / 10_000_000).toFixed(2)} Cr`;
+  if (n >= 100_000)    return `₹ ${(n / 100_000).toFixed(2)} L`;
+  return `₹ ${n.toLocaleString("en-IN")}`;
 };
 
 function PropertyImage({ src, alt }) {
-    const [errored, setErrored] = useState(false);
-    if (!src || errored) return <div className="img-placeholder">🏠</div>;
-    return (
-        <img
-            src={src} alt={alt} className="property-img"
-            loading="lazy" decoding="async"
-            onError={() => setErrored(true)}
-        />
-    );
+  const [err, setErr] = useState(false);
+  if (!src || err) return (
+    <div className="pc-img-placeholder">
+      <svg width="40" height="40" fill="none" stroke="#cbd5e1" strokeWidth="1.5" viewBox="0 0 24 24">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </div>
+  );
+  return <img src={src} alt={alt} className="pc-img" loading="lazy" decoding="async" onError={() => setErr(true)} />;
 }
 
 function PropertyCard({ property }) {
-    const [isFavorite, setIsFavorite] = useState(false);
+  const [fav, setFav] = useState(false);
 
-    const mainImage =
-        property.mainImages?.[0] ||
-        property.images?.[0]     ||
-        property.image            ||
-        null;
+  const img = property.mainImages?.[0] || property.images?.[0] || property.image || null;
+  const price = formatPrice(property.price);
+  const soldOut = Boolean(property.soldOut);
 
-    const handleFavClick = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsFavorite((prev) => !prev);
-    }, []);
+  const toggleFav = useCallback((e) => {
+    e.preventDefault(); e.stopPropagation();
+    setFav(v => !v);
+  }, []);
 
-    const price     = formatPrice(property.price);
-    const isSoldOut = Boolean(property.soldOut);
+  return (
+    <Link to={`/property/${property.slug}`} className="pc" aria-label={property.title}>
 
-    return (
-        <Link
-            to={`/property/${property.slug}`}
-            className="property-card"
-            aria-label={`View details for ${property.title}`}
-        >
-            {/* ── Image ── */}
-            <div className="img-wrapper">
-                <PropertyImage src={mainImage} alt={property.title} />
-                <div className="img-overlay-bottom" />
+      {/* ── Image area ── */}
+      <div className="pc-img-wrap">
+        <PropertyImage src={img} alt={property.title} />
 
-                {/* Price on image — single source of truth */}
-                <span className="img-price">{price}</span>
+        {/* Gradient */}
+        <div className="pc-gradient" />
 
-                {property.reraApproved && (
-                    <span className="rera-badge">RERA ✓</span>
-                )}
+        {/* Price — bottom left */}
+        <div className="pc-price">{price}</div>
 
-                {isSoldOut ? (
-                    <span className="sold-badge">Sold Out</span>
-                ) : (
-                    <button
-                        className="fav-btn"
-                        onClick={handleFavClick}
-                        aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
-                    >
-                        <Heart className={`heart-icon ${isFavorite ? "heart-active" : "heart-inactive"}`} />
-                    </button>
-                )}
-            </div>
+        {/* Top badges */}
+        {property.reraApproved && <span className="pc-rera">RERA ✓</span>}
 
-            {/* ── Card Body ── */}
-            <div className="property-info">
-                <h3 className="property-title">{property.title}</h3>
+        {soldOut
+          ? <span className="pc-sold">Sold Out</span>
+          : (
+            <button className="pc-fav" onClick={toggleFav} aria-label="Wishlist">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={fav ? "#ef4444" : "none"}
+                stroke={fav ? "#ef4444" : "#64748b"} strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </button>
+          )
+        }
+      </div>
 
-                {/* Location pill — styled like type tag */}
-                {property.location && (
-                    <div className="property-location-pill">
-                        <MapPin size={11} strokeWidth={2.5} color="#0b63e5" />
-                        <span>{property.location}</span>
-                    </div>
-                )}
+      {/* ── Card body ── */}
+      <div className="pc-body">
 
-                {/* Footer: sqft + type */}
-                <div className="property-footer">
-                    {property.sqft
-                        ? <span className="property-sqft">{property.sqft} sqft</span>
-                        : <span />
-                    }
-                    {property.type && (
-                        <span className="property-type-tag">{property.type}</span>
-                    )}
-                </div>
-            </div>
-        </Link>
-    );
+        {/* Title */}
+        <h3 className="pc-title">{property.title}</h3>
+
+        {/* Location */}
+        {property.location && (
+          <div className="pc-location">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#1B3A6B" stroke="none">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <span>{property.location}</span>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="pc-footer">
+          {property.sqft
+            ? (
+              <div className="pc-sqft">
+                <svg width="12" height="12" fill="none" stroke="#94a3b8" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+                {property.sqft} sqft
+              </div>
+            )
+            : <span />
+          }
+          {property.type && <span className="pc-type">{property.type}</span>}
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 export default memo(PropertyCard);
