@@ -1,127 +1,189 @@
 /* ============================================================
-   PREMIUM DARK FOOTER - FULL WIDTH BREAKOUT
-   ============================================================ */
+   OGM FOOTER — Premium Dark, Full-Width Breakout
+   Brand: #1B3A6B navy · #f97316 orange · DM Sans
+============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+/* ── Full-width breakout ── */
 .premium-footer {
-    /* BREAKOUT LOGIC: Spans edge-to-edge even inside narrow parents */
-    width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
-    box-sizing: border-box;
-
-    padding: 70px 0;
-    margin-top: 60px;
-    background: radial-gradient(circle at top, #0f172a 0%, #0a1120 70%);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    color: #e2e8f0;
-    overflow: hidden;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
+  margin-top: 0;
+  padding: 64px 0 0;
+  background: #0d1f3c;
+  border-top: 3px solid #1B3A6B;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: 'DM Sans', -apple-system, sans-serif;
 }
 
-/* Inner container to align content with your main site grid */
+/* ── Main container ── */
 .footer-container {
-    max-width: 1100px; /* Matches your SearchBar max-width */
-    margin: 0 auto;
-    padding: 0 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+  margin-bottom: 48px;
 }
 
+/* ── Brand column ── */
 .footer-brand {
-    max-width: 550px;
-    text-align: center;
-    margin-bottom: 40px;
+  text-align: left;
+  max-width: 100%;
+  margin-bottom: 0;
 }
 
 .footer-logo {
-    height: 60px;
-    margin-bottom: 20px;
-    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 16px;
+  display: block;
+  opacity: 0.9;
+  transition: opacity 0.2s;
 }
+.footer-logo:hover { opacity: 1; }
 
 .footer-brand-text {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #94a3b8;
+  max-width: 280px;
+  margin-bottom: 20px;
 }
 
-/* SOCIALS */
+/* ── Social icons ── */
 .footer-social {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-top: 0;
 }
 
+.footer-social a {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.footer-social a:hover {
+  background: #f97316;
+  border-color: #f97316;
+  color: #fff;
+  transform: translateY(-2px);
+}
 .footer-social a i {
-    font-size: 22px;
-    color: #94a3b8;
-    transition: all 0.3s ease;
+  font-size: 16px;
+  color: inherit;
+  transition: none;
 }
 
-.footer-social a i:hover {
-    color: #38bdf8;
-    transform: translateY(-3px);
-    filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.5));
+/* ── Link columns ── */
+.footer-col {
+  display: flex;
+  flex-direction: column;
 }
 
-/* GLASS LINKS CARD */
+.footer-col-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f97316;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 16px;
+}
+
+/* ── Glass links card (now used for nav columns) ── */
 .footer-links-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    border-radius: 20px;
-    padding: 20px 40px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 25px;
-    margin-bottom: 40px;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 0;
 }
 
 .footer-links-card a {
-    color: #cbd5e1;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 14px;
-    transition: color 0.2s;
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 5px 0;
+  border-bottom: none;
+  transition: color 0.18s, transform 0.18s;
 }
-
 .footer-links-card a:hover {
-    color: #38bdf8;
+  color: #ffffff;
+  transform: translateX(3px);
 }
 
-/* BOTTOM SECTION */
+/* ── Bottom bar ── */
 .footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 30px;
-    width: 100%;
-    text-align: center;
+  background: rgba(0,0,0,0.2);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 20px 40px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .footer-disclaimer {
-    font-size: 12px;
-    color: #64748b;
-    max-width: 700px;
-    margin: 0 auto 15px;
+  font-size: 12px;
+  color: #475569;
+  max-width: 680px;
+  margin: 0 auto 6px;
+  line-height: 1.6;
 }
 
 .footer-copy {
-    font-size: 13px;
-    color: #94a3b8;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
 }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
-    .premium-footer {
-        padding: 50px 0;
-    }
-    .footer-links-card {
-        padding: 20px;
-        gap: 15px;
-        border-radius: 15px;
-    }
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .footer-container {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 36px;
+  }
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-brand-text { max-width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .premium-footer { padding-top: 44px; }
+  .footer-container {
+    grid-template-columns: 1fr 1fr;
+    padding: 0 20px;
+    gap: 28px;
+    margin-bottom: 32px;
+  }
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-bottom { padding: 16px 20px; }
+  .footer-logo { height: 40px; }
+}
+
+@media (max-width: 400px) {
+  .footer-container { grid-template-columns: 1fr; }
 }
