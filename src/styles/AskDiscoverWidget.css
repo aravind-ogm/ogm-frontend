@@ -379,3 +379,102 @@
   background: #f8fafc; font-size: 13px; color: #94a3b8; padding: 20px;
   text-align: center;
 }
+
+/* ── Map outer wrapper ── */
+.adw-map-outer { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Nearby hint ── */
+.adw-map-nearby-hint {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(13,31,60,0.85); color: #fff;
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 600; white-space: nowrap; z-index: 10;
+}
+
+/* ── Nearby list below map ── */
+.adw-nearby-list {
+  background: #fff; border: 1.5px solid #e2e8f0;
+  border-top: none; border-radius: 0 0 16px 16px; overflow: hidden;
+}
+.adw-nearby-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px; width: 100%; text-align: left;
+  background: none; border: none; border-bottom: 1px solid #f1f5f9;
+  cursor: pointer; transition: background .15s;
+}
+.adw-nearby-item:last-child { border-bottom: none; }
+.adw-nearby-item:hover { background: #f8fafc; }
+.adw-nearby-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #f97316; color: #fff;
+  font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.adw-nearby-info { flex: 1; }
+.adw-nearby-name { font-size: 13px; font-weight: 700; color: #0d1f3c; }
+.adw-nearby-addr { font-size: 11.5px; color: #94a3b8; margin-top: 1px; }
+.adw-nearby-rating { font-size: 11.5px; color: #f97316; margin-top: 2px; }
+.adw-nearby-arrow { font-size: 18px; color: #cbd5e1; }
+
+/* ── Place detail side panel ── */
+.adw-place-panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 340px; background: #fff; z-index: 99993;
+  box-shadow: -8px 0 40px rgba(15,23,42,0.15);
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: adw-panel-in .3s ease;
+}
+@keyframes adw-panel-in { from { transform: translateX(100%); } to { transform: none; } }
+
+.adw-place-close {
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.55);
+  color: #fff; border: none; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.adw-place-close:hover { background: rgba(0,0,0,0.8); }
+
+.adw-place-num {
+  position: absolute; top: 12px; left: 12px; z-index: 2;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #f97316; color: #fff;
+  font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.adw-place-photo-wrap { position: relative; height: 220px; background: #e2e8f0; flex-shrink: 0; }
+.adw-place-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.adw-place-photo-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(0,0,0,0.55); color: #fff; border: none;
+  width: 28px; height: 28px; border-radius: 50%; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.adw-place-photo-arrow.left  { left: 8px; }
+.adw-place-photo-arrow.right { right: 8px; }
+
+.adw-place-photo-dots {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 5px;
+}
+.adw-place-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,0.5); border: none; cursor: pointer; padding: 0;
+  transition: background .15s;
+}
+.adw-place-dot.active { background: #fff; }
+
+.adw-place-body { padding: 18px; overflow-y: auto; flex: 1; }
+.adw-place-name { font-size: 16px; font-weight: 800; color: #0d1f3c; margin-bottom: 6px; }
+.adw-place-rating { font-size: 13px; color: #f97316; margin-bottom: 8px; }
+.adw-place-rating span { color: #64748b; font-size: 12px; }
+.adw-place-addr  { font-size: 12.5px; color: #64748b; margin-bottom: 6px; line-height: 1.5; }
+.adw-place-phone { font-size: 12.5px; color: #1B3A6B; font-weight: 600; margin-bottom: 8px; }
+.adw-place-hours { font-size: 12.5px; font-weight: 700; padding: 4px 12px; border-radius: 20px; display: inline-block; }
+.adw-place-hours.open   { background: #f0fdf4; color: #15803d; }
+.adw-place-hours.closed { background: #fef2f2; color: #b91c1c; }
+
+@media (max-width: 480px) {
+  .adw-place-panel { width: 100vw; }
+}
