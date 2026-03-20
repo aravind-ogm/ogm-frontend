@@ -274,6 +274,201 @@ const POST_QUERY_SUGGESTIONS = [
 /* ════════════════════
    MAIN WIDGET
 ════════════════════ */
+/* ── PDF / download detection ── */
+function isPdfQuery(q) {
+  return /pdf|document|download|brochure|report|save.*details|create.*doc|generate.*doc|compile/i.test(q);
+}
+
+/* ── Chat history storage ── */
+const HISTORY_KEY = "ogm_chat_history";
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; }
+}
+
+function saveSession(property, messages) {
+  try {
+    const hist = loadHistory();
+    const session = {
+      id:        Date.now(),
+      propertyId: property?.id,
+      title:     property?.title?.slice(0, 40) || "Property Chat",
+      date:      new Date().toLocaleDateString("en-IN", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }),
+      preview:   messages.find(m => m.role === "user")?.content?.slice(0, 60) || "",
+      messages,
+    };
+    hist.unshift(session);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(0, 20)));
+  } catch {}
+}
+
+/* ── jsPDF loader ── */
+function loadJsPDF() {
+  return new Promise((resolve, reject) => {
+    if (window.jspdf) { resolve(window.jspdf.jsPDF); return; }
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload  = () => resolve(window.jspdf.jsPDF);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+/* ── Generate premium PDF ── */
+async function generatePropertyPDF(property, selections) {
+  const JsPDF = await loadJsPDF();
+  const doc   = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W     = 210, M = 18;
+
+  const navy   = [27, 58, 107];
+  const orange = [249, 115, 22];
+  const white  = [255, 255, 255];
+  const gray   = [100, 116, 139];
+  const light  = [248, 250, 252];
+  const dark   = [15, 23, 42];
+
+  const price = property.price >= 10_000_000
+    ? "Rs " + (property.price / 10_000_000).toFixed(2) + " Cr"
+    : "Rs " + (property.price / 100_000).toFixed(2) + " Lakhs";
+
+  let y = 0;
+
+  // ── Header bar ──
+  doc.setFillColor(...navy);
+  doc.rect(0, 0, W, 38, "F");
+  doc.setFontSize(7); doc.setTextColor(...white);
+  doc.text("ONE GLOBAL MARKETPLACE", M, 10);
+  doc.setFontSize(16); doc.setFont("helvetica","bold");
+  doc.text("Property Report", M, 22);
+  doc.setFontSize(8); doc.setFont("helvetica","normal");
+  doc.text("www.oneglobalmarketplace.com", M, 32);
+  doc.setFillColor(...orange);
+  doc.rect(W - 45, 10, 35, 18, "F");
+  doc.setFontSize(7); doc.setFont("helvetica","bold"); doc.setTextColor(...white);
+  doc.text("RERA", W - 40, 17);
+  doc.text(property.reraApproved ? "APPROVED" : "PENDING", W - 40, 24);
+
+  y = 50;
+
+  // ── Title + price ──
+  doc.setFontSize(17); doc.setFont("helvetica","bold"); doc.setTextColor(...dark);
+  const titleLines = doc.splitTextToSize(property.title, W - 2*M);
+  doc.text(titleLines, M, y); y += titleLines.length * 7 + 3;
+
+  doc.setFontSize(10); doc.setTextColor(...gray);
+  doc.text("📍 " + (property.location || ""), M, y); y += 7;
+
+  doc.setFontSize(20); doc.setFont("helvetica","bold"); doc.setTextColor(...navy);
+  doc.text(price, M, y);
+  if (property.reraApproved) {
+    doc.setFillColor(240, 253, 244); doc.roundedRect(M + 52, y - 7, 32, 9, 2, 2, "F");
+    doc.setFontSize(7); doc.setTextColor(21, 128, 61);
+    doc.text("RERA Approved", M + 54, y - 1);
+  }
+  y += 12;
+
+  // ── Divider ──
+  doc.setDrawColor(...orange); doc.setLineWidth(0.7);
+  doc.line(M, y, W - M, y); y += 8;
+
+  // ── Spec boxes ──
+  const specs = [
+    ["Bedrooms",   property.bedrooms    || "N/A"],
+    ["Bathrooms",  property.bathrooms   || "N/A"],
+    ["Area",       (property.builtupArea || property.sqft || "N/A") + " sqft"],
+    ["Parking",    property.parking     || "N/A"],
+    ["Facing",     property.facing      || "N/A"],
+    ["Furnishing", property.furnishing  || "N/A"],
+  ];
+  const boxW = (W - 2*M - 8) / 3, boxH = 20;
+  specs.forEach(([label, val], i) => {
+    const col = i % 3, row = Math.floor(i / 3);
+    const bx = M + col*(boxW+4), by = y + row*(boxH+4);
+    doc.setFillColor(...light); doc.roundedRect(bx, by, boxW, boxH, 2, 2, "F");
+    doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3); doc.roundedRect(bx, by, boxW, boxH, 2, 2, "S");
+    doc.setFontSize(7); doc.setTextColor(...gray); doc.setFont("helvetica","normal");
+    doc.text(label.toUpperCase(), bx + 4, by + 7);
+    doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(...dark);
+    doc.text(String(val), bx + 4, by + 15);
+  });
+  y += 2 * (boxH + 4) + 8;
+
+  // ── Selected sections ──
+  const section = (title) => {
+    doc.setFillColor(...navy); doc.rect(M, y, 4, 8, "F");
+    doc.setFontSize(12); doc.setFont("helvetica","bold"); doc.setTextColor(...dark);
+    doc.text(title, M + 7, y + 6); y += 13;
+  };
+
+  if (selections.includes("overview") && property.description) {
+    section("Property Overview");
+    doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(55, 65, 81);
+    const lines = doc.splitTextToSize(property.description, W - 2*M);
+    doc.text(lines, M, y); y += lines.length * 5 + 8;
+  }
+
+  if (selections.includes("details")) {
+    section("Property Details");
+    const rows = [
+      ["Type",         property.type        || "N/A"],
+      ["Built-up Area",property.builtupArea  || "N/A"],
+      ["Carpet Area",  property.carpetArea   || "N/A"],
+      ["Maintenance",  property.maintenance  || "N/A"],
+      ["Developer",    property.developerName|| "N/A"],
+      ["Possession",   property.possessionStatus || "N/A"],
+    ];
+    rows.forEach(([lbl, val], i) => {
+      const rowY = y + i*9;
+      if (i % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(M, rowY - 3, W - 2*M, 9, "F"); }
+      doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(...gray);
+      doc.text(lbl, M + 2, rowY + 3);
+      doc.setFont("helvetica","bold"); doc.setTextColor(...dark);
+      doc.text(String(val), W/2, rowY + 3);
+    });
+    y += rows.length * 9 + 8;
+  }
+
+  if (selections.includes("amenities") && property.amenities?.length) {
+    section("Features & Amenities");
+    const cols = 3, gap = 4;
+    const aw = (W - 2*M - gap*(cols-1)) / cols;
+    property.amenities.forEach((a, i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      const ax = M + col*(aw+gap), ay = y + row*9;
+      doc.setFillColor(239,246,255); doc.roundedRect(ax, ay-3, aw, 8, 1, 1, "F");
+      doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.setTextColor(...navy);
+      doc.text("• " + a, ax+3, ay+2);
+    });
+    y += (Math.ceil(property.amenities.length/cols)) * 9 + 8;
+  }
+
+  if (selections.includes("contact")) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFillColor(...navy); doc.rect(M, y, W - 2*M, 40, "F");
+    doc.setFontSize(11); doc.setFont("helvetica","bold"); doc.setTextColor(...white);
+    doc.text("Contact Us", M + 8, y + 10);
+    doc.setFontSize(8); doc.setFont("helvetica","normal");
+    doc.text("📞 +91 83091 20616", M + 8, y + 20);
+    doc.text("🌐 www.oneglobalmarketplace.com", M + 8, y + 28);
+    doc.text("📍 Bengaluru, Karnataka, India", M + 8, y + 36);
+    y += 50;
+  }
+
+  // ── Footer ──
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFillColor(...light); doc.rect(0, 285, W, 12, "F");
+    doc.setDrawColor(...orange); doc.setLineWidth(0.5); doc.line(0, 285, W, 285);
+    doc.setFontSize(7); doc.setTextColor(...gray);
+    doc.text("One Global Marketplace — Trusted Real Estate Discovery", M, 291);
+    doc.text("Page " + i + " of " + pageCount, W - M - 12, 291);
+    doc.text("Generated: " + new Date().toLocaleDateString("en-IN"), W/2 - 10, 291);
+  }
+
+  doc.save(`OGM-${property.title?.slice(0,25).replace(/\s+/g, "-") || "Property"}.pdf`);
+}
+
 export default function AskDiscoverWidget({ property }) {
   const [phase,         setPhase]         = useState("pill");
   const [input,         setInput]         = useState("");
@@ -282,6 +477,12 @@ export default function AskDiscoverWidget({ property }) {
   const [visible,       setVisible]       = useState(false);
   const [expanded,      setExpanded]      = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
+  const [showHistory,   setShowHistory]   = useState(false);
+  const [history,       setHistory]       = useState(() => loadHistory());
+  // PDF flow: null | "asking" | "generating"
+  const [pdfMode,       setPdfMode]       = useState(null);
+  const [pdfSelections, setPdfSelections] = useState(["overview","details","amenities","contact"]);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
 
   const chatIdRef = useRef(`prop-${property?.id}-${Date.now()}`);
   const inputRef  = useRef(null);
@@ -310,6 +511,16 @@ export default function AskDiscoverWidget({ property }) {
     if (!q || loading) return;
     setInput("");
     setPhase("chat");
+    // PDF request?
+    if (isPdfQuery(q) && pdfMode === null) {
+      setPdfMode("asking");
+      setMessages(prev => [...prev,
+        { role: "user", content: q },
+        { role: "assistant", content: null, isPdfAsk: true },
+      ]);
+      setLoading(false);
+      return;
+    }
     const isNearby    = isNearbyQuery(q);
     const isDist      = isDistanceQuery(q);
     const nInfo       = isNearby ? extractNearbyType(q) : {};
@@ -380,7 +591,31 @@ export default function AskDiscoverWidget({ property }) {
       {/* FULL CHAT */}
       {phase === "chat" && (
         <div className="adw-chat-overlay">
-          <div className="adw-chat-inner">
+          {/* History sidebar */}
+          {showHistory && (
+            <div className="adw-history-sidebar">
+              <div className="adw-history-header">
+                <span>Chat History</span>
+                <button className="adw-history-close" onClick={() => setShowHistory(false)}>✕</button>
+              </div>
+              <div className="adw-history-list">
+                {history.length === 0 && <div className="adw-history-empty">No previous chats yet</div>}
+                {history.map(session => (
+                  <div key={session.id} className="adw-history-item"
+                    onClick={() => { setMessages(session.messages); setShowHistory(false); }}>
+                    <div className="adw-history-title">{session.title}</div>
+                    <div className="adw-history-preview">{session.preview}</div>
+                    <div className="adw-history-date">{session.date}</div>
+                  </div>
+                ))}
+              </div>
+              <button className="adw-history-clear" onClick={() => { localStorage.removeItem("ogm_chat_history"); setHistory([]); }}>
+                Clear all history
+              </button>
+            </div>
+          )}
+
+        <div className="adw-chat-inner">
 
             {/* Mini card */}
             {property && (
@@ -427,10 +662,53 @@ export default function AskDiscoverWidget({ property }) {
               {messages.map((msg, i) => (
                 <div key={i}>
                   {msg.role === "user" && <div className="adw-user-q">{msg.content}</div>}
-                  {msg.role === "assistant" && (
+                  {msg.role === "assistant" && !msg.isPdfAsk && msg.content && (
                     <div className="adw-assistant-msg">
                       <img src={ROBOT_IMG} alt="AI" className="adw-msg-avatar" />
                       <div className="adw-msg-text">{msg.content}</div>
+                    </div>
+                  )}
+                  {msg.role === "assistant" && msg.isPdfAsk && (
+                    <div className="adw-assistant-msg">
+                      <img src={ROBOT_IMG} alt="AI" className="adw-msg-avatar" />
+                      <div className="adw-pdf-ask-card">
+                        <div className="adw-pdf-ask-title">What should I include in the document?</div>
+                        <div className="adw-pdf-options">
+                          {[
+                            { key:"overview",  label:"📝 Property Overview" },
+                            { key:"details",   label:"📋 Property Details" },
+                            { key:"amenities", label:"✨ Features & Amenities" },
+                            { key:"contact",   label:"📞 Contact Information" },
+                          ].map(({ key, label }) => (
+                            <label key={key} className={`adw-pdf-opt ${pdfSelections.includes(key) ? "selected" : ""}`}>
+                              <input type="checkbox" checked={pdfSelections.includes(key)}
+                                onChange={e => setPdfSelections(prev =>
+                                  e.target.checked ? [...prev, key] : prev.filter(k => k !== key))}
+                              />
+                              {label}
+                            </label>
+                          ))}
+                        </div>
+                        <button
+                          className="adw-pdf-generate-btn"
+                          disabled={pdfSelections.length === 0 || pdfGenerating}
+                          onClick={async () => {
+                            setPdfGenerating(true);
+                            setMessages(prev => [...prev, { role:"user", content:"Generate the PDF with: " + pdfSelections.join(", ") }]);
+                            try {
+                              await generatePropertyPDF(property, pdfSelections);
+                              setMessages(prev => [...prev, { role:"assistant", content:"✅ Your PDF has been downloaded! It includes: " + pdfSelections.join(", ") + ". Let me know if you need any other information." }]);
+                            } catch {
+                              setMessages(prev => [...prev, { role:"assistant", content:"Sorry, there was an issue generating the PDF. Please try again." }]);
+                            } finally {
+                              setPdfGenerating(false);
+                              setPdfMode(null);
+                            }
+                          }}
+                        >
+                          {pdfGenerating ? "⏳ Generating PDF…" : "⬇ Download PDF"}
+                        </button>
+                      </div>
                     </div>
                   )}
                   {msg.role === "assistant" && messages[i-1]?.needsMap && (
@@ -476,7 +754,18 @@ export default function AskDiscoverWidget({ property }) {
             {selectedPlace && (
               <PlacePanel place={selectedPlace.place} number={selectedPlace.number} onClose={() => setSelectedPlace(null)} />
             )}
-            <button className="adw-chat-close" onClick={() => { setPhase("pill"); setMessages([]); setSelectedPlace(null); }}>✕</button>
+            <button className="adw-history-toggle" onClick={() => setShowHistory(v => !v)} title="Chat history">
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </button>
+            <button className="adw-chat-close" onClick={() => {
+                if (messages.length > 0) {
+                  saveSession(property, messages);
+                  setHistory(loadHistory());
+                }
+                setPhase("pill"); setMessages([]); setSelectedPlace(null); setPdfMode(null);
+              }}>✕</button>
           </div>
         </div>
       )}
