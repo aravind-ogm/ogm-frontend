@@ -926,7 +926,7 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
 
   // ── Cancel call ──
   const handleCancel = async (id) => {
-    await fetch(`${API_BASE}/api/agent/schedule-call/${id}`, { method: 'DELETE' });
+    await fetch(`${API_BASE}/api/agent/upcoming/${id}/cancel`, { method: 'PUT' });
     setCalls(prev => prev.filter(c => c.id !== id));
   };
 
@@ -1071,7 +1071,7 @@ function ScheduleCallModal({ agentId, onClose, onSaved }) {
     setSaving(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/api/agent/schedule-call`, {
+      const res = await fetch(`${API_BASE}/api/agent/book-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1079,10 +1079,9 @@ function ScheduleCallModal({ agentId, onClose, onSaved }) {
           propertyId: form.propertyId ? Number(form.propertyId) : null,
           customerName: form.customerName,
           customerMobile: form.customerMobile,
-          customerEmail: form.customerEmail,
           note: form.note,
           scheduledAt: form.scheduledAt,
-          source: 'AGENT_MANUAL',
+          source: 'AGENT_SCHEDULED',
         }),
       });
       if (!res.ok) throw new Error();

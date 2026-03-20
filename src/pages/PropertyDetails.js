@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import GalleryCarousel  from "../components/GalleryCarousel";
 import VideoModal       from "../components/VideoModal";
 import Amenities        from "../components/Amenities";
@@ -58,6 +58,7 @@ function loadGoogleMaps() {
 
 export default function PropertyDetails() {
   const { slug } = useParams();
+  const navigate  = useNavigate();
 
   /* ── Core state ── */
   const [property,          setProperty]          = useState(null);
@@ -351,6 +352,25 @@ export default function PropertyDetails() {
 
         <div className="top-actions">
 
+          {/* Book Live Tour */}
+          <div className="tooltip-wrapper">
+            <button
+              className="action-btn"
+              onClick={() => navigate(`/book/${slug}`)}
+              style={{ background: "linear-gradient(135deg,#0b63e5,#004bbd)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", width: 44, height: 44 }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8"  y1="2" x2="8"  y2="6"/>
+                <line x1="3"  y1="10" x2="21" y2="10"/>
+                <line x1="12" y1="15" x2="12" y2="19"/>
+                <line x1="10" y1="17" x2="14" y2="17"/>
+              </svg>
+            </button>
+            <span className="tooltip">Book Live Tour</span>
+          </div>
+
           {/* Book Meeting */}
           <div className="tooltip-wrapper">
             <a
@@ -431,6 +451,46 @@ export default function PropertyDetails() {
       <div className="details-top-info">
         <span className="details-price">{formatIndianPrice(property.price)}</span>
         {property.reraApproved && <span className="rera-tag">RERA Approved</span>}
+      </div>
+
+      {/* ── BOOK LIVE TOUR CTA ── */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 14,
+        margin: "16px 0 24px",
+        padding: "18px 22px",
+        background: "linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)",
+        borderRadius: 16,
+        border: "1.5px solid #bfdbfe",
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 800, fontSize: 16, color: "#0f172a", marginBottom: 4 }}>
+            📹 Book a Live Property Tour
+          </div>
+          <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+            See the property live with our agent via video call — pick your preferred date & time.
+          </div>
+        </div>
+        <button
+          onClick={() => navigate(`/book/${slug}`)}
+          style={{
+            flexShrink: 0,
+            padding: "12px 24px",
+            borderRadius: 12,
+            border: "none",
+            background: "linear-gradient(135deg, #0b63e5, #004bbd)",
+            color: "#fff",
+            fontWeight: 800,
+            fontSize: 14,
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(11,99,229,0.3)",
+            transition: "all 0.2s",
+            whiteSpace: "nowrap",
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+          onMouseLeave={e => e.currentTarget.style.transform = ""}
+        >
+          Book Tour →
+        </button>
       </div>
 
       {/* ── MEDIA: GALLERY + VIDEO ── */}

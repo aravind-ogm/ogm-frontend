@@ -3,8 +3,6 @@ import { Heart, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import "../styles/PropertyCard.css";
 
-// ─── Price Formatter ─────────────────────────────────────────────────────────
-
 const formatPrice = (price) => {
     const num = Number(price);
     if (!price || isNaN(num)) return "Price on request";
@@ -13,28 +11,17 @@ const formatPrice = (price) => {
     return `₹ ${num.toLocaleString("en-IN")}`;
 };
 
-// ─── Image with fallback ──────────────────────────────────────────────────────
-
 function PropertyImage({ src, alt }) {
     const [errored, setErrored] = useState(false);
-
-    if (!src || errored) {
-        return <div className="img-placeholder">🏠</div>;
-    }
-
+    if (!src || errored) return <div className="img-placeholder">🏠</div>;
     return (
         <img
-            src={src}
-            alt={alt}
-            className="property-img"
-            loading="lazy"
-            decoding="async"
+            src={src} alt={alt} className="property-img"
+            loading="lazy" decoding="async"
             onError={() => setErrored(true)}
         />
     );
 }
-
-// ─── Property Card ───────────────────────────────────────────────────────────
 
 function PropertyCard({ property }) {
     const [isFavorite, setIsFavorite] = useState(false);
@@ -63,9 +50,9 @@ function PropertyCard({ property }) {
             {/* ── Image ── */}
             <div className="img-wrapper">
                 <PropertyImage src={mainImage} alt={property.title} />
+                <div className="img-overlay-bottom" />
 
-                {/* Dark gradient + price overlay */}
-                <div className="img-overlay" />
+                {/* Price on image — single source of truth */}
                 <span className="img-price">{price}</span>
 
                 {property.reraApproved && (
@@ -80,28 +67,29 @@ function PropertyCard({ property }) {
                         onClick={handleFavClick}
                         aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
                     >
-                        <Heart
-                            className={`heart-icon ${isFavorite ? "heart-active" : "heart-inactive"}`}
-                        />
+                        <Heart className={`heart-icon ${isFavorite ? "heart-active" : "heart-inactive"}`} />
                     </button>
                 )}
             </div>
 
-            {/* ── Info ── */}
+            {/* ── Card Body ── */}
             <div className="property-info">
                 <h3 className="property-title">{property.title}</h3>
 
+                {/* Location pill — styled like type tag */}
                 {property.location && (
-                    <p className="property-location">
-                        <MapPin size={11} strokeWidth={2.5} color="#94a3b8" />
-                        {property.location}
-                    </p>
+                    <div className="property-location-pill">
+                        <MapPin size={11} strokeWidth={2.5} color="#0b63e5" />
+                        <span>{property.location}</span>
+                    </div>
                 )}
 
+                {/* Footer: sqft + type */}
                 <div className="property-footer">
-                    <span className="property-sqft">
-                        {property.sqft ? `${property.sqft} sqft` : "—"}
-                    </span>
+                    {property.sqft
+                        ? <span className="property-sqft">{property.sqft} sqft</span>
+                        : <span />
+                    }
                     {property.type && (
                         <span className="property-type-tag">{property.type}</span>
                     )}

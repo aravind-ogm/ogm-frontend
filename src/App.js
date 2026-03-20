@@ -25,13 +25,16 @@ import AiSearchPage from "./components/ai/AiSearchPage";
 // Agent Admin Dashboard
 import AgentAdminApp from "./components/admindashboard/Agentadminapp";
 
+// Booking
+import BookTourPage from "./components/admindashboard/BookTourPage";
+
 import "./styles/App.css";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const BASE_URL = process.env.REACT_APP_API_BASE || "http://localhost:8080";
 
-const HIDE_FOOTER_ROUTES = ["/ai-search", "/dashboard", "/admin", "/agent-admin"];
+const HIDE_FOOTER_ROUTES = ["/ai-search", "/dashboard", "/admin", "/agent-admin", "/book"];
 
 // ─── Meta Pixel Tracker ──────────────────────────────────────────────────────
 
@@ -154,6 +157,7 @@ function AppContent() {
                         }
                     />
                     <Route path="/property/:slug" element={<PropertyDetails />} />
+                    <Route path="/book/:slug"     element={<BookTourPage />} />
                     <Route path="/about"          element={<About />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/contact"        element={<Contact />} />

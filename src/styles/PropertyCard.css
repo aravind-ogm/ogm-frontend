@@ -2,7 +2,7 @@
    PROPERTY CARD — Ultra Premium
 ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 .property-card {
     display: flex;
@@ -11,25 +11,25 @@
     overflow: hidden;
     background: #ffffff;
     box-shadow:
-        0 1px 2px rgba(15, 23, 42, 0.04),
-        0 4px 16px rgba(15, 23, 42, 0.06);
-    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.28s ease;
+        0 1px 3px rgba(15, 23, 42, 0.05),
+        0 6px 24px rgba(15, 23, 42, 0.07);
+    transition:
+        transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1),
+        box-shadow 0.3s ease;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
     height: 100%;
     position: relative;
-    isolation: isolate;        /* ✅ fixes pink bar bleed from LiveTourButton */
+    isolation: isolate;
 }
 
-/* ── Hover border — clean box-shadow approach ── */
 .property-card:hover {
     transform: translateY(-8px);
     box-shadow:
         0 2px 4px rgba(15, 23, 42, 0.04),
-        0 20px 48px rgba(15, 23, 42, 0.13),
-        0 0 0 1.5px rgba(15, 23, 42, 0.18);
+        0 22px 52px rgba(15, 23, 42, 0.14),
+        0 0 0 1.5px rgba(15, 23, 42, 0.1);
 }
 
 /* ── Image ───────────────────────────────── */
@@ -37,7 +37,7 @@
 .img-wrapper {
     position: relative;
     overflow: hidden;
-    height: 230px;
+    height: 210px;
     flex-shrink: 0;
     background: #f1f5f9;
 }
@@ -46,7 +46,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     display: block;
 }
 
@@ -54,31 +54,34 @@
     transform: scale(1.08);
 }
 
-/* Dark gradient overlay — price lives here */
-.img-overlay {
+/* Bottom gradient for price readability */
+.img-overlay-bottom {
     position: absolute;
-    inset: 0;
+    bottom: 0; left: 0; right: 0;
+    height: 100px;
     background: linear-gradient(
-        to bottom,
-        rgba(0,0,0,0) 40%,
-        rgba(0,0,0,0.55) 100%
+        to top,
+        rgba(0,0,0,0.68) 0%,
+        rgba(0,0,0,0.2) 65%,
+        transparent 100%
     );
     z-index: 1;
     pointer-events: none;
 }
 
-/* Price pinned to bottom of image */
+/* Price — bottom left of image */
 .img-price {
     position: absolute;
-    bottom: 12px;
+    bottom: 13px;
     left: 14px;
     z-index: 2;
     font-family: 'Inter', sans-serif;
-    font-size: 17px;
-    font-weight: 800;
+    font-size: 19px;
+    font-weight: 900;
     color: #ffffff;
-    letter-spacing: -0.2px;
-    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    letter-spacing: -0.5px;
+    line-height: 1;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
 /* ── Image placeholder ─────────────────── */
@@ -94,26 +97,28 @@
     font-size: 40px;
 }
 
-/* ── Badges ──────────────────────────────── */
+/* ── RERA badge ──────────────────────────── */
 
 .rera-badge {
     position: absolute;
     top: 12px;
     left: 12px;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 4px 11px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 4px 10px;
     border-radius: 30px;
     font-family: 'Inter', sans-serif;
-    font-size: 10.5px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 800;
     color: #0f172a;
-    letter-spacing: 0.4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-    z-index: 3;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+    z-index: 3;
 }
+
+/* ── Sold Out ────────────────────────────── */
 
 .sold-badge {
     position: absolute;
@@ -123,25 +128,25 @@
     color: #ffffff;
     padding: 4px 12px;
     font-family: 'Inter', sans-serif;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 800;
     border-radius: 30px;
-    box-shadow: 0 4px 14px rgba(185, 28, 28, 0.4);
+    box-shadow: 0 4px 14px rgba(185,28,28,0.4);
     text-transform: uppercase;
     letter-spacing: 0.8px;
     z-index: 3;
 }
 
-/* ── Favourite button ────────────────────── */
+/* ── Favourite ───────────────────────────── */
 
 .fav-btn {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 34px;
-    height: 34px;
+    width: 33px;
+    height: 33px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255,255,255,0.92);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     display: flex;
@@ -151,45 +156,34 @@
     cursor: pointer;
     transition: transform 0.2s ease, background 0.2s ease;
     z-index: 3;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
 }
 
 .fav-btn:hover {
-    transform: scale(1.18);
+    transform: scale(1.2);
     background: #ffffff;
 }
 
-.heart-icon {
-    width: 17px;
-    height: 17px;
-    transition: fill 0.2s ease, color 0.2s ease;
-}
+.heart-icon { width: 16px; height: 16px; transition: fill 0.2s ease, color 0.2s ease; }
+.heart-inactive { fill: rgba(15,23,42,0.45); color: rgba(15,23,42,0.45); }
+.heart-active   { fill: #ef4444; color: #ef4444; }
 
-.heart-inactive {
-    fill: rgba(15, 23, 42, 0.4);
-    color: rgba(15, 23, 42, 0.4);
-}
-
-.heart-active {
-    fill: #ef4444;
-    color: #ef4444;
-}
-
-/* ── Card Body ───────────────────────────── */
+/* ── Card body ───────────────────────────── */
 
 .property-info {
-    padding: 14px 16px 16px;
+    padding: 13px 15px 15px;
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 8px;
     flex: 1;
-    background: #fff;
+    background: #ffffff;
 }
 
+/* Title */
 .property-title {
-    margin: 0 0 5px;
+    margin: 0;
     font-family: 'Inter', sans-serif;
-    font-size: 14.5px;
+    font-size: 14px;
     font-weight: 700;
     color: #0f172a;
     line-height: 1.4;
@@ -200,48 +194,59 @@
     letter-spacing: -0.1px;
 }
 
-.property-location {
-    margin: 0 0 10px;
+/* Location — styled as a pill exactly like type tag but slate/gray */
+.property-location-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    align-self: flex-start;
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    padding: 4px 10px 4px 8px;
+    border-radius: 30px;
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    color: #94a3b8;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #0b63e5;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.property-location-pill span {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 3px;
 }
 
-/* ── Bottom row: sqft + type tag ────────── */
+/* ── Footer ──────────────────────────────── */
 
 .property-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-top: auto;
-    padding-top: 10px;
+    padding-top: 8px;
     border-top: 1px solid #f1f5f9;
 }
 
+/* sqft */
 .property-sqft {
     font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: #475569;
+    color: #64748b;
 }
 
+/* Type tag — blue pill, same row as sqft */
 .property-type-tag {
     font-family: 'Inter', sans-serif;
     font-size: 10.5px;
     font-weight: 700;
     color: #0b63e5;
     background: #eff6ff;
+    border: 1px solid #dbeafe;
     padding: 3px 10px;
     border-radius: 30px;
     letter-spacing: 0.2px;
     white-space: nowrap;
 }
-
-/* ── end of file ── */
