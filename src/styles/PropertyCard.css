@@ -1,15 +1,15 @@
 /* ============================================
-   PROPERTY CARD — Premium Redesign
-   Matches OGM brand: #1B3A6B navy, #f97316 orange
+   PROPERTY CARD — OGM Premium
+   Brand: #1B3A6B navy · #f97316 orange
 ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap');
 
 /* ── Card shell ── */
 .pc {
   display: flex;
   flex-direction: column;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   background: #ffffff;
   text-decoration: none;
@@ -18,24 +18,27 @@
   position: relative;
   isolation: isolate;
   border: 1.5px solid #f1f5f9;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  will-change: transform;
   transition:
-    transform 0.3s cubic-bezier(0.34, 1.3, 0.64, 1),
-    box-shadow 0.3s ease,
-    border-color 0.2s ease;
+    transform 0.32s cubic-bezier(0.34, 1.3, 0.64, 1),
+    box-shadow 0.28s ease,
+    border-color 0.22s ease;
 }
 
 .pc:hover {
-  transform: translateY(-8px);
-  border-color: #e2e8f0;
+  transform: translateY(-7px) scale(1.012);
+  border-color: rgba(249, 115, 22, 0.30);
   box-shadow:
-    0 4px 6px rgba(15,23,42,0.04),
-    0 20px 48px rgba(15,23,42,0.12);
+    0 0 0 3px rgba(249, 115, 22, 0.08),
+    0 6px 12px rgba(15, 23, 42, 0.06),
+    0 24px 52px rgba(15, 23, 42, 0.13);
 }
 
-/* ── Image ── */
+/* ── Image wrap ── */
 .pc-img-wrap {
   position: relative;
-  height: 200px;
+  height: 205px;
   overflow: hidden;
   background: #f1f5f9;
   flex-shrink: 0;
@@ -46,11 +49,11 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .pc:hover .pc-img {
-  transform: scale(1.07);
+  transform: scale(1.08);
 }
 
 .pc-img-placeholder {
@@ -59,7 +62,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #cbd5e1;
+  font-size: 42px;
 }
 
 /* ── Gradient overlay ── */
@@ -68,11 +73,12 @@
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(10, 15, 35, 0.82) 0%,
-    rgba(10, 15, 35, 0.25) 45%,
+    rgba(8, 12, 30, 0.88) 0%,
+    rgba(8, 12, 30, 0.30) 42%,
     transparent 100%
   );
   pointer-events: none;
+  z-index: 1;
 }
 
 /* ── Price ── */
@@ -82,87 +88,106 @@
   left: 14px;
   z-index: 2;
   font-family: 'DM Sans', sans-serif;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
   color: #ffffff;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.5px;
   line-height: 1;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.4);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+/* Orange accent dot before price */
+.pc-price::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f97316;
+  margin-right: 6px;
+  vertical-align: middle;
+  margin-bottom: 2px;
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.7);
 }
 
 /* ── RERA badge ── */
 .pc-rera {
   position: absolute;
-  top: 11px;
-  left: 11px;
+  top: 12px;
+  left: 12px;
   z-index: 3;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(8px);
-  color: #0f172a;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #1B3A6B;
   font-family: 'DM Sans', sans-serif;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   padding: 3px 9px;
   border-radius: 20px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
+  border: 1px solid rgba(27, 58, 107, 0.12);
 }
 
 /* ── Sold Out badge ── */
 .pc-sold {
   position: absolute;
-  top: 11px;
-  right: 11px;
+  top: 12px;
+  right: 12px;
   z-index: 3;
   background: linear-gradient(135deg, #ef4444, #b91c1c);
   color: #fff;
   font-family: 'DM Sans', sans-serif;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   padding: 3px 11px;
   border-radius: 20px;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
-  box-shadow: 0 3px 10px rgba(185,28,28,0.4);
+  box-shadow: 0 3px 12px rgba(185, 28, 28, 0.45);
 }
 
 /* ── Fav button ── */
 .pc-fav {
   position: absolute;
-  top: 9px;
-  right: 9px;
+  top: 10px;
+  right: 10px;
   z-index: 3;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.93);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  transition: transform 0.2s ease, background 0.2s;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  transition: transform 0.22s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
+
 .pc-fav:hover {
-  transform: scale(1.18);
-  background: #fff;
+  transform: scale(1.2);
+  background: #fff5ee;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.22);
 }
 
 /* ── Card body ── */
 .pc-body {
-  padding: 14px 15px 15px;
+  padding: 14px 16px 15px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   flex: 1;
 }
 
-/* Title */
+/* ── Title ── */
 .pc-title {
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.4;
@@ -171,28 +196,44 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  letter-spacing: -0.1px;
+  letter-spacing: -0.15px;
+  transition: color 0.2s ease;
 }
 
-/* Location */
+.pc:hover .pc-title {
+  color: #1B3A6B;
+}
+
+/* ── Location pill ── */
 .pc-location {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 4px 10px 4px 8px;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
+  background: #fff7ed;
+  border: 1px solid rgba(249, 115, 22, 0.18);
   border-radius: 20px;
   align-self: flex-start;
   max-width: 100%;
   overflow: hidden;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.pc:hover .pc-location {
+  background: #ffedd5;
+  border-color: rgba(249, 115, 22, 0.32);
+}
+
+.pc-location svg {
+  color: #f97316;
+  flex-shrink: 0;
 }
 
 .pc-location span {
   font-family: 'DM Sans', sans-serif;
   font-size: 11.5px;
   font-weight: 600;
-  color: #1B3A6B;
+  color: #c2410c;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -203,11 +244,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 8px;
+  padding-top: 9px;
   margin-top: auto;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f8f4f0;
 }
 
+/* ── Sqft ── */
 .pc-sqft {
   display: flex;
   align-items: center;
@@ -218,20 +260,60 @@
   color: #64748b;
 }
 
+.pc-sqft svg {
+  color: #94a3b8;
+}
+
+/* ── Type badge ── */
 .pc-type {
   font-family: 'DM Sans', sans-serif;
   font-size: 10.5px;
-  font-weight: 700;
-  color: #1B3A6B;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  padding: 3px 10px;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  padding: 3px 11px;
   border-radius: 20px;
   white-space: nowrap;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.28);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.pc:hover .pc-type {
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.38);
+  transform: scale(1.04);
+}
+
+/* ── Premium shimmer on hover (subtle) ── */
+.pc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(249, 115, 22, 0.04) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.pc:hover::after {
+  opacity: 1;
 }
 
 /* ── Responsive ── */
+@media (max-width: 768px) {
+  .pc-img-wrap { height: 185px; }
+}
+
 @media (max-width: 480px) {
-  .pc-img-wrap { height: 175px; }
-  .pc-price    { font-size: 16px; }
+  .pc           { border-radius: 16px; }
+  .pc-img-wrap  { height: 170px; }
+  .pc-price     { font-size: 16.5px; }
+  .pc-title     { font-size: 13.5px; }
+  .pc-body      { padding: 12px 13px 13px; }
 }

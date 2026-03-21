@@ -10,7 +10,6 @@ import {
 // Components
 import SearchBarContainer from "./search/SearchBarContainer";
 import PropertyCard from "./components/PropertyCard";
-import AIResultCard from "./components/property/AIResultCard";
 import FloatingWhatsapp from "./components/FloatingWhatsapp";
 import Footer from "./components/Footer";
 import AuthContainer from "./components/ogm-auth/AuthContainer";
@@ -34,7 +33,7 @@ import "./styles/App.css";
 
 const BASE_URL = process.env.REACT_APP_API_BASE || "http://localhost:8080";
 
-const HIDE_FOOTER_ROUTES = ["/ai-search", "/dashboard", "/admin", "/agent-admin", "/book"];
+const HIDE_FOOTER_ROUTES = new Set(["/ai-search", "/dashboard", "/admin", "/agent-admin", "/book"]);
 
 // ─── Meta Pixel Tracker ──────────────────────────────────────────────────────
 
@@ -64,14 +63,14 @@ function AppContent() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [properties, setProperties]       = useState([]);
-    const [searchMode, setSearchMode]       = useState("default");
-    const [isAuthenticated, setIsAuthenticated] = useState(
+    const [properties, setProperties]           = useState([]);
+    const [isSearching, setIsSearching]          = useState(false);
+    const [isAuthenticated, setIsAuthenticated]  = useState(
         () => Boolean(localStorage.getItem("token"))
     );
 
-    const isAgentAdmin = location.pathname.startsWith("/agent-admin");
-    const shouldHideFooter = HIDE_FOOTER_ROUTES.includes(location.pathname);
+    const isAgentAdmin     = location.pathname.startsWith("/agent-admin");
+    const shouldHideFooter = HIDE_FOOTER_ROUTES.has(location.pathname);
 
     // ─── Data Loading ────────────────────────────────────────────────────────
 
@@ -81,7 +80,7 @@ function AppContent() {
             if (query) params.set("q", query);
             const res  = await fetch(`${BASE_URL}/api/properties?${params}`);
             const data = await res.json();
-            setProperties(data?.content || []);
+            setProperties(data?.content ?? []);
         } catch (err) {
             console.error("Failed to fetch properties:", err);
             setProperties([]);
@@ -96,16 +95,11 @@ function AppContent() {
 
     const handleSearch = useCallback((data) => {
         if (data === null) {
-            setSearchMode("default");
+            setIsSearching(false);
             loadProperties();
             return;
         }
-        if (Array.isArray(data)) {
-            setProperties(data);
-            setSearchMode("ai");
-            return;
-        }
-        setSearchMode("normal");
+        setIsSearching(true);
         loadProperties(data);
     }, [loadProperties]);
 
@@ -151,7 +145,7 @@ function AppContent() {
                         element={
                             <HomePage
                                 properties={properties}
-                                searchMode={searchMode}
+                                isSearching={isSearching}
                                 onSearch={handleSearch}
                             />
                         }
@@ -180,19 +174,23 @@ function AppContent() {
 function Header({ onSearch, isAuthenticated, onLogout }) {
     const navigate = useNavigate();
 
-    const handleLogoClick = () => {
+    const handleLogoClick = useCallback(() => {
         onSearch?.(null);
         navigate("/", { replace: true });
-    };
+    }, [onSearch, navigate]);
 
     return (
         <header className="topbar">
             <div
                 className="header-left header-content"
                 onClick={handleLogoClick}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && handleLogoClick()}
+                aria-label="Go to homepage"
                 style={{ cursor: "pointer" }}
             >
-                <img src="/logo.png" alt="OGM Logo" className="logo-img" style={{ height: "50px" }} />
+                <img src="/logo.png" alt="OGM Logo" className="logo-img" />
                 <h1 className="header-title">One Global Marketplace</h1>
             </div>
 
@@ -209,47 +207,32 @@ function Header({ onSearch, isAuthenticated, onLogout }) {
 
 // ─── Home Page ───────────────────────────────────────────────────────────────
 
-function HomePage({ properties, searchMode, onSearch }) {
+function HomePage({ properties, isSearching, onSearch }) {
     return (
         <main className="main-section">
-            {searchMode === "ai" && (
-                <div className="ai-suggestions premium">
-                    <div className="ai-suggestion-card">
-                        ✨ <strong>Refine your search</strong>
-                        <p>Find <b>2 BHKs under ₹2 Cr</b> in <b>Sarjapur Road</b></p>
-                    </div>
-                    <div className="ai-suggestion-card">
-                        📊 <strong>Compare smarter</strong>
-                        <p>Add properties to your <b>watchlist</b> and compare easily.</p>
-                    </div>
-                </div>
-            )}
-
-            {searchMode !== "ai" && (
-                <SearchBarContainer onSearch={onSearch} />
-            )}
+            <SearchBarContainer onSearch={onSearch} />
 
             <h2 className="section-title">
-                {searchMode === "default" && "Popular Homes in Bengaluru"}
-                {searchMode === "ai"      && "AI Curated Properties"}
-                {searchMode === "normal"  && "Search Results"}
+                <span className="section-title-text">
+                    {isSearching ? "Search Results" : "Popular Homes in Bengaluru"}
+                </span>
             </h2>
 
-            <PropertyList properties={properties} searchMode={searchMode} />
+            <PropertyList properties={properties} />
         </main>
     );
 }
 
 // ─── Property List ───────────────────────────────────────────────────────────
 
-function PropertyList({ properties, searchMode }) {
+function PropertyList({ properties }) {
     if (!properties?.length) {
         return (
             <div className="no-results-container">
                 <div className="no-results-content">
                     <div className="no-results-icon">🏠</div>
                     <h3>No properties found</h3>
-                    <p>We couldn't find any listings matching your current criteria.</p>
+                    <p>We couldn't find any listings matching your criteria. Try adjusting your search.</p>
                     <button
                         className="reset-search-btn"
                         onClick={() => window.location.reload()}
@@ -262,12 +245,10 @@ function PropertyList({ properties, searchMode }) {
     }
 
     return (
-        <div className={searchMode === "ai" ? "ai-results" : "property-grid"}>
-            {properties.map((prop) =>
-                searchMode === "ai"
-                    ? <AIResultCard  key={prop.id} property={prop} />
-                    : <PropertyCard  key={prop.id} property={prop} />
-            )}
+        <div className="property-grid">
+            {properties.map((prop) => (
+                <PropertyCard key={prop.id} property={prop} />
+            ))}
         </div>
     );
 }
