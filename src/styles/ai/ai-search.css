@@ -1,0 +1,226 @@
+/* ============================================
+   AI SUGGESTIONS
+============================================ */
+
+.ai-suggestions.premium {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    max-width: 1000px;
+}
+
+.ai-suggestion-card {
+    flex: 1;
+    background: linear-gradient(135deg, #f9fafb, #ffffff);
+    padding: 16px 18px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    font-size: 14px;
+}
+
+.ai-suggestion-card p {
+    margin-top: 6px;
+    color: #444;
+}
+
+/* ============================================
+   AI BOTTOM SEARCH
+============================================ */
+
+.ai-bottom-search {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to top, #ffffff 75%, rgba(255, 255, 255, 0.95));
+    padding: 22px 0 14px;
+    margin-top: 48px;
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.12);
+    z-index: 50;
+}
+
+.ai-bottom-search .search-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.ai-bottom-search .dual-search-bar {
+    justify-content: center;
+}
+
+.ai-bottom-search .search-pill.ai {
+    width: 100%;
+    max-width: 960px;
+    border-radius: 18px;
+    padding: 6px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.ai-bottom-search .search-pill.ai .pill-input {
+    font-size: 15px;
+    padding: 14px 16px;
+}
+
+.ai-bottom-search .pill-btn.ai {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 18px;
+}
+
+.ai-bottom-search .search-pill:not(.ai) {
+    display: none;
+}
+
+.ai-refine-hint {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+/* ============================================
+/* ============================================
+   ABS — AI BOTTOM SEARCH BAR (split pill)
+   Fully namespaced to prevent global style bleed
+============================================ */
+
+.abs-bar {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  height: 58px;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
+  background: #f97316;
+}
+
+/* ── White input zone (85%) ── */
+.abs-bar .abs-input-zone {
+  flex: 85;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 0 22px;
+  background: #ffffff !important;
+  border: 1.5px solid rgba(200, 215, 235, 0.7);
+  border-radius: 999px;
+  min-width: 0;
+  box-shadow: none !important;
+  position: relative;
+  z-index: 1;
+}
+
+.abs-bar .abs-search-icon { flex-shrink: 0; }
+
+.abs-bar .abs-input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0f172a;
+  min-width: 0;
+  caret-color: #f97316;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.abs-bar .abs-input::placeholder { color: #aab4c4; font-weight: 400; }
+.abs-bar .abs-input:disabled     { color: #aab4c4; cursor: not-allowed; }
+
+.abs-bar .abs-clear {
+  background: rgba(15,23,42,0.07) !important;
+  border: none !important;
+  color: #94a3b8 !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  font-size: 9px;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.abs-bar .abs-clear:hover {
+  background: rgba(15,23,42,0.13) !important;
+  color: #0f172a !important;
+}
+
+/* ── Orange action zone (15%) ── */
+.abs-bar .abs-action-zone {
+  flex: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 20px 0 14px;
+  background: #f97316 !important;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* Icons — no button background, just transparent */
+.abs-bar .abs-action-btn {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  max-width: 28px !important;
+  max-height: 28px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  padding: 0 !important;
+  box-shadow: none !important;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.abs-bar .abs-action-btn:hover {
+  opacity: 0.8 !important;
+  transform: scale(1.15) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.abs-bar .abs-action-btn:active  { transform: scale(0.92) !important; }
+.abs-bar .abs-action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.abs-bar .abs-action-btn svg     { display: block; flex-shrink: 0; pointer-events: none; }
+
+.abs-bar .abs-recording          { opacity: 0.7 !important; }
+.abs-bar .abs-rec-dot {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 7px; height: 7px;
+  background: #fff;
+  border-radius: 50%;
+  animation: abs-pulse 1.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes abs-pulse {
+  0%,100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.5); opacity: 0.4; }
+}
+
+.abs-bar .abs-send-idle          { opacity: 0.55; }
+.abs-bar .abs-loading svg        { animation: abs-spin 0.9s linear infinite; }
+@keyframes abs-spin              { to { transform: rotate(360deg); } }
+
+@media (max-width: 600px) {
+  .abs-bar                    { height: 52px; }
+  .abs-bar .abs-input         { font-size: 14px; }
+  .abs-bar .abs-action-zone   { gap: 12px; padding: 0 18px 0 12px; }
+  .abs-bar .abs-action-btn    { width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important; max-width: 24px !important; max-height: 24px !important; }
+}

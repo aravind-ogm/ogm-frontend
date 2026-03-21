@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Icon from "./Icon";
 import AiMessage from "./AiMessage";
 import SuggestionChips from "./SuggestionChips";
+import AiBottomSearchBar from "./AiBottomSearchBar";
 import { formatPrice } from "./Helpers";
 import { detectRouteIntent } from "./RouteHelper";
 import "../../styles/ai/ai-chatbox.css";
+import "../../styles/ai/ai-search.css";
 
 /* ─── Google Maps API key ──────────────────────────────────────────────────── */
 const GMAPS_KEY =
@@ -508,26 +510,7 @@ export default function AiChatBox({
           </div>
 
           <div className="chat-input-bar">
-            <div className="chat-input-wrapper">
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-                }}
-                placeholder="Ask anything — find, compare, and locate properties"
-                disabled={loading}
-              />
-              <button
-                className="chat-send-btn"
-                onClick={() => handleSend()}
-                disabled={!input.trim() || loading}
-              >
-                <Icon name="send" size={16} />
-              </button>
-            </div>
+            <AiBottomSearchBar onSend={handleSend} />
           </div>
         </div>
 

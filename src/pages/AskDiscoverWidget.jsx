@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import AiBottomSearchBar from "../components/ai/AiBottomSearchBar";
 import "../styles/AskDiscoverWidget.css";
+import "../styles/ai/ai-search.css";
 
 const ROBOT_IMG = "/images/ai-robot.png";
 const API_BASE  = process.env.REACT_APP_API_BASE || "http://localhost:8080";
@@ -742,13 +744,7 @@ export default function AskDiscoverWidget({ property }) {
 
             {/* Wide input */}
             <div className="adw-chat-input-wrap">
-              <input className="adw-chat-input"
-                placeholder="Have more questions? Ask your AI Property Advisor..."
-                value={input} onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKey} disabled={loading} />
-              <button className="adw-chat-send" onClick={() => send()} disabled={!input.trim() || loading}>
-                <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              </button>
+              <AiBottomSearchBar onSend={(text) => send(text)} />
             </div>
 
             {selectedPlace && (
