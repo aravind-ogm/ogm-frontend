@@ -1,28 +1,43 @@
 import { useEffect, useRef } from "react";
 import useGeolocation from "./Usegeolocation";
 
-/**
- * LocationPermissionModal
- *
- * Shows a branded popup asking the user to share their location.
- * Appears automatically when:
- *  - The user types a "near me" query, OR
- *  - The parent explicitly sets open={true}
- *
- * Props:
- *  open           boolean   — controls visibility
- *  onClose        fn        — called when user dismisses
- *  onLocationGranted fn(pos) — called with {latitude, longitude} on success
- *  queryText      string    — the user's original query (shown in the modal)
- */
+const PERM_KEY = "ogm_location_granted";
+
 export default function LocationPermissionModal({
   open,
   onClose,
   onLocationGranted,
   queryText = "",
 }) {
-  const { requestLocation, isRequesting, error, isDenied } = useGeolocation();
+  const { requestLocation, isRequesting, error, isDenied, position, isGranted } = useGeolocation();
   const overlayRef = useRef(null);
+
+  /* ── If already granted (cached or hook) — skip modal, fire callback directly ── */
+  useEffect(() => {
+    if (!open) return;
+
+    const cached = localStorage.getItem(PERM_KEY);
+    if (cached) {
+      try {
+        const pos = JSON.parse(cached);
+        onLocationGranted?.(pos);
+        onClose();
+        return;
+      } catch { localStorage.removeItem(PERM_KEY); }
+    }
+
+    // Hook already has position (e.g. granted in a previous interaction this session)
+    if (isGranted && position) {
+      const pos = {
+        latitude:  position.latitude,
+        longitude: position.longitude,
+        locationName: position.locationName ?? null,
+      };
+      localStorage.setItem(PERM_KEY, JSON.stringify(pos));
+      onLocationGranted?.(pos);
+      onClose();
+    }
+  }, [open, isGranted, position]); // eslint-disable-line
 
   // Close on backdrop click
   useEffect(() => {
@@ -45,6 +60,13 @@ export default function LocationPermissionModal({
   const handleAllow = async () => {
     try {
       const pos = await requestLocation();
+      // Cache so we never ask again
+      const toCache = {
+        latitude:     pos.latitude,
+        longitude:    pos.longitude,
+        locationName: pos.locationName ?? null,
+      };
+      localStorage.setItem(PERM_KEY, JSON.stringify(toCache));
       onLocationGranted?.(pos);
       onClose();
     } catch {

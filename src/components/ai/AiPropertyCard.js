@@ -146,31 +146,44 @@ function AiPropertyCard({
 /* ── Pure helper — no hooks, safe to call in useMemo ── */
 function generateBulletPoints(p) {
   const points = [];
+  const seen   = new Set();
+
+  const add = (text) => {
+    const key = text.toLowerCase().trim();
+    if (key && !seen.has(key)) { seen.add(key); points.push(text); }
+  };
 
   if (p.location) {
-    points.push(`Prime location in ${p.location} with excellent connectivity`);
+    add(`Prime location in ${p.location} with excellent connectivity`);
   }
   if (p.sqft && p.bedrooms) {
-    points.push(`Spacious ${p.bedrooms} BHK spanning ${Number(p.sqft).toLocaleString("en-IN")} sqft`);
+    add(`Spacious ${p.bedrooms} BHK spanning ${Number(p.sqft).toLocaleString("en-IN")} sqft`);
   } else if (p.sqft) {
-    points.push(`Total area of ${Number(p.sqft).toLocaleString("en-IN")} sqft with well-planned layout`);
+    add(`Total area of ${Number(p.sqft).toLocaleString("en-IN")} sqft with well-planned layout`);
   } else if (p.bedrooms) {
-    points.push(`${p.bedrooms} BHK with modern layout and ample natural light`);
+    add(`${p.bedrooms} BHK with modern layout and ample natural light`);
   }
   if (p.price && p.sqft) {
     const pn = Number(String(p.price).replace(/[₹,]/g, ""));
     const sn = Number(p.sqft);
     if (!isNaN(pn) && !isNaN(sn) && sn > 0) {
-      points.push(`₹${Math.round(pn / sn).toLocaleString("en-IN")}/sqft — competitive pricing`);
+      add(`₹${Math.round(pn / sn).toLocaleString("en-IN")}/sqft — competitive pricing`);
     }
   }
-  if (p.reraApproved) points.push("RERA approved — transparency and legal compliance");
-  if (p.builder)      points.push(`Developed by ${p.builder}`);
+  if (p.reraApproved) add("RERA approved — transparency and legal compliance");
+  if (p.builder)      add(`Developed by ${p.builder}`);
+
+  // Amenities — joined on one line, not duplicated as individual items
   if (p.amenities?.length > 0) {
-    points.push(`Amenities: ${p.amenities.slice(0, 4).join(", ")}`);
+    add(`Amenities: ${p.amenities.slice(0, 5).join(", ")}`);
   }
+
+  // Highlights — skip any that are just amenity names already listed
+  const amenitySet = new Set((p.amenities || []).map((a) => a.toLowerCase().trim()));
   if (p.highlights?.length > 0) {
-    p.highlights.slice(0, 2).forEach((h) => points.push(h));
+    p.highlights.slice(0, 3).forEach((h) => {
+      if (!amenitySet.has(h.toLowerCase().trim())) add(h);
+    });
   }
 
   const fillers = [
@@ -181,11 +194,11 @@ function generateBulletPoints(p) {
     "Strong rental potential and long-term appreciation",
   ];
   for (const f of fillers) {
-    if (points.length >= 6) break;
-    points.push(f);
+    if (points.length >= 5) break;
+    add(f);
   }
 
-  return points.slice(0, 7);
+  return points.slice(0, 5);
 }
 
 export default React.memo(AiPropertyCard);

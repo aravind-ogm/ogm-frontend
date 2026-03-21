@@ -478,6 +478,9 @@ export default function AiChatBox({
                 <h2>What can I help you find?</h2>
                 <p>Search for properties, compare listings, or ask anything about real estate.</p>
                 <SuggestionChips onSelect={(v) => handleSend(v)} />
+                <div className="chat-empty-bar">
+                  <AiBottomSearchBar onSend={handleSend} />
+                </div>
               </div>
             ) : (
               <div className="chat-messages-container">
@@ -509,9 +512,12 @@ export default function AiChatBox({
             )}
           </div>
 
-          <div className="chat-input-bar">
-            <AiBottomSearchBar onSend={handleSend} />
-          </div>
+          {/* ── Bottom bar — only when conversation is active ── */}
+          {(messages.length > 0 || loading) && (
+            <div className="chat-input-bar">
+              <AiBottomSearchBar onSend={handleSend} />
+            </div>
+          )}
         </div>
 
         {/* ══════════════════════════════

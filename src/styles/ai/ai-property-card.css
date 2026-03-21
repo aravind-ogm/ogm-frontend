@@ -123,8 +123,8 @@
 
 .pcard-bullets {
   list-style: none; padding: 0; margin: 0;
-  flex: 1; display: flex; flex-direction: column; gap: 3px;
-  overflow: hidden; max-height: 80px;
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  overflow: hidden; max-height: 110px;
 }
 .pcard-bullets li {
   font-size: 12px; font-weight: 500; color: var(--text-secondary);
