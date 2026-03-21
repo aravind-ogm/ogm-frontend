@@ -136,7 +136,7 @@
   top: 12px;
   right: 12px;
   z-index: 3;
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
   font-family: 'DM Sans', sans-serif;
   font-size: 9px;
@@ -145,7 +145,7 @@
   border-radius: 20px;
   letter-spacing: 0.7px;
   text-transform: uppercase;
-  box-shadow: 0 3px 12px rgba(185, 28, 28, 0.45);
+  box-shadow: 0 3px 12px rgba(234, 88, 12, 0.45);
 }
 
 /* ── Fav button ── */
@@ -177,11 +177,10 @@
 
 /* ── Card body ── */
 .pc-body {
-  padding: 14px 16px 15px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;
+  gap: 7px;
 }
 
 /* ── Title ── */
@@ -204,64 +203,53 @@
   color: #1B3A6B;
 }
 
-/* ── Location pill ── */
+/* ── Location ── */
 .pc-location {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px 4px 8px;
-  background: #fff7ed;
-  border: 1px solid rgba(249, 115, 22, 0.18);
-  border-radius: 20px;
+  gap: 4px;
   align-self: flex-start;
   max-width: 100%;
   overflow: hidden;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.pc:hover .pc-location {
-  background: #ffedd5;
-  border-color: rgba(249, 115, 22, 0.32);
 }
 
 .pc-location svg {
-  color: #f97316;
   flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .pc-location span {
   font-family: 'DM Sans', sans-serif;
   font-size: 11.5px;
   font-weight: 600;
-  color: #c2410c;
+  color: #2563EB;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+  transition: color 0.2s ease;
 }
 
-/* ── Footer row ── */
-.pc-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 9px;
-  margin-top: auto;
-  border-top: 1px solid #f8f4f0;
+.pc:hover .pc-location span {
+  color: #1d4ed8;
 }
 
-/* ── Sqft ── */
-.pc-sqft {
+/* ── Sqft on image — bottom right ── */
+.pc-sqft-img {
+  position: absolute;
+  bottom: 13px;
+  right: 14px;
+  z-index: 2;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.pc-sqft svg {
-  color: #94a3b8;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  letter-spacing: -0.2px;
 }
 
 /* ── Type badge ── */

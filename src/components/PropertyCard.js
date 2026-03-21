@@ -48,6 +48,16 @@ function PropertyCard({ property }) {
         {/* Price — bottom left */}
         <div className="pc-price">{price}</div>
 
+        {/* Sqft — bottom right */}
+        {property.sqft && (
+          <div className="pc-sqft-img">
+            <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+            </svg>
+            {property.sqft} sqft
+          </div>
+        )}
+
         {/* Top badges */}
         {property.reraApproved && <span className="pc-rera">RERA ✓</span>}
 
@@ -74,28 +84,14 @@ function PropertyCard({ property }) {
         {/* Location */}
         {property.location && (
           <div className="pc-location">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="#1B3A6B" stroke="none">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#2563EB" stroke="none">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
             <span>{property.location}</span>
           </div>
         )}
 
-        {/* Footer */}
-        <div className="pc-footer">
-          {property.sqft
-            ? (
-              <div className="pc-sqft">
-                <svg width="12" height="12" fill="none" stroke="#94a3b8" strokeWidth="1.8" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                </svg>
-                {property.sqft} sqft
-              </div>
-            )
-            : <span />
-          }
-          {property.type && <span className="pc-type">{property.type}</span>}
-        </div>
+
       </div>
     </Link>
   );
