@@ -1,45 +1,77 @@
 /* ═══════════════════════════════════════════════
-   AI CHAT — SUGGESTION CHIPS
+   OGM AI — SUGGESTION CHIPS
    ═══════════════════════════════════════════════ */
 
 .suggestion-chips {
-  width: 100%;
-  max-width: 680px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 0 auto;
+  width: 100%; max-width: 680px;
+  display: flex; gap: 10px; flex-wrap: wrap;
+  justify-content: center; margin: 0 auto;
   padding: 0 24px;
   animation: chipsIn 0.5s var(--ease) 0.2s both;
 }
-
 @keyframes chipsIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Pill chip */
 .chip-btn {
   background: var(--bg-surface);
-  border: 1px solid var(--border-primary);
-  padding: 10px 18px;
+  border: 1.5px solid var(--border-primary);
+  padding: 9px 18px;
   border-radius: var(--radius-pill);
   font-family: var(--font-primary);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13px; font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s var(--ease);
+  transition: all var(--duration) var(--ease);
 }
-
 .chip-btn:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: #fff;
   transform: translateY(-2px);
   box-shadow: var(--shadow-glow);
 }
+.chip-btn:active { transform: scale(0.96); }
 
-.chip-btn:active {
-  transform: scale(0.96);
+/* ── Suggestion card grid (empty state) ── */
+.suggestion-cards-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; width: 100%; max-width: 560px;
+}
+.suggestion-card {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 14px 16px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  cursor: pointer; text-align: left;
+  transition: all var(--duration) var(--ease);
+  font-family: var(--font-primary);
+}
+.suggestion-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+.suggestion-card-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.suggestion-card-text { font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+.suggestion-card-sub  { font-size: 11.5px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+
+/* Follow-up chips (inside message) */
+.msg-followups { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.msg-followup-btn {
+  padding: 6px 14px; border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-primary);
+  background: var(--bg-surface);
+  font-family: var(--font-primary); font-size: 12.5px; font-weight: 600;
+  color: var(--navy); cursor: pointer;
+  transition: all var(--duration) var(--ease);
+}
+.msg-followup-btn:hover {
+  background: var(--navy-soft);
+  border-color: var(--navy);
+  transform: translateY(-1px);
 }

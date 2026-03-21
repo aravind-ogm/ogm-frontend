@@ -1,156 +1,87 @@
 /* ═══════════════════════════════════════════════
-   AI CHAT — COMPARE BAR & MODAL
+   OGM AI — COMPARE BAR & MODAL
    ═══════════════════════════════════════════════ */
 
 /* ── COMPARE BAR ── */
-
 .compare-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-primary);
-  padding: 14px 28px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--navy-deep);
+  border-top: 3px solid var(--accent);
+  padding: 12px 28px;
+  display: flex; justify-content: space-between; align-items: center;
   z-index: 500;
   animation: barSlideUp 0.3s var(--ease);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 -4px 24px rgba(15,23,42,0.2);
 }
-
-@keyframes barSlideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
+@keyframes barSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
 .compare-text {
-  font-size: 14px;
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.8);
 }
+.compare-text strong { color: var(--accent); font-size: 15px; font-weight: 800; }
 
 .compare-btn {
-  background: var(--accent);
-  border: none;
-  padding: 10px 24px;
-  border-radius: var(--radius-pill);
-  color: white;
-  font-family: var(--font-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--duration) var(--ease);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  border: none; padding: 10px 26px; border-radius: var(--radius-pill);
+  color: #fff; font-family: var(--font-primary);
+  font-size: 13.5px; font-weight: 700;
+  cursor: pointer; transition: all var(--duration) var(--ease);
+  box-shadow: 0 4px 14px rgba(249,115,22,0.4);
 }
-
-.compare-btn:hover {
-  background: var(--accent-hover);
-  box-shadow: var(--shadow-glow);
-}
-
-.compare-btn.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.compare-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(249,115,22,0.5); }
+.compare-btn.disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* ── COMPARE MODAL ── */
-
 .compare-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s var(--ease);
-  backdrop-filter: blur(4px);
+  position: fixed; inset: 0;
+  background: rgba(13,31,60,0.75);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000; animation: fadeIn 0.2s var(--ease);
+  backdrop-filter: blur(6px);
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .compare-modal {
   background: var(--bg-surface);
-  border: 1px solid var(--border-primary);
-  width: 92%;
-  max-width: 1100px;
-  max-height: 85vh;
-  overflow-y: auto;
-  border-radius: var(--radius-lg);
-  padding: 32px;
-  position: relative;
+  border: 1.5px solid var(--border-primary);
+  width: 92%; max-width: 1100px; max-height: 85vh;
+  overflow-y: auto; border-radius: var(--radius-xl);
+  padding: 32px; position: relative;
   animation: modalSlideUp 0.3s var(--ease);
   box-shadow: var(--shadow-lg);
 }
-
-@keyframes modalSlideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
+@keyframes modalSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 .compare-close-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border-primary);
+  position: absolute; top: 16px; right: 16px;
+  width: 34px; height: 34px;
+  border: 1.5px solid var(--border-primary);
   border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: transparent; color: var(--text-muted);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
   transition: all var(--duration) var(--ease);
 }
-
-.compare-close-btn:hover {
-  background: var(--danger-soft);
-  color: var(--danger);
-  border-color: var(--danger);
-}
+.compare-close-btn:hover { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
 
 /* ── COMPARE TABLE ── */
-
-.compare-grid {
-  width: 100%;
-}
+.compare-grid { width: 100%; }
 
 .compare-row {
   display: grid;
-  grid-template-columns: 160px repeat(auto-fit, minmax(180px, 1fr));
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-subtle);
-  align-items: center;
+  grid-template-columns: 150px repeat(auto-fit, minmax(180px, 1fr));
+  padding: 11px 8px; border-bottom: 1px solid var(--border-subtle); align-items: center;
+  transition: background var(--duration) var(--ease);
 }
-
+.compare-row:hover { background: var(--bg-hover); }
 .compare-row.header {
-  font-weight: 600;
-  color: var(--text-primary);
-  border-bottom: 2px solid var(--border-primary);
-  padding-bottom: 14px;
-  margin-bottom: 4px;
+  font-weight: 700; color: var(--text-primary);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 14px; margin-bottom: 4px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
-.compare-label {
-  font-size: 13.5px;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.compare-cell {
-  font-size: 14px;
-  color: var(--text-primary);
-  padding: 0 8px;
-}
-
-.compare-cell.title {
-  font-weight: 600;
-  font-size: 14.5px;
-}
+.compare-label { font-size: 12.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.compare-cell  { font-size: 13.5px; color: var(--text-primary); padding: 0 8px; }
+.compare-cell.title { font-weight: 700; font-size: 13.5px; color: var(--navy); }

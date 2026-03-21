@@ -1,134 +1,139 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:wght@600;700&display=swap');
 
 /* ═══════════════════════════════════════════════
-   AI CHAT — SCOPED VARIABLES & THEME
-
-   IMPORTANT: Everything is scoped to .ai-layout
-   so it will NOT affect your homepage, property
-   listings, or any other part of the site.
+   OGM AI — SCOPED CSS VARIABLES
+   Scoped to .ai-layout — won't affect homepage
+   Brand: #1B3A6B navy · #f97316 orange · DM Sans
    ═══════════════════════════════════════════════ */
 
-/* ── DARK THEME (default for AI page) ── */
-
+/* ── LIGHT THEME (default) ── */
 .ai-layout {
-  --font-primary: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-primary:   'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display:   'Playfair Display', Georgia, serif;
+  --font-mono:      'JetBrains Mono', 'Fira Code', monospace;
 
-  --bg-deep: #08080d;
-  --bg-surface: #0f0f17;
-  --bg-elevated: #161622;
-  --bg-card: #1a1a28;
-  --bg-hover: #1f1f30;
-  --bg-active: #262640;
-  --bg-input: #12121e;
+  /* Backgrounds */
+  --bg-deep:        #f4f6fb;
+  --bg-surface:     #ffffff;
+  --bg-elevated:    #ffffff;
+  --bg-card:        #ffffff;
+  --bg-hover:       #f1f5f9;
+  --bg-active:      #eef3ff;
+  --bg-input:       #ffffff;
 
-  --border-primary: #252538;
-  --border-subtle: #1a1a2a;
-  --border-focus: #4f6ef7;
+  /* Borders */
+  --border-primary: #e2e8f0;
+  --border-subtle:  #f1f5f9;
+  --border-focus:   #f97316;
 
-  --text-primary: #eaeaf2;
-  --text-secondary: #9494b0;
-  --text-muted: #5a5a78;
+  /* Text */
+  --text-primary:   #0d1f3c;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
 
-  --accent: #4f6ef7;
-  --accent-hover: #3d5be5;
-  --accent-soft: rgba(79, 110, 247, 0.12);
-  --accent-glow: rgba(79, 110, 247, 0.25);
+  /* Brand accent — ORANGE */
+  --accent:         #f97316;
+  --accent-hover:   #ea580c;
+  --accent-soft:    rgba(249, 115, 22, 0.10);
+  --accent-glow:    rgba(249, 115, 22, 0.20);
 
-  --user-bubble-bg: linear-gradient(135deg, #4f6ef7 0%, #3b5bdb 100%);
-  --user-bubble-text: #ffffff;
-  --ai-bubble-bg: transparent;
-  --ai-bubble-text: var(--text-primary);
-  --ai-bubble-border: var(--border-primary);
+  /* Navy — user bubbles, sidebar, headers */
+  --navy:           #1B3A6B;
+  --navy-deep:      #0d1f3c;
+  --navy-hover:     #2563EB;
+  --navy-soft:      rgba(27, 58, 107, 0.08);
 
-  --danger: #ef4468;
-  --danger-soft: rgba(239, 68, 104, 0.12);
-  --success: #34d399;
-  --success-soft: rgba(52, 211, 153, 0.12);
+  /* Bubble colors */
+  --user-bubble-bg:     linear-gradient(135deg, #1B3A6B 0%, #2563EB 100%);
+  --user-bubble-text:   #ffffff;
+  --ai-bubble-bg:       #ffffff;
+  --ai-bubble-text:     var(--text-primary);
+  --ai-bubble-border:   var(--border-primary);
 
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.4);
-  --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 20px rgba(79, 110, 247, 0.15);
+  /* Status */
+  --danger:         #ef4444;
+  --danger-soft:    rgba(239, 68, 68, 0.10);
+  --success:        #059669;
+  --success-soft:   rgba(5, 150, 105, 0.10);
+  --warning:        #f59e0b;
+  --warning-soft:   rgba(245, 158, 11, 0.10);
 
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* Shadows */
+  --shadow-sm:  0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md:  0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg:  0 16px 48px rgba(15, 23, 42, 0.12);
+  --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.15);
+
+  /* Radii */
+  --radius-xs:   6px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
   --radius-pill: 999px;
 
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --duration: 180ms;
+  /* Motion */
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --duration:    180ms;
   --duration-md: 280ms;
 }
 
-/* ── LIGHT THEME ── */
+/* ── DARK THEME ── */
+.ai-layout.dark-theme {
+  --bg-deep:        #080e1a;
+  --bg-surface:     #0d1629;
+  --bg-elevated:    #111d35;
+  --bg-card:        #152342;
+  --bg-hover:       #1a2a4a;
+  --bg-active:      #1e3258;
+  --bg-input:       #0d1629;
 
-.ai-layout.light-theme {
-  --bg-deep: #f5f5fa;
-  --bg-surface: #ffffff;
-  --bg-elevated: #ffffff;
-  --bg-card: #ffffff;
-  --bg-hover: #f0f0f6;
-  --bg-active: #e8e8f0;
-  --bg-input: #f7f7fc;
+  --border-primary: #1e3258;
+  --border-subtle:  #152342;
+  --border-focus:   #f97316;
 
-  --border-primary: #e0e0ec;
-  --border-subtle: #ebebf4;
-  --border-focus: #4f6ef7;
+  --text-primary:   #e8edf5;
+  --text-secondary: #94a3b8;
+  --text-muted:     #4a6080;
 
-  --text-primary: #1a1a2e;
-  --text-secondary: #6b6b88;
-  --text-muted: #9e9eb8;
+  --accent:         #f97316;
+  --accent-hover:   #fb923c;
+  --accent-soft:    rgba(249, 115, 22, 0.15);
+  --accent-glow:    rgba(249, 115, 22, 0.25);
 
-  --accent: #4f6ef7;
-  --accent-hover: #3d5be5;
-  --accent-soft: rgba(79, 110, 247, 0.08);
-  --accent-glow: rgba(79, 110, 247, 0.15);
+  --navy:           #2563EB;
+  --navy-deep:      #1B3A6B;
+  --navy-hover:     #3b82f6;
+  --navy-soft:      rgba(37, 99, 235, 0.15);
 
-  --user-bubble-bg: linear-gradient(135deg, #4f6ef7 0%, #3b5bdb 100%);
+  --user-bubble-bg:   linear-gradient(135deg, #1e3a7a 0%, #2563EB 100%);
   --user-bubble-text: #ffffff;
-  --ai-bubble-bg: #f3f3fa;
-  --ai-bubble-text: var(--text-primary);
-  --ai-bubble-border: var(--border-primary);
+  --ai-bubble-bg:     #111d35;
+  --ai-bubble-border: #1e3258;
 
-  --danger: #ef4468;
-  --danger-soft: rgba(239, 68, 104, 0.08);
-  --success: #10b981;
-  --success-soft: rgba(16, 185, 129, 0.08);
+  --danger:       #f87171;
+  --danger-soft:  rgba(248, 113, 113, 0.12);
+  --success:      #34d399;
+  --success-soft: rgba(52, 211, 153, 0.12);
 
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-lg: 0 16px 48px rgba(0,0,0,0.1);
-  --shadow-glow: 0 0 20px rgba(79, 110, 247, 0.08);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md:   0 8px 24px rgba(0,0,0,0.4);
+  --shadow-lg:   0 16px 48px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 20px rgba(249,115,22,0.2);
 }
 
-/* ── SCOPED BASE STYLES — only inside AI layout ── */
-
+/* ── SCOPED BASE STYLES ── */
 .ai-layout {
   font-family: var(--font-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-deep);
+  color: var(--text-primary);
 }
-
-.ai-layout *,
-.ai-layout *::before,
-.ai-layout *::after {
-  box-sizing: border-box;
-}
+.ai-layout *, .ai-layout *::before, .ai-layout *::after { box-sizing: border-box; }
 
 /* ── SCOPED SCROLLBAR ── */
-
-.ai-layout ::-webkit-scrollbar {
-  width: 5px;
-}
-
-.ai-layout ::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.ai-layout ::-webkit-scrollbar-thumb {
-  background: var(--border-primary);
-  border-radius: 10px;
-}
+.ai-layout ::-webkit-scrollbar { width: 4px; }
+.ai-layout ::-webkit-scrollbar-track { background: transparent; }
+.ai-layout ::-webkit-scrollbar-thumb { background: var(--border-primary); border-radius: 10px; }
+.ai-layout ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

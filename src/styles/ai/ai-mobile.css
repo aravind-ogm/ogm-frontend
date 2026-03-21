@@ -1,309 +1,125 @@
 /* ═══════════════════════════════════════════════
-   AI CHAT — MOBILE RESPONSIVE
-   Supports Android + iOS (iPhone, iPad)
-   Import this AFTER all other ai CSS files.
+   OGM AI — MOBILE RESPONSIVE
+   Import AFTER all other ai CSS files
    ═══════════════════════════════════════════════ */
 
 /* ── TABLET (768px – 1024px) ── */
 @media (max-width: 1024px) {
   .topbar-shortcuts { display: none; }
-
-  .pcard { height: auto; min-height: 280px; }
-  .pcard-img { min-height: 280px; }
-  .pcard-bullets li { font-size: 12.5px; }
-  .pcard-title { font-size: 15px; }
+  .pcard { height: auto; min-height: 260px; }
+  .pcard-img { min-height: 200px; }
+  .ai-map-panel { width: 340px; min-width: 340px; }
 }
 
 /* ── MOBILE (max 768px) ── */
 @media (max-width: 768px) {
+  /* Dynamic viewport height for iOS Safari */
+  .ai-layout { height: calc(100vh - 60px); height: calc(100dvh - 60px); }
 
-  /* Layout — full height minus mobile navbar */
-  .ai-layout {
-    height: calc(100vh - 60px);
-    height: calc(100dvh - 60px); /* Dynamic viewport for iOS Safari */
-  }
-
-  /* ── SIDEBAR — full overlay with backdrop ── */
+  /* Sidebar — full overlay */
   .ai-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 280px;
-    min-width: 280px;
-    z-index: 200;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 272px; min-width: 272px; z-index: 200;
     box-shadow: var(--shadow-lg);
     transform: translateX(0);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s var(--ease);
   }
-
   .ai-sidebar.collapsed {
     transform: translateX(-100%);
-    width: 280px;
-    min-width: 280px;
-    opacity: 1;
-    pointer-events: auto;
+    width: 272px; min-width: 272px;
+    opacity: 1; pointer-events: auto;
   }
+  .sidebar-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 
-  /* Sidebar footer */
-  .sidebar-footer {
-    padding: 12px 16px;
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
-  }
+  /* Topbar */
+  .ai-topbar { height: 48px; padding: 0 12px; gap: 10px; }
+  .topbar-btn { width: 40px; height: 40px; min-width: 40px; }
+  .topbar-title { font-size: 13.5px; }
 
-  /* ── TOPBAR ── */
-  .ai-topbar {
-    height: 48px;
-    padding: 0 12px;
-    gap: 10px;
-  }
+  /* Messages */
+  .chat-messages-container { padding: 10px; }
 
-  .topbar-btn {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-  }
-
-  .topbar-title { font-size: 14px; }
-  .topbar-shortcuts { display: none !important; }
-
-  /* ── CHAT MESSAGES ── */
-  .chat-messages-area { padding: 12px 0; }
-  .chat-messages-container { padding: 0 10px; }
-
-  .msg-bubble {
-    max-width: 88%;
-    padding: 12px 14px;
-    font-size: 14px;
-    border-radius: 12px;
-  }
-
-  .msg-bubble.wide {
-    max-width: 100%;
-    padding: 12px 14px;
-  }
-
-  .msg-text-content { font-size: 14px; line-height: 1.6; }
-
-  /* ── PROPERTY CARDS — stack vertical on mobile ── */
-  .pcard {
-    flex-direction: column;
-    height: auto;
-    min-height: auto;
-  }
-
-  .pcard-img {
-    width: 100%;
-    height: 220px;
-    min-height: 220px;
-    border-radius: 10px 10px 0 0;
-  }
-
-  .pcard-body {
-    width: 100%;
-    height: auto;
-    padding: 14px 16px;
-    overflow-y: visible;
-  }
-
-  .pcard-title { font-size: 15px; padding-right: 30px; }
-
-  .pcard-specs { gap: 4px; }
-  .pcard-chip { font-size: 11px; padding: 2px 7px; }
-
-  .pcard-loc { font-size: 12.5px; }
-
-  .pcard-bullets { gap: 3px; }
-  .pcard-bullets li { font-size: 12.5px; line-height: 1.45; padding-left: 14px; }
-  .pcard-bullets li::before { font-size: 14px; }
-
-  /* Action buttons — larger touch targets */
-  .pcard-acts {
-    gap: 6px;
-    padding-top: 10px;
-  }
-
-  .pact {
-    font-size: 12px;
-    padding: 8px 12px;
-    min-height: 38px;
-  }
-
+  /* Property cards — stack vertical */
+  .pcard { flex-direction: column; height: auto; }
+  .pcard-img { width: 100%; height: 200px; min-height: 200px; border-radius: 0; }
+  .pcard-body { width: 100%; height: auto; padding: 12px 14px; }
+  .pcard-title { font-size: 14.5px; padding-right: 28px; }
+  .pcard-bullets li { font-size: 12px; }
+  .pact { font-size: 11px; padding: 6px 9px; }
   .pact-view { margin-left: 0; width: 100%; justify-content: center; margin-top: 4px; }
+  .pcard-price { font-size: 19px; }
+  .pcard-arrow { opacity: 1; }
 
-  .pcard-price { font-size: 20px; padding: 12px 14px; }
-
-  .pcard-arrow { width: 36px; height: 36px; font-size: 22px; opacity: 1; }
-
-  /* ── MAP SPLIT — stack vertically ── */
-  .ai-split-wrapper { flex-direction: column; }
-
-  .ai-chat-panel.with-map {
-    flex: 0 0 45%;
-    max-width: 100%;
-  }
-
+  /* Map panel — full screen overlay */
   .ai-map-panel {
-    flex: 0 0 55%;
-    max-width: 100%;
-    border-left: none;
-    border-top: 1px solid var(--border-primary);
+    position: fixed; inset: 0; width: 100vw; min-width: unset;
+    z-index: 100; border-left: none; border-top: none;
   }
 
-  .ai-map-header { padding: 10px 12px; }
-  .ai-map-title { font-size: 13px; }
-  .ai-map-close { padding: 6px 10px; font-size: 12px; }
-
-  .ai-map-list { max-height: 120px; }
-  .ai-map-item { padding: 8px 12px; gap: 8px; }
-  .ai-map-item-marker { width: 24px; height: 24px; font-size: 11px; }
-  .ai-map-item-title { font-size: 12px; }
-  .ai-map-item-price { font-size: 12.5px; }
-
-  /* ── INPUT BAR — safe area for iPhone ── */
+  /* Input bar — safe area for iPhone notch */
   .chat-input-bar {
-    padding: 8px 10px 12px;
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
   }
+  .chat-input-wrapper { border-radius: 20px; padding: 4px 6px 4px 14px; }
+  .chat-input-wrapper textarea { font-size: 16px; } /* Prevents iOS zoom */
+  .chat-send-btn { width: 42px; height: 42px; min-width: 42px; }
 
-  .chat-input-wrapper {
-    border-radius: 16px;
-    padding: 4px 6px 4px 14px;
-  }
-
-  .chat-input-wrapper textarea {
-    font-size: 16px; /* Prevents iOS zoom on focus */
-    padding: 8px 0;
-  }
-
-  .chat-send-btn {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-    min-height: 42px;
-  }
-
-  /* ── FOLLOW-UP CHIPS ── */
+  /* Follow-ups */
   .msg-followups { gap: 6px; }
-  .msg-followup-btn {
-    font-size: 12px;
-    padding: 8px 14px;
-    min-height: 36px;
-  }
+  .msg-followup-btn { font-size: 12px; padding: 7px 13px; min-height: 36px; }
 
-  /* ── REACTIONS — larger touch targets ── */
-  .msg-reaction-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
-
-  .msg-action {
-    padding: 6px 12px;
-    font-size: 12px;
-    min-height: 32px;
-  }
-
-  /* ── SUGGESTION CHIPS ── */
+  /* Suggestion chips */
   .suggestion-chips { padding: 0 12px; gap: 8px; }
-  .chip-btn {
-    font-size: 12.5px;
-    padding: 10px 16px;
-    min-height: 40px;
-  }
+  .chip-btn { font-size: 12.5px; padding: 9px 14px; min-height: 40px; }
+  .suggestion-cards-grid { grid-template-columns: 1fr; }
 
-  /* ── CONFIRM DIALOG ── */
+  /* Confirm dialog */
   .confirm-dialog { padding: 24px 20px; max-width: 320px; }
-  .confirm-btns button {
-    padding: 10px 20px;
-    min-height: 42px;
-  }
+  .confirm-btns button { padding: 10px 20px; min-height: 42px; }
 
-  /* ── EMPTY STATE ── */
-  .chat-empty-state { padding: 30px 16px; gap: 16px; }
-  .chat-empty-state h2 { font-size: 20px; }
-  .chat-empty-state p { font-size: 13.5px; }
-  .chat-empty-icon { width: 56px; height: 56px; }
+  /* Compare bar */
+  .compare-bar { padding: 10px 16px; }
+  .compare-btn { padding: 9px 18px; font-size: 13px; }
+
+  /* Empty state */
+  .chat-empty-state { padding: 28px 16px; }
+  .chat-empty-title { font-size: 20px; }
 }
 
-/* ── SMALL MOBILE (max 380px) — iPhone SE, small Android ── */
+/* ── SMALL MOBILE (max 380px — iPhone SE) ── */
 @media (max-width: 380px) {
-  .pcard-img { height: 180px; min-height: 180px; }
-  .pcard-title { font-size: 14px; }
-  .pcard-bullets li { font-size: 12px; }
-  .pact { font-size: 11px; padding: 6px 10px; }
-
-  .msg-bubble { max-width: 92%; font-size: 13.5px; }
-
+  .pcard-img { height: 170px; min-height: 170px; }
+  .pcard-title { font-size: 13.5px; }
+  .pact { font-size: 10.5px; padding: 5px 8px; }
   .ai-sidebar { width: 260px; min-width: 260px; }
-
   .chip-btn { font-size: 12px; padding: 8px 12px; }
 }
 
-/* ── iOS SPECIFIC FIXES ── */
+/* ── IOS OVERSCROLL + SAFE AREA ── */
+.ai-layout { -webkit-overflow-scrolling: touch; overscroll-behavior: none; }
+.chat-messages-container { -webkit-overflow-scrolling: touch; }
 
-/* Prevent iOS overscroll bounce */
-.ai-layout {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: none;
-}
-
-.chat-messages-area {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Safe area for notch devices */
 @supports (padding: env(safe-area-inset-bottom)) {
-  .chat-input-bar {
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
-  }
-
-  .sidebar-footer {
-    padding-bottom: calc(14px + env(safe-area-inset-bottom));
-  }
+  .chat-input-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .sidebar-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 }
 
 /* ── LANDSCAPE MOBILE ── */
 @media (max-width: 900px) and (orientation: landscape) {
-  .ai-layout {
-    height: 100vh;
-    height: 100dvh;
-  }
-
-  .pcard {
-    flex-direction: row;
-    height: 220px;
-  }
-
-  .pcard-img {
-    width: 40%;
-    height: 100%;
-    border-radius: 10px 0 0 10px;
-  }
-
-  .pcard-body { width: 60%; }
-
-  .ai-chat-panel.with-map { flex: 0 0 50%; }
-  .ai-map-panel { flex: 0 0 50%; border-left: 1px solid var(--border-primary); border-top: none; }
+  .ai-layout { height: 100dvh; }
+  .pcard { flex-direction: row; height: 200px; }
+  .pcard-img { width: 42%; height: 100%; border-radius: var(--radius-md) 0 0 var(--radius-md); }
+  .pcard-body { width: 58%; }
 }
 
 /* ── TOUCH OPTIMIZATIONS ── */
 @media (hover: none) and (pointer: coarse) {
-  /* Always show image arrows on touch devices */
   .pcard-arrow { opacity: 1; }
-
-  /* Larger tap targets */
-  .pcard-x { width: 32px; height: 32px; }
   .topbar-btn { width: 42px; height: 42px; }
-
-  /* Remove hover effects that don't work on touch */
-  .pcard:hover { box-shadow: none; border-color: var(--border-primary); }
-  .pcard:active { box-shadow: var(--shadow-md); border-color: var(--accent); }
-
+  .pcard:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .pcard:active { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
   .pact:hover { background: transparent; }
   .pact:active { background: var(--bg-hover); }
-
   .msg-followup-btn:hover { transform: none; }
   .msg-followup-btn:active { background: var(--accent); border-color: var(--accent); color: #fff; }
 }

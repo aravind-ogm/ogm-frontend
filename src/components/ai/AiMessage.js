@@ -98,21 +98,45 @@ function AiMessage({
 
             {/* Property cards */}
             {isAi && msg.hasResults && msg.properties?.length > 0 && (
-              <div className="ai-property-results-list">
-                {msg.properties.map((property) => (
-                  <AiPropertyCard
-                    key={property.id}
-                    property={property}
-                    onMapView={() => onMapView?.(msg.properties)}
-                    isMapOpen={isMapOpen}
-                    userPosition={userPosition}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="ai-property-results-list">
+                  {msg.properties.map((property) => (
+                    <AiPropertyCard
+                      key={property.id}
+                      property={property}
+                      onMapView={() => onMapView?.(msg.properties)}
+                      isMapOpen={isMapOpen}
+                      userPosition={userPosition}
+                    />
+                  ))}
+                </div>
+                <div className="ai-result-chips-wrap">
+                  <span className="ai-result-chips-label">Explore further</span>
+                  <div className="ai-result-chips">
+                    {[
+                      { icon: "🗺", label: "Show on map",         query: "Show these properties on map" },
+                      { icon: "🏥", label: "Nearby hospitals",    query: "Are there good hospitals nearby?" },
+                      { icon: "🏫", label: "Schools nearby",      query: "What schools are close by?" },
+                      { icon: "🍽", label: "Restaurants nearby",  query: "Are there good restaurants nearby?" },
+                      { icon: "🏋", label: "Gyms nearby",         query: "What gyms are close by?" },
+                      { icon: "⛪", label: "Temples nearby",      query: "Show temples nearby" },
+                      { icon: "🛍", label: "Malls nearby",        query: "Any shopping malls nearby?" },
+                      { icon: "🏨", label: "Hotels nearby",       query: "Show hotels near this property" },
+                      { icon: "📄", label: "Download report",     query: "Create a downloadable PDF report for this property" },
+                      { icon: "📞", label: "Book a visit",        query: "How do I book a site visit?" },
+                    ].map(({ icon, label, query }) => (
+                      <button key={label} className="ai-result-chip" onClick={() => onFollowUp?.(query)}>
+                        <span className="ai-result-chip-icon">{icon}</span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
 
-            {/* Follow-up chips */}
-            {followUps.length > 0 && (
+            {/* Follow-up chips (non-property responses) */}
+            {followUps.length > 0 && !(msg.hasResults && msg.properties?.length > 0) && (
               <div className="msg-followups">
                 {followUps.map((s, i) => (
                   <button key={i} className="msg-followup-btn" onClick={() => onFollowUp?.(s)}>
