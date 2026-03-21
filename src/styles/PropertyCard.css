@@ -221,8 +221,8 @@
 .pc-location span {
   font-family: 'DM Sans', sans-serif;
   font-size: 11.5px;
-  font-weight: 600;
-  color: #2563EB;
+  font-weight: 800;
+  color: #1a56db;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -231,7 +231,7 @@
 }
 
 .pc:hover .pc-location span {
-  color: #1d4ed8;
+  color: #1448c2;
 }
 
 /* ── Sqft on image — bottom right ── */
