@@ -12,14 +12,19 @@ const formatPrice = (price) => {
 };
 
 // ─── Property type → emoji ─────────────────────────────────────────────────────
+// Covers all types present in the Property model's "type" column
 const getTypeIcon = (type = "") => {
   const t = type.toLowerCase();
-  if (t.includes("villa"))                       return "🏡";
-  if (t.includes("plot") || t.includes("land"))  return "🗺️";
-  if (t.includes("commercial"))                  return "🏢";
-  if (t.includes("farmhouse"))                   return "🌾";
-  if (t.includes("penthouse"))                   return "🏙️";
-  return "🏗️";
+  if (t.includes("villa"))                          return "🏡";
+  if (t.includes("plot") || t.includes("land"))     return "🗺️";
+  if (t.includes("commercial"))                     return "🏢";
+  if (t.includes("farmhouse"))                      return "🌾";
+  if (t.includes("penthouse"))                      return "🏙️";
+  if (t.includes("studio"))                         return "🛋️";
+  if (t.includes("independent") || t.includes("house")) return "🏠";
+  if (t.includes("duplex"))                         return "🏘️";
+  if (t.includes("weekend") || t.includes("holiday")) return "🌴";
+  return "🏗️"; // apartment / residential building / default
 };
 
 // ─── Image with fallback ───────────────────────────────────────────────────────
@@ -57,10 +62,18 @@ function PropertyCard({ property }) {
   }, []);
 
   // Build chips array — rendered as ONE single pill with dividers
+  // BHK comes from property.bedrooms (the Java model field)
+  // Fallback chain: bedrooms → bhk (legacy) → null
+  const bedroomCount = property.bedrooms ?? property.bhk ?? null;
+
   const chips = [
-    property.sqft ? `${Number(property.sqft).toLocaleString("en-IN")} sqft` : null,
-    property.bhk  ? `${property.bhk} BHK`                                   : null,
-    property.type || property.propertyType                                   || null,
+    property.sqft
+      ? `${Number(property.sqft).toLocaleString("en-IN")} sqft`
+      : null,
+    bedroomCount
+      ? `${bedroomCount} BHK`
+      : null,
+    property.type || property.propertyType || null,
   ].filter(Boolean);
 
   const typeIcon = getTypeIcon(property.type || property.propertyType || "");
