@@ -1,169 +1,85 @@
 /* ============================================================
-   SEARCH BAR — LUXURY REAL ESTATE
-   Premium glass-morphism with refined navy / gold palette
+   OGM SEARCH BAR — exact match from zoomed screenshot
+
+   Orange cap shape:  concave inward curve on left edge
+                      (like a stadium shape with left side scooped in)
+                      achieved with clip-path polygon/SVG
+
+   Slash:             thick solid navy line (SVG, not text)
+   RERA:              dark circled checkmark icon
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
-/* ── Design tokens ─────────────────────────────────────────── */
 :root {
-  --sb-navy:       #0f1f3d;
-  --sb-accent:     #e63a56;
-  --sb-gold:       #c9a84c;
-  --sb-glass:      rgba(255, 255, 255, 0.97);
-  --sb-border:     rgba(200, 215, 235, 0.75);
-  --sb-divider:    rgba(15, 31, 61, 0.11);
-  --sb-muted:      #8896aa;
-  --sb-font:       'DM Sans', sans-serif;
-  --sb-radius:     999px;
-  --sb-shadow:
-    0 2px 4px rgba(15,31,61,0.04),
-    0 8px 24px rgba(15,31,61,0.08),
-    0 24px 56px rgba(15,31,61,0.09);
-  --sb-shadow-up:
-    0 4px 8px rgba(15,31,61,0.06),
-    0 16px 40px rgba(15,31,61,0.13),
-    0 40px 80px rgba(15,31,61,0.11);
+  --sb-orange:    #f97316;
+  --sb-orange-dk: #ea580c;
+  --sb-muted:     #a8b4c4;
+  --sb-text:      #1e293b;
+  --sb-font:      'DM Sans', sans-serif;
 }
 
-/* ============================================================
-   WRAPPER
-   ============================================================ */
+/* ── Wrapper ─────────────────────────────────────────────── */
 .search-wrap {
   width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 20px;
-  margin: 36px auto 44px;
+  justify-content: center;
+  padding: 20px 24px 16px;
   box-sizing: border-box;
   font-family: var(--sb-font);
 }
 
-/* Optional serif headline above bar */
-.search-headline {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(20px, 3vw, 32px);
-  font-weight: 600;
-  color: var(--sb-navy);
-  letter-spacing: -0.4px;
-  margin-bottom: 20px;
-  text-align: center;
-  line-height: 1.25;
-}
-.search-headline em {
-  font-style: italic;
-  color: var(--sb-accent);
-}
-
-/* ============================================================
-   BAR
-   ============================================================ */
+/* ── Two-pill row ─────────────────────────────────────────── */
 .dual-search-bar {
   display: flex;
+  align-items: center;
   width: 100%;
-  max-width: 1060px;
-  background: var(--sb-glass);
-  border-radius: var(--sb-radius);
-  border: 1.5px solid var(--sb-border);
-  box-shadow: var(--sb-shadow);
-  overflow: hidden;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
-  position: relative;
-}
-.dual-search-bar:hover,
-.dual-search-bar:focus-within {
-  box-shadow: var(--sb-shadow-up);
-  border-color: rgba(15,31,61,0.2);
-  transform: translateY(-2px);
+  max-width: 920px;
 }
 
-/* ============================================================
-   PILL
-   ============================================================ */
+/* ── Pill shell ───────────────────────────────────────────── */
 .search-pill {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px 14px 24px;
-  position: relative;
-  transition: background 0.2s ease;
+  background: #ffffff;
+  border-radius: 999px;
+  height: 60px;
+  overflow: hidden;
+  box-shadow:
+    0 2px 10px rgba(15,23,42,0.09),
+    0 1px 3px  rgba(15,23,42,0.05);
   min-width: 0;
-}
-.search-pill:hover { background: rgba(15,31,61,0.018); }
-
-/* Icon badge */
-.pill-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 18px;
-  background: rgba(15,31,61,0.06);
-  transition: background 0.2s ease;
-}
-.search-pill:hover .pill-icon,
-.search-pill:focus-within .pill-icon { background: rgba(15,31,61,0.10); }
-
-.pill-icon.ai-icon {
-  background: linear-gradient(135deg, rgba(230,58,86,0.12), rgba(201,168,76,0.10));
-}
-.search-pill:hover .pill-icon.ai-icon,
-.search-pill:focus-within .pill-icon.ai-icon {
-  background: linear-gradient(135deg, rgba(230,58,86,0.20), rgba(201,168,76,0.15));
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
+  position: relative;
 }
 
-/* Divider between pills */
-.search-pill.ai::before {
-  content: "";
-  width: 1px;
-  height: 44px;
-  background: var(--sb-divider);
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+.search-pill:hover,
+.search-pill:focus-within {
+  box-shadow:
+    0 6px 24px rgba(15,23,42,0.14),
+    0 2px 6px  rgba(15,23,42,0.07);
+  transform: translateY(-1px);
 }
 
-/* ============================================================
-   PILL CONTENT
-   ============================================================ */
+/* ── Input area ───────────────────────────────────────────── */
 .pill-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
   min-width: 0;
+  padding: 0 14px 0 22px;
+  display: flex;
+  align-items: center;
 }
 
-.pill-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--sb-navy);
-  opacity: 0.5;
-  user-select: none;
-  line-height: 1;
-}
-/* Gold gradient label for AI pill */
-.search-pill.ai .pill-title {
-  background: linear-gradient(90deg, var(--sb-accent), var(--sb-gold));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  opacity: 1;
+.search-pill.ai .pill-content {
+  padding: 0 10px 0 8px;
 }
 
 .input-wrapper {
   display: flex;
   align-items: center;
   width: 100%;
-  min-width: 0;
+  gap: 4px;
 }
 
 .pill-input {
@@ -172,167 +88,195 @@
   background: transparent;
   font-family: var(--sb-font);
   font-size: 14.5px;
-  font-weight: 500;
-  color: var(--sb-navy);
+  font-weight: 400;
+  color: var(--sb-text);
   width: 100%;
   min-width: 0;
   text-overflow: ellipsis;
-  caret-color: var(--sb-accent);
+  caret-color: var(--sb-orange);
+  line-height: 1;
 }
 .pill-input::placeholder { color: var(--sb-muted); font-weight: 400; }
-.pill-input:disabled     { color: var(--sb-muted); cursor: not-allowed; }
+.pill-input:disabled      { color: var(--sb-muted); cursor: not-allowed; }
 
-/* Clear button */
 .clear-btn {
-  background: rgba(15,31,61,0.07);
+  background: #eef1f6;
   border: none;
   color: var(--sb-muted);
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-right: 10px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.14s;
 }
-.clear-btn:hover { background: rgba(15,31,61,0.14); color: var(--sb-navy); }
+.clear-btn:hover { background: #dde5f0; color: var(--sb-text); }
 
-/* ============================================================
-   ACTION BUTTONS
-   ============================================================ */
-.pill-btn {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  background: var(--sb-navy);
-  color: #fff;
-  font-size: 17px;
+/* ── AI robot avatar ──────────────────────────────────────── */
+.ai-avatar {
+  width: 50px;
+  height: 60px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  margin-right: 2px;
+  padding: 6px 0 6px 8px;
+}
+.ai-avatar img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  display: block;
+}
+
+/* ── Orange cap wrapper ───────────────────────────────────────
+   Positioned relative so the SVG shape can be absolute inside.
+   The cap is wider than its content to accommodate the concave
+   curve on the left side.
+*/
+.pill-cap {
   position: relative;
-  overflow: hidden;
-  transition:
-    transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
-    box-shadow 0.2s ease;
+  flex-shrink: 0;
+  /* Width: enough for concave indent + content + right padding */
+  width: 80px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The left portion of the cap overlaps the white area slightly
+     so the concave curve meets the white pill seamlessly */
+  margin-left: -4px;
 }
 
-/* Shimmer sweep */
-.pill-btn::after {
-  content: "";
+/* AI pill cap is wider to fit 3 icons */
+.pill-cap.ai-cap {
+  width: 130px;
+  padding-right: 6px;
+}
+
+/* SVG shape fills the entire cap area */
+.pill-cap-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
-  transform: translateX(-100%);
-  transition: transform 0.45s ease;
-}
-.pill-btn:hover:not(:disabled)::after { transform: translateX(100%); }
-
-.pill-btn:hover:not(:disabled) {
-  transform: scale(1.08) translateY(-1px);
-  box-shadow: 0 6px 20px rgba(15,31,61,0.28);
-}
-.pill-btn:active:not(:disabled) { transform: scale(0.96); }
-.pill-btn:focus-visible { outline: 2px solid var(--sb-navy); outline-offset: 3px; }
-
-/* AI gradient button */
-.pill-btn.ai {
-  background: linear-gradient(135deg, #e63a56 0%, #c9273f 55%, #b8860b 100%);
-  background-size: 200% 200%;
-  animation: ai-grad 4s ease infinite;
-}
-@keyframes ai-grad {
-  0%   { background-position: 0% 50%;   }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%;   }
-}
-.pill-btn.ai:hover:not(:disabled) {
-  box-shadow: 0 6px 24px rgba(230,58,86,0.42);
+  width: 100%;
+  height: 100%;
 }
 
-/* Disabled */
-.pill-btn:disabled {
-  background: #dde3ec;
-  color: #a0aec0;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
+/* Icons sit on top of the SVG background */
+.pill-cap-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  width: 100%;
+  padding-left: 12px;   /* push content past the concave notch */
 }
 
-/* Loading */
-.loading-active { animation: pulse-ring 1.4s infinite !important; cursor: wait; }
+/* ── Search button (inside cap) ───────────────────────────── */
+.pill-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+.pill-btn:hover  { transform: scale(1.12); }
+.pill-btn:active { transform: scale(0.92); }
+
+/* ── AI action buttons ────────────────────────────────────── */
+.ai-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, opacity 0.15s;
+}
+.ai-action-btn:hover  { transform: scale(1.2); }
+.ai-action-btn:active { transform: scale(0.9); }
+.ai-action-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Waveform bars ────────────────────────────────────────── */
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+}
+.waveform span {
+  display: block;
+  width: 2.5px;
+  background: #fff;
+  border-radius: 2px;
+  animation: sb-wave 1s ease-in-out infinite;
+}
+.waveform span:nth-child(1) { height: 5px;  animation-delay: 0s;    }
+.waveform span:nth-child(2) { height: 12px; animation-delay: 0.12s; }
+.waveform span:nth-child(3) { height: 7px;  animation-delay: 0.24s; }
+.waveform span:nth-child(4) { height: 14px; animation-delay: 0.08s; }
+.waveform span:nth-child(5) { height: 5px;  animation-delay: 0.20s; }
+
+@keyframes sb-wave {
+  0%,100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.3); }
+}
+
 .loader-dots {
   font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 3px;
-  animation: dot-fade 0.9s infinite ease-in-out;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #fff;
+  animation: sb-dot 0.9s infinite ease-in-out;
 }
-@keyframes dot-fade { 0%,100%{opacity:1} 50%{opacity:0.2} }
-@keyframes pulse-ring {
-  0%   { box-shadow: 0 0 0 0   rgba(230,58,86,0.55); }
-  70%  { box-shadow: 0 0 0 12px rgba(230,58,86,0);   }
-  100% { box-shadow: 0 0 0 0   rgba(230,58,86,0);    }
-}
+@keyframes sb-dot { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-/* Live gold dot on AI button */
-.ai-badge {
-  position: absolute;
-  top: -3px; right: -3px;
-  width: 13px; height: 13px;
-  background: var(--sb-gold);
-  border-radius: 50%;
-  border: 2px solid #fff;
-  animation: badge-pulse 2.5s ease-in-out infinite;
-}
-@keyframes badge-pulse {
-  0%,100%{ transform:scale(1);    opacity:1; }
-  50%    { transform:scale(1.3);  opacity:0.65; }
+/* ── Blue diagonal slash ──────────────────────────────────── */
+/*
+  Rendered as an inline SVG in SearchBarContainer.
+  This class styles the wrapper.
+*/
+.search-slash {
+  flex-shrink: 0;
+  width: 44px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
-@media (max-width: 860px) {
-  .search-wrap { margin: 20px auto 30px; }
-  .search-headline { font-size: 20px; margin-bottom: 14px; }
-
-  .dual-search-bar {
-    flex-direction: column;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    gap: 10px;
-    overflow: visible;
-    border-radius: 0;
-    transform: none !important;
-  }
-  .dual-search-bar:hover,
-  .dual-search-bar:focus-within {
-    transform: none !important;
-    box-shadow: none;
-    border-color: transparent;
-  }
-
-  .search-pill {
-    background: var(--sb-glass);
-    border-radius: 999px;
-    border: 1.5px solid var(--sb-border);
-    box-shadow: 0 2px 12px rgba(15,31,61,0.07);
-  }
-  .search-pill:hover { background: var(--sb-glass); }
-  .search-pill.ai::before { display: none; }
+/* ── Mobile ───────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .search-wrap      { padding: 14px 14px 12px; }
+  .dual-search-bar  { flex-direction: column; gap: 10px; }
+  .search-slash     { display: none; }
+  .search-pill,
+  .search-pill.ai   { width: 100%; height: 54px; }
+  .pill-cap         { height: 54px; }
+  .pill-cap.ai-cap  { height: 54px; }
+  .ai-avatar        { height: 54px; }
 }
 
 @media (max-width: 400px) {
-  .search-headline { font-size: 18px; }
-  .pill-title      { display: none; }
-  .pill-icon       { width: 30px; height: 30px; font-size: 14px; border-radius: 50%; }
+  .pill-input    { font-size: 13px; }
+  .ai-avatar     { width: 44px; padding: 5px 0 5px 6px; }
+  .ai-avatar img { width: 36px; height: 36px; }
 }
