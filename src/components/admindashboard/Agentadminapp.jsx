@@ -1527,6 +1527,21 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
         },
       });
 
+      // Inject CSS into Jitsi iframe to hide their watermark/logo
+      jitsiApi.current.addListener('videoConferenceJoined', () => {
+        try {
+          const iframe = jitsiRef.current?.querySelector('iframe');
+          if (iframe?.contentDocument) {
+            const style = iframe.contentDocument.createElement('style');
+            style.textContent = `
+              #jitsiLogo, .watermark, .leftwatermark, .rightwatermark,
+              .powered-by-div, [class*="watermark"] { display: none !important; }
+            `;
+            iframe.contentDocument.head.appendChild(style);
+          }
+        } catch { /* cross-origin may block, silent fail */ }
+      });
+
       jitsiApi.current.addEventListeners({
         participantLeft: () => onEndRef.current?.(),
         readyToClose:    () => onEndRef.current?.(),
@@ -1580,20 +1595,51 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
           {/* Jitsi fills the entire container — it renders its own controls, pip, and room label */}
           <div className="vc-jitsi-container" ref={jitsiRef} />
 
-          {/* Our only overlay — End Call button, sits above Jitsi's toolbar on the right */}
+          {/* OGM logo overlay — top-left, replaces Jitsi branding */}
+          <div style={{
+            position: 'absolute', top: 12, left: 12, zIndex: 9999,
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'rgba(0,0,0,0.55)', borderRadius: 8,
+            padding: '6px 12px', backdropFilter: 'blur(6px)',
+            pointerEvents: 'none',
+          }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: 6,
+              background: 'linear-gradient(135deg,#3b82f6,#f97316)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 800, color: 'white',
+            }}>OG</div>
+            <span style={{ color: 'white', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
+              OGM Live
+            </span>
+          </div>
+
+          {/* End Tour button — bottom-left, clear of the face */}
           <button
-            className="vc-end-call-btn"
             onClick={onEnd}
-            title="End call"
-            aria-label="End call"
+            aria-label="End tour and return to dashboard"
             style={{
               position: 'absolute',
-              bottom: 20,
-              right: 20,
+              bottom: 80,
+              left: 16,
               zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '9px 18px',
+              background: 'rgba(220,38,38,0.92)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontFamily: 'var(--font-ui)',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              backdropFilter: 'blur(4px)',
+              boxShadow: '0 4px 14px rgba(220,38,38,0.5)',
             }}
           >
-            <Icon.PhoneOff />
+            <Icon.PhoneOff /> End Tour
           </button>
         </div>
 

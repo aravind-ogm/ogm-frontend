@@ -753,6 +753,23 @@ export default function PropertyDetails() {
               </div>
             ) : (
               <>
+                {/* OGM branding overlay — top-left */}
+                <div style={{
+                  position:'absolute',top:12,left:12,zIndex:9999,
+                  display:'flex',alignItems:'center',gap:7,
+                  background:'rgba(0,0,0,0.55)',borderRadius:8,
+                  padding:'6px 12px',backdropFilter:'blur(6px)',
+                  pointerEvents:'none',
+                }}>
+                  <div style={{
+                    width:22,height:22,borderRadius:6,
+                    background:'linear-gradient(135deg,#3b82f6,#f97316)',
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    fontSize:11,fontWeight:800,color:'white',
+                  }}>OG</div>
+                  <span style={{color:'white',fontSize:12,fontWeight:700,letterSpacing:0.3}}>OGM Live</span>
+                </div>
+                {/* Close — top-right */}
                 <button className="live-close-btn" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourOpen(false); }}>✕</button>
                 <LiveJitsi containerRef={liveTourJitsiRef} apiRef={liveTourApiRef} name={liveTourName} roomName={`ogm-live-${property?.id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`} />
               </>
