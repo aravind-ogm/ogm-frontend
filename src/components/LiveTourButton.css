@@ -108,11 +108,11 @@
 .ltb-modal {
   position: relative;
   width: 95%;
-  max-width: 560px;
+  max-width: 860px;
   max-height: 90vh;
   background: #0f172a;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;      /* allow Jitsi self-view pip to show at top-right */
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.06);
   animation: ltb-modal-in 0.35s var(--ltb-spring);
 }
@@ -448,7 +448,18 @@
   height: 70vh;
   min-height: 480px;
   position: relative;
+  border-radius: 0 0 20px 20px;  /* match modal bottom corners */
 }
+/* Push Jitsi iframe content down so it starts below our OGM header bar */
+.ltb-jitsi-container iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+/* Jitsi logo covered via JSX overlay div inside the container */
 
 .ltb-end-call {
   position: absolute;
@@ -690,4 +701,77 @@
 /* Override modal background for this screen */
 .ltb-modal:has(.ltb-screen--connecting) {
   background: #f5f5f7;
+}
+
+/* ── Thank You Screen ────────────────────────────────────────── */
+.ltb-thankyou {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fff7ed 100%);
+  min-height: 320px;
+  gap: 12px;
+}
+.ltb-thankyou-icon {
+  font-size: 56px;
+  margin-bottom: 8px;
+  animation: bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes bounceIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.ltb-thankyou-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+.ltb-thankyou-sub {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+  max-width: 340px;
+  margin: 4px 0 16px;
+}
+.ltb-thankyou-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ltb-thankyou-book {
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(249,115,22,0.4);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.ltb-thankyou-book:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(249,115,22,0.5);
+}
+.ltb-thankyou-close {
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  background: white;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s;
+}
+.ltb-thankyou-close:hover {
+  border-color: #9ca3af;
+  color: #374151;
 }

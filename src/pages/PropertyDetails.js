@@ -74,12 +74,20 @@ function LiveJitsi({ containerRef, apiRef, name, roomName }) {
           disableDeepLinking: true,
         },
         interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_BRAND_WATERMARK: false,
-          SHOW_POWERED_BY: false,
-          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-          TOOLBAR_ALWAYS_VISIBLE: true,
+          SHOW_JITSI_WATERMARK:              false,
+          SHOW_BRAND_WATERMARK:              false,
+          SHOW_POWERED_BY:                   false,
+          DISABLE_JOIN_LEAVE_NOTIFICATIONS:  true,
+          TOOLBAR_ALWAYS_VISIBLE:            true,
+          SHOW_CHROME_EXTENSION_BANNER:      false,
+          MOBILE_APP_PROMO:                  false,
+          HIDE_INVITE_MORE_HEADER:           true,
+          GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
         },
+      });
+      // Intercept Jitsi hang-up → show our thank you screen instead of Jitsi promo
+      apiRef.current.addEventListeners({
+        readyToClose: () => onClose?.(),
       });
     };
     if (!window.JitsiMeetExternalAPI) {
@@ -105,6 +113,7 @@ export default function PropertyDetails() {
   const [liveTourOpen,      setLiveTourOpen]      = useState(false);
   const [liveTourName,      setLiveTourName]      = useState("");
   const [liveTourJoined,    setLiveTourJoined]    = useState(false);
+  const [liveTourEnded,     setLiveTourEnded]     = useState(false);
   const liveTourJitsiRef = useRef(null);
   const liveTourApiRef   = useRef(null);
 
@@ -725,10 +734,29 @@ export default function PropertyDetails() {
       <AskDiscoverWidget property={property} />
 
       {/* ── LIVE TOUR MODAL ── */}
-      {liveTourOpen && (
-        <div className="live-modal-overlay" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourOpen(false); }}>
+      {(liveTourOpen || liveTourEnded) && (
+        <div className="live-modal-overlay" onClick={() => { if (!liveTourJoined) { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourOpen(false); setLiveTourEnded(false); } }}>
           <div className="live-modal-box" onClick={e => e.stopPropagation()}>
-            {!liveTourJoined ? (
+            {liveTourEnded ? (
+              /* ── THANK YOU SCREEN ── */
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'56px 32px', textAlign:'center', background:'linear-gradient(135deg,#f0f4ff,#fff7ed)', minHeight:380, borderRadius:16, gap:14 }}>
+                <div style={{ fontSize:64, animation:'none' }}>🏡</div>
+                <h2 style={{ fontSize:24, fontWeight:800, color:'#1e3a8a', margin:0, letterSpacing:'-0.3px' }}>Thank you for your time!</h2>
+                <p style={{ fontSize:14, color:'#6b7280', lineHeight:1.65, maxWidth:320, margin:'4px 0 20px' }}>
+                  Our property expert will follow up with you shortly.<br/>We hope you enjoyed the live tour of {property?.title}.
+                </p>
+                <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center' }}>
+                  <button
+                    onClick={() => { setLiveTourEnded(false); setLiveTourOpen(false); setLiveTourName(''); }}
+                    style={{ padding:'12px 24px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#f97316,#fb923c)', color:'white', fontSize:14, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 14px rgba(249,115,22,0.4)' }}
+                  >📅 Book Another Tour</button>
+                  <button
+                    onClick={() => { setLiveTourEnded(false); setLiveTourOpen(false); setLiveTourName(''); }}
+                    style={{ padding:'12px 24px', borderRadius:10, border:'1.5px solid #d1d5db', background:'white', color:'#6b7280', fontSize:14, fontWeight:600, cursor:'pointer' }}
+                  >Close</button>
+                </div>
+              </div>
+            ) : !liveTourJoined ? (
               <div className="live-prejoin">
                 <img src={property.mainImages?.[0] || property.images?.[0]} alt="" className="live-prejoin-bg" />
                 <div className="live-prejoin-overlay" />
@@ -753,26 +781,44 @@ export default function PropertyDetails() {
               </div>
             ) : (
               <>
-                {/* OGM branding overlay — top-left */}
+                {/* Full-width dark cover over Jitsi header */}
                 <div style={{
-                  position:'absolute',top:12,left:12,zIndex:9999,
-                  display:'flex',alignItems:'center',gap:7,
-                  background:'rgba(0,0,0,0.55)',borderRadius:8,
-                  padding:'6px 12px',backdropFilter:'blur(6px)',
+                  position:'absolute',top:0,left:0,right:0,
+                  height:72,zIndex:9999,
+                  background:'#111827',
+                  pointerEvents:'none',
+                }} />
+                {/* OGM branding on top of cover */}
+                <div style={{
+                  position:'absolute',top:0,left:0,right:0,
+                  height:72,zIndex:10000,
+                  display:'flex',alignItems:'center',gap:10,
+                  padding:'0 16px',
                   pointerEvents:'none',
                 }}>
                   <div style={{
-                    width:22,height:22,borderRadius:6,
+                    width:36,height:36,borderRadius:10,
                     background:'linear-gradient(135deg,#3b82f6,#f97316)',
                     display:'flex',alignItems:'center',justifyContent:'center',
-                    fontSize:11,fontWeight:800,color:'white',
+                    fontSize:12,fontWeight:900,color:'white',flexShrink:0,
+                    boxShadow:'0 2px 8px rgba(59,130,246,0.4)',
                   }}>OG</div>
-                  <span style={{color:'white',fontSize:12,fontWeight:700,letterSpacing:0.3}}>OGM Live</span>
+                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                    <span style={{color:'white',fontSize:15,fontWeight:800,lineHeight:1,letterSpacing:0.2}}>OGM Live</span>
+                    <span style={{color:'rgba(255,255,255,0.5)',fontSize:11,lineHeight:1}}>Live Property Tour</span>
+                  </div>
                 </div>
                 {/* Close — top-right */}
-                <button className="live-close-btn" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourOpen(false); }}>✕</button>
-                <LiveJitsi containerRef={liveTourJitsiRef} apiRef={liveTourApiRef} name={liveTourName} roomName={`ogm-live-${property?.id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`} />
+                <button className="live-close-btn" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}>✕</button>
+                <LiveJitsi
+                  containerRef={liveTourJitsiRef}
+                  apiRef={liveTourApiRef}
+                  name={liveTourName}
+                  roomName={`ogm-live-${property?.id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`}
+                  onClose={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}
+                />
               </>
+            )}
             )}
           </div>
         </div>

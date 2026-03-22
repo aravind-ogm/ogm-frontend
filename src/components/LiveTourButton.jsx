@@ -24,12 +24,13 @@ const JITSI_DOMAIN = "meet.jit.si";
 /* ─── Screens ────────────────────────────────────────────────────────────── */
 const SCREEN = {
   CLOSED:     "closed",
-  CHECKING:   "checking",    // checking availability from backend
-  PREJOIN:    "prejoin",     // agent online — customer enters name
-  CONNECTING: "connecting",  // after "Join Live Now" — loading Jitsi + showing agent card
-  BUSY:       "busy",        // agent busy — show queue
-  OFFLINE:    "offline",     // agent offline
-  CALL:       "call",        // live video call active
+  CHECKING:   "checking",
+  PREJOIN:    "prejoin",
+  CONNECTING: "connecting",
+  BUSY:       "busy",
+  OFFLINE:    "offline",
+  CALL:       "call",
+  THANKYOU:   "thankyou",   // shown after call ends — replaces Jitsi promo page
 };
 
 /* ─── Agent avatar placeholder images (fallback if no photo) ─────────────── */
@@ -277,6 +278,8 @@ export default function LiveTourButton({ property }) {
           MOBILE_APP_PROMO:                 false,
         },
       });
+      // Intercept Jitsi hang-up → show our thank you screen
+      jitsiApiRef.current.addListener('readyToClose', () => closeModal());
     };
 
     if (!window.JitsiMeetExternalAPI) {
@@ -302,7 +305,7 @@ export default function LiveTourButton({ property }) {
     wsRef.current?.disconnect();
     clearInterval(waitTimerRef.current);
     abortRef.current?.abort();
-    setScreen(SCREEN.CLOSED);
+    setScreen(SCREEN.THANKYOU);
     setName("");
     setMobile("");
     setQueuePosition(null);
@@ -641,6 +644,32 @@ export default function LiveTourButton({ property }) {
               </div>
             )}
 
+            {/* ── THANK YOU ── */}
+            {screen === SCREEN.THANKYOU && (
+              <div className="ltb-thankyou">
+                <div className="ltb-thankyou-icon">🏡</div>
+                <h2 className="ltb-thankyou-title">Thank you for your time!</h2>
+                <p className="ltb-thankyou-sub">
+                  Our property expert will follow up with you shortly.<br/>
+                  We hope you enjoyed your live tour.
+                </p>
+                <div className="ltb-thankyou-actions">
+                  <button
+                    className="ltb-thankyou-book"
+                    onClick={() => setScreen(SCREEN.CLOSED)}
+                  >
+                    📅 Book Another Tour
+                  </button>
+                  <button
+                    className="ltb-thankyou-close"
+                    onClick={() => setScreen(SCREEN.CLOSED)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* ── LIVE CALL ── */}
             {screen === SCREEN.CALL && (
               <>
@@ -649,23 +678,34 @@ export default function LiveTourButton({ property }) {
                   ref={jitsiContainerRef}
                 />
 
-                {/* OGM logo — replaces Jitsi watermark top-left */}
+                {/* Full top-bar dark cover — hides entire Jitsi header row */}
                 <div style={{
-                  position: 'absolute', top: 12, left: 12, zIndex: 9999,
-                  display: 'flex', alignItems: 'center', gap: 7,
-                  background: 'rgba(0,0,0,0.55)', borderRadius: 8,
-                  padding: '6px 12px', backdropFilter: 'blur(6px)',
+                  position: 'absolute', top: 0, left: 0, right: 0,
+                  height: 72,
+                  zIndex: 9999,
+                  background: '#111827',
+                  pointerEvents: 'none',
+                }} />
+                {/* OGM badge on top */}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0,
+                  height: 72,
+                  zIndex: 10000,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '0 16px',
                   pointerEvents: 'none',
                 }}>
                   <div style={{
-                    width: 22, height: 22, borderRadius: 6,
+                    width: 36, height: 36, borderRadius: 10,
                     background: 'linear-gradient(135deg,#3b82f6,#f97316)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 800, color: 'white',
+                    fontSize: 12, fontWeight: 900, color: 'white', flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(59,130,246,0.4)',
                   }}>OG</div>
-                  <span style={{ color: 'white', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
-                    OGM Live
-                  </span>
+                  <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                    <span style={{ color:'white', fontSize:15, fontWeight:800, lineHeight:1, letterSpacing:0.2 }}>OGM Live</span>
+                    <span style={{ color:'rgba(255,255,255,0.5)', fontSize:11, lineHeight:1 }}>Live Property Tour</span>
+                  </div>
                 </div>
 
                 {/* End Call — bottom-left, away from face */}

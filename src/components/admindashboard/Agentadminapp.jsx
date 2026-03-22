@@ -1575,7 +1575,11 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
       {/* Top bar */}
       <div className="vc-topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div className="vc-brand-badge"><span className="vc-live-dot" aria-hidden="true" />Live Property Tour</div>
+          <div className="vc-brand-badge">
+              <div style={{ width:20,height:20,borderRadius:6,background:'linear-gradient(135deg,#3b82f6,#f97316)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:900,color:'white',flexShrink:0 }}>OG</div>
+              OGM Live
+              <span className="vc-live-dot" aria-hidden="true" style={{ marginLeft:4 }} />
+            </div>
           <div className="vc-status-text">
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green-500)', display: 'inline-block' }} aria-hidden="true" />
             Live Tour in Progress
@@ -1595,23 +1599,31 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
           {/* Jitsi fills the entire container — it renders its own controls, pip, and room label */}
           <div className="vc-jitsi-container" ref={jitsiRef} />
 
-          {/* OGM logo overlay — top-left, replaces Jitsi branding */}
+          {/* Premium OGM badge — covers Jitsi logo, frosted glass style */}
           <div style={{
-            position: 'absolute', top: 12, left: 12, zIndex: 9999,
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: 'rgba(0,0,0,0.55)', borderRadius: 8,
-            padding: '6px 12px', backdropFilter: 'blur(6px)',
+            position: 'absolute', top: 8, left: 8, zIndex: 9999,
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(10,14,20,0.88)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 12,
+            padding: '8px 16px 8px 9px',
             pointerEvents: 'none',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            minWidth: 140,
           }}>
             <div style={{
-              width: 22, height: 22, borderRadius: 6,
-              background: 'linear-gradient(135deg,#3b82f6,#f97316)',
+              width: 36, height: 36, borderRadius: 9,
+              background: 'linear-gradient(135deg, #3b82f6, #f97316)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 800, color: 'white',
+              fontSize: 13, fontWeight: 900, color: 'white', flexShrink: 0,
+              boxShadow: '0 3px 10px rgba(59,130,246,0.55)',
             }}>OG</div>
-            <span style={{ color: 'white', fontFamily: 'var(--font-ui)', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
-              OGM Live
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ color: 'white', fontFamily: 'var(--font-ui)', fontSize: 14, fontWeight: 800, lineHeight: 1, letterSpacing: 0.2 }}>OGM Live</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-ui)', fontSize: 11, lineHeight: 1 }}>Property Tour</span>
+            </div>
           </div>
 
           {/* End Tour button — bottom-left, clear of the face */}

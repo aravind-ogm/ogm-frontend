@@ -1285,13 +1285,28 @@ body {
 
 .vc-body { flex: 1; display: flex; overflow: hidden; }
 
-.vc-video-main { flex: 1; position: relative; background: #12161e; overflow: hidden; }
+.vc-video-main {
+  flex: 1;
+  position: relative;
+  background: #0d1117;   /* match Jitsi bg exactly — no visible gap */
+  overflow: hidden;
+  min-width: 0;
+}
 .vc-jitsi-container {
   width: 100%;
   height: 100%;
-  position: relative;
+  position: absolute;   /* fill parent absolutely — no gaps */
+  top: 0; left: 0;
   z-index: 1;
 }
+.vc-jitsi-container iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+/* Note: ::before cannot penetrate iframes. Logo cover is handled via JSX overlay div */
+
 /* Hide our custom pip and controls bar — Jitsi renders its own */
 .vc-pip,
 .vc-room-label,
@@ -1330,13 +1345,15 @@ body {
 .vc-ctrl-btn.active-off { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.35); }
 .vc-sep { width: 1px; height: 28px; background: rgba(255,255,255,0.15); margin: 0 2px; }
 .vc-end-call-btn {
-  width: 52px; height: 52px; border-radius: 50%; border: none;
+  width: 48px; height: 48px; border-radius: 50%; border: none;
   background: var(--red-500); color: white;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: 0 4px 18px rgba(239,68,68,0.55);
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(239,68,68,0.55);
   transition: var(--transition);
+  /* Positioned via inline style in JSX — absolute bottom-right above Jitsi toolbar */
 }
-.vc-end-call-btn:hover { transform: scale(1.12); box-shadow: 0 8px 28px rgba(239,68,68,0.7); }
+.vc-end-call-btn:hover { transform: scale(1.1); box-shadow: 0 8px 28px rgba(239,68,68,0.7); }
 
 .vc-sidebar {
   width: 295px; background: white;
