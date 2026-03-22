@@ -107,6 +107,29 @@ export default function PropertyDetails() {
   const [liveTourJoined,    setLiveTourJoined]    = useState(false);
   const liveTourJitsiRef = useRef(null);
   const liveTourApiRef   = useRef(null);
+
+  /* ─── Notify agent + join Jitsi ────────────────────────────── */
+  const handleJoinLiveTour = async () => {
+    if (!liveTourName.trim()) return;
+
+    // 1. Notify agent via join-queue → triggers WebSocket popup on agent dashboard
+    try {
+      await fetch(`${API_BASE}/api/live-tour/join-queue`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyId: property?.id,
+          name:       liveTourName.trim(),
+          mobile:     "",
+        }),
+      });
+    } catch {
+      // Non-critical — proceed to call even if this fails
+    }
+
+    // 2. Enter Jitsi room
+    setLiveTourJoined(true);
+  };
   const [copyToast,         setCopyToast]         = useState(false);
   const [zoomOpen,          setZoomOpen]          = useState(false);
   const [zoomImage,         setZoomImage]         = useState("");
@@ -718,11 +741,11 @@ export default function PropertyDetails() {
                     placeholder="Enter your name"
                     value={liveTourName}
                     onChange={e => setLiveTourName(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && liveTourName && setLiveTourJoined(true)}
+                    onKeyDown={e => e.key === "Enter" && liveTourName && handleJoinLiveTour()}
                     className="live-name-input"
                     autoFocus
                   />
-                  <button className="live-join-btn" onClick={() => setLiveTourJoined(true)} disabled={!liveTourName}>
+                  <button className="live-join-btn" onClick={handleJoinLiveTour} disabled={!liveTourName}>
                     Join Live Now →
                   </button>
                   <button className="live-cancel-btn" onClick={() => setLiveTourOpen(false)}>Cancel</button>
@@ -731,7 +754,7 @@ export default function PropertyDetails() {
             ) : (
               <>
                 <button className="live-close-btn" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourOpen(false); }}>✕</button>
-                <LiveJitsi containerRef={liveTourJitsiRef} apiRef={liveTourApiRef} name={liveTourName} roomName={`ogm-live-${property?.id}`} />
+                <LiveJitsi containerRef={liveTourJitsiRef} apiRef={liveTourApiRef} name={liveTourName} roomName={`ogm-live-${property?.id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`} />
               </>
             )}
           </div>

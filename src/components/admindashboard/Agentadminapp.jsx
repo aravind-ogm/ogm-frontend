@@ -1,31 +1,39 @@
 /**
- * =============================================================
- * AGENT ADMIN DASHBOARD — AgentAdminApp.jsx
- * Production-ready React component
- * =============================================================
- * BACKEND ENDPOINTS (Spring Boot — com.ogm.market.live):
- *   GET  /api/live-tour/availability/{propertyId}
- *   POST /api/live-tour/join-queue
- *   POST /api/live-tour/start-session
- *   POST /api/live-tour/end-session/{sessionId}
+ * ═══════════════════════════════════════════════════════════════
+ *  AGENT ADMIN DASHBOARD — AgentAdminApp.jsx
+ *  Production-ready · WebSocket-first · Zero mock data at runtime
+ * ═══════════════════════════════════════════════════════════════
  *
- * AGENT-SPECIFIC ENDPOINTS (add to your backend):
- *   GET  /api/agent/profile          → { id, name, role, email }
- *   PUT  /api/agent/availability     → { online, busy }
- *   GET  /api/agent/calls?filter=today|yesterday|week
- *   GET  /api/agent/upcoming?week=ISO_DATE
- *   GET  /api/agent/schedule?week=ISO_DATE
- *   PUT  /api/agent/schedule/{date}  → { startTime, endTime }
+ *  BACKEND ENDPOINTS  (Spring Boot — com.ogm.market.live)
+ *  ────────────────────────────────────────────────────────────
+ *  AUTH
+ *    POST /api/agent/login              { email, password }
+ *    GET  /api/agent/profile?agentId=   → LoginResponse
+ *    PUT  /api/agent/profile            UpdateProfileRequest
  *
- * WEBSOCKET (STOMP):
- *   /topic/queue/{propertyId}        → live queue updates
- *   /topic/incoming/{agentId}        → incoming call events
+ *  DASHBOARD
+ *    GET  /api/agent/calls?agentId=     → CallHistoryDto[]
+ *    GET  /api/agent/stats?agentId=     → { total, completed, active }
  *
- * HOW TO USE:
- *   import AgentAdminApp from './AgentAdminApp';
- *   // Wrap with your router / auth context if needed
- *   <AgentAdminApp />
- * =============================================================
+ *  AVAILABILITY
+ *    PUT  /api/agent/availability       AvailabilityToggleRequest
+ *    GET  /api/agent/schedule?agentId=  → AgentSchedule[]
+ *    PUT  /api/agent/schedule?agentId=  ScheduleSlotDto[]
+ *
+ *  UPCOMING CALLS
+ *    GET  /api/agent/upcoming?agentId=  → ScheduledCallDto[]
+ *    POST /api/agent/book-call          BookCallRequest
+ *    PUT  /api/agent/upcoming/{id}/cancel
+ *    PUT  /api/agent/upcoming/{id}/complete
+ *
+ *  WEBSOCKET (STOMP over SockJS at /live-queue)
+ *    /topic/agent/{agentId}/incoming-call
+ *      payload: { callerName, callerMobile, propertyId, queuePosition }
+ *
+ *  USAGE
+ *    import AgentAdminApp from './AgentAdminApp';
+ *    <AgentAdminApp />
+ * ═══════════════════════════════════════════════════════════════
  */
 
 import React, {
@@ -38,246 +46,65 @@ import React, {
 import './AgentAdmin.css';
 
 /* ─────────────────────────────────────────────────────────────
-   CONFIGURATION
+   ENVIRONMENT CONFIG
    ───────────────────────────────────────────────────────────── */
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8080';
-const WS_BASE  = process.env.REACT_APP_WS_BASE  || 'ws://localhost:8080';
+const API_BASE   = process.env.REACT_APP_API_BASE  || 'http://localhost:8080';
+const WS_BASE    = process.env.REACT_APP_WS_BASE   || 'http://localhost:8080';
+const JITSI_HOST = process.env.REACT_APP_JITSI_HOST || 'meet.jit.si';
 
 /* ─────────────────────────────────────────────────────────────
-   MOCK DATA  (replace with real API calls)
+   TOKEN HELPERS  (centralise all auth header logic)
    ───────────────────────────────────────────────────────────── */
-const MOCK_CALLS = [
-  { id: 1, name: 'John Carter',    initials: 'JC', property: 'Oceanview Apartments', status: 'completed', duration: '12:32 min', notes: 'Interested in 2BHK, budget 80L', time: '2:27 PM',  online: true  },
-  { id: 2, name: 'Sarah Miller',   initials: 'SM', property: 'Greenwood Villas',     status: 'completed', duration: '56:45 min', notes: 'High Interest, follow-up required', time: '1:50 PM',  online: true  },
-  { id: 3, name: 'Alex Johnson',   initials: 'AJ', property: 'Maplewood Estates',   status: 'missed',    duration: '–',         notes: "Didn't answer the call",         time: '12:15 PM', online: false },
-  { id: 4, name: 'Emily Davis',    initials: 'ED', property: 'Sunset Heights',       status: 'cancelled', duration: '–',         notes: 'Client cancelled last minute',   time: '10:10 AM', online: false },
-  { id: 5, name: 'William Taylor', initials: 'WT', property: 'Lakeside Residences', status: 'completed', duration: '9:20 min',  notes: 'Discussed 2BHK options',        time: '9:25 AM',  online: true  },
-  { id: 6, name: 'Linda Brooks',   initials: 'LB', property: 'Harbor View',         status: 'completed', duration: '7:28 min',  notes: 'Planning a visit this weekend', time: '8:50 AM',  online: true  },
-  { id: 7, name: 'Ravi Sharma',    initials: 'RS', property: 'Prestige Tower',      status: 'ongoing',   duration: '–',         notes: '3BHK corner unit query',        time: 'Now',      online: true  },
-];
+const getToken  = () => localStorage.getItem('agent_token') || '';
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${getToken()}`,
+});
 
-const MOCK_UPCOMING = [
-  { id: 1, time: '10:30 AM', name: 'John Carter',    initials: 'JC', property: 'Oceanview Apartments', note: 'Wants 2BHK walkthrough',        nextIn: 15 },
-  { id: 2, time: '1:00 PM',  name: 'Sarah Miller',   initials: 'SM', property: 'Greenwood Villas',     note: 'Discuss property pricing',      nextIn: null },
-  { id: 3, time: '2:30 PM',  name: 'Alex Johnson',   initials: 'AJ', property: 'Maplewood Estates',   note: 'Review lease agreement details',nextIn: null },
-  { id: 4, time: '4:00 PM',  name: 'Emily Davis',    initials: 'ED', property: 'Sunset Heights',       note: 'Questions about HOA regulations',nextIn: null },
-  { id: 5, time: '9:15 AM',  name: 'William Taylor', initials: 'WT', property: 'Lakeside Residences', note: 'Marketing strategy discussion', nextIn: null },
-  { id: 6, time: '11:00 AM', name: 'Linda Brooks',   initials: 'LB', property: 'Harbor View',         note: 'Finalize contract paperwork',   nextIn: null },
-];
-
+/* ─────────────────────────────────────────────────────────────
+   DATE / TIME UTILS
+   ───────────────────────────────────────────────────────────── */
 const DAYS_OF_WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 function buildWeekSchedule(weekOffset = 0) {
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0=Sun
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7) + weekOffset * 7);
+  const today    = new Date();
+  const dow      = today.getDay();              // 0 = Sun
+  const monday   = new Date(today);
+  monday.setDate(today.getDate() - ((dow + 6) % 7) + weekOffset * 7);
 
   return DAYS_OF_WEEK.map((day, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     const isToday = d.toDateString() === today.toDateString();
-    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     return {
-      id: i,
-      date: label,
-      day,
-      isToday,
+      id: i, day, isToday,
+      date:      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      isoDate:   d.toISOString().slice(0, 10),
       startTime: '9:00 AM',
       endTime:   '6:00 PM',
-      status: i === 6 ? 'not-set' : (i === 3 ? 'unavailable' : 'available'),
+      status:    'available',
     };
   });
 }
 
-const MOCK_INCOMING_CALL = {
-  name: 'Emily Roberts',
-  initials: 'ER',
-  property: 'Harbor View',
-  mobile: null,
-  email: null,
-};
+function fmtDuration(seconds) {
+  if (!seconds) return '–';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function fmtTime(isoString) {
+  if (!isoString) return '–';
+  try {
+    return new Date(isoString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  } catch { return '–'; }
+}
 
 /* ─────────────────────────────────────────────────────────────
-   TINY ICON HELPERS  (inline SVGs — zero dependencies)
+   AVATAR COLOR  (deterministic from initials)
    ───────────────────────────────────────────────────────────── */
-const Icon = {
-  Dashboard: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-      <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-    </svg>
-  ),
-  CallHistory: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-    </svg>
-  ),
-  Availability: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  ),
-  Settings: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
-  ),
-  UpcomingCalls: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-    </svg>
-  ),
-  Phone: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.86-1.86a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-    </svg>
-  ),
-  Video: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-    </svg>
-  ),
-  VideoOff: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
-    </svg>
-  ),
-  Mic: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
-      <line x1="8" y1="23" x2="16" y2="23"/>
-    </svg>
-  ),
-  MicOff: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="1" y1="1" x2="23" y2="23"/>
-      <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
-      <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
-      <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-    </svg>
-  ),
-  Volume: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-    </svg>
-  ),
-  MessageSquare: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-  ),
-  Monitor: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/>
-      <line x1="12" y1="17" x2="12" y2="21"/>
-    </svg>
-  ),
-  PhoneOff: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
-      <line x1="23" y1="1" x2="1" y2="23"/>
-    </svg>
-  ),
-  Search: () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-  ),
-  ChevLeft: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="15 18 9 12 15 6"/>
-    </svg>
-  ),
-  ChevRight: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="9 18 15 12 9 6"/>
-    </svg>
-  ),
-  Calendar: () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  ),
-  Plus: () => (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
-  ),
-  Check: () => (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  ),
-  X: () => (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-  ),
-  ChevDown: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  ),
-  Mail: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-      <polyline points="22,6 12,13 2,6"/>
-    </svg>
-  ),
-  PhoneIcon: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.86-1.86a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-    </svg>
-  ),
-  Send: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-    </svg>
-  ),
-  Bell: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  ),
-  Eye: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-    </svg>
-  ),
-  EyeOff: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
-    </svg>
-  ),
-  Lock: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </svg>
-  ),
-  GearPerson: () => (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="8" r="4"/>
-      <path d="M2 20c0-4 3.6-7 8-7"/>
-      <circle cx="18" cy="17" r="3"/>
-      <path d="M18 14v-1m0 7v-1m-3-3h-1m7 0h-1m-1.5-2.5-.7-.7m-1.6 4.4-.7-.7m4.4-1.6.7.7m-4.4 1.6.7.7"/>
-    </svg>
-  ),
-};
-
-/* ─────────────────────────────────────────────────────────────
-   UTILITY: initials avatar color
-   ───────────────────────────────────────────────────────────── */
-const AVATAR_COLORS = [
+const AVATAR_PALETTE = [
   { bg: '#dbeafe', fg: '#2563eb' },
   { bg: '#dcfce7', fg: '#16a34a' },
   { bg: '#fce7f3', fg: '#be185d' },
@@ -285,9 +112,245 @@ const AVATAR_COLORS = [
   { bg: '#ffedd5', fg: '#ea580c' },
   { bg: '#cffafe', fg: '#0891b2' },
 ];
-function avatarColor(initials) {
-  const i = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[i];
+function avatarColor(initials = 'XX') {
+  const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % AVATAR_PALETTE.length;
+  return AVATAR_PALETTE[idx];
+}
+function toInitials(name = '') {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '??';
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INLINE SVG ICON LIBRARY  (zero external deps)
+   ───────────────────────────────────────────────────────────── */
+const Icon = {
+  Dashboard:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+  CallHistory:  () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  Availability: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  Settings:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  UpcomingCalls:() => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
+  Phone:        () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.86-1.86a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+  PhoneOff:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>,
+  Video:        () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+  VideoOff:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/><line x1="1" y1="1" x2="23" y2="23"/></svg>,
+  Mic:          () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+  MicOff:       () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+  Volume:       () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>,
+  MessageSquare:() => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  Monitor:      () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>,
+  Search:       () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  ChevLeft:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
+  ChevRight:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+  ChevDown:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
+  Calendar:     () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  Plus:         () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  Check:        () => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  X:            () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  Bell:         () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
+  Eye:          () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+  EyeOff:       () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>,
+  Lock:         () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+  Mail:         () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+  PhoneIcon:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.86-1.86a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+  Send:         () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+  Logout:       () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  GearPerson:   () => <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="8" r="4"/><path d="M2 20c0-4 3.6-7 8-7"/><circle cx="18" cy="17" r="3"/><path d="M18 14v-1m0 7v-1m-3-3h-1m7 0h-1m-1.5-2.5-.7-.7m-1.6 4.4-.7-.7m4.4-1.6.7.7m-4.4 1.6.7.7"/></svg>,
+  Refresh:      () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>,
+  WifiOff:      () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>,
+};
+
+/* ─────────────────────────────────────────────────────────────
+   HOOK: useWebSocket  — STOMP over SockJS, auto-reconnect
+   ─────────────────────────────────────────────────────────────
+
+   Root cause of 🔴 Offline: the callbacks (onIncomingCall,
+   onAvailabilityChange) are new function refs every render,
+   so useCallback re-creates `connect` every render, which
+   triggers the useEffect, which disconnects and reconnects
+   endlessly — staying in 'disconnected' state.
+
+   Fix: store callbacks in refs so connect() is stable and
+   the useEffect only runs once when agentId is first set.
+   ───────────────────────────────────────────────────────────── */
+function useWebSocket(agentId, onIncomingCall, onAvailabilityChange) {
+  const stompRef        = useRef(null);
+  const reconnectRef    = useRef(null);
+  const mountedRef      = useRef(true);
+  const onCallRef       = useRef(onIncomingCall);
+  const onAvailRef      = useRef(onAvailabilityChange);
+  const agentIdRef      = useRef(agentId);
+  const [wsStatus, setWsStatus] = useState('disconnected');
+
+  // Keep refs current every render — zero effect cost
+  useEffect(() => { onCallRef.current  = onIncomingCall;    });
+  useEffect(() => { onAvailRef.current = onAvailabilityChange; });
+  useEffect(() => { agentIdRef.current = agentId;           });
+
+  // Stable connect function — never changes, reads everything via refs
+  const connect = useCallback(() => {
+    const aid = agentIdRef.current;
+    if (!aid || !window.SockJS || !window.Stomp) return;
+    if (stompRef.current?.connected) return;
+
+    setWsStatus('connecting');
+    try {
+      const socket = new window.SockJS(`${API_BASE}/live-queue`);
+      const stomp  = window.Stomp.over(socket);
+      stomp.debug  = null;
+
+      stomp.connect(
+        {},  // no auth header — WebSocket endpoint is public (permitted in SecurityConfig)
+        () => {
+          if (!mountedRef.current) return;
+          stompRef.current = stomp;
+          setWsStatus('connected');
+
+          stomp.subscribe(`/topic/agent/${aid}/incoming-call`, (msg) => {
+            try { onCallRef.current?.(JSON.parse(msg.body)); } catch { /* ignore */ }
+          });
+
+          stomp.subscribe(`/topic/agent/${aid}/availability`, (msg) => {
+            try { onAvailRef.current?.(JSON.parse(msg.body)); } catch { /* ignore */ }
+          });
+        },
+        (error) => {
+          // STOMP error callback — schedule reconnect
+          if (!mountedRef.current) return;
+          console.warn('WS disconnected, reconnecting in 5s…', error);
+          setWsStatus('disconnected');
+          stompRef.current = null;
+          reconnectRef.current = setTimeout(connect, 5000);
+        }
+      );
+    } catch (err) {
+      console.warn('WS connect error:', err);
+      setWsStatus('disconnected');
+      reconnectRef.current = setTimeout(connect, 5000);
+    }
+  }, []); // ← stable, no deps — everything via refs
+
+  // Load scripts once, then connect — only re-runs if agentId changes
+  useEffect(() => {
+    if (!agentId) return;
+    mountedRef.current = true;
+
+    const loadScripts = (cb) => {
+      if (window.SockJS && window.Stomp) { cb(); return; }
+
+      const s1 = document.createElement('script');
+      s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js';
+      s1.onerror = () => console.warn('Failed to load SockJS');
+      s1.onload  = () => {
+        const s2 = document.createElement('script');
+        s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js';
+        s2.onerror = () => console.warn('Failed to load STOMP');
+        s2.onload  = cb;
+        document.body.appendChild(s2);
+      };
+      document.body.appendChild(s1);
+    };
+
+    loadScripts(connect);
+
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(reconnectRef.current);
+      if (stompRef.current?.connected) {
+        stompRef.current.disconnect();
+      }
+      stompRef.current = null;
+    };
+  }, [agentId, connect]); // connect is now stable so this only fires on agentId change
+
+  return { wsStatus };
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HOOK: useCallHistory
+   ───────────────────────────────────────────────────────────── */
+function useCallHistory(agentId) {
+  const [calls,   setCalls]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
+
+  const refresh = useCallback(async () => {
+    if (!agentId) return;
+    setLoading(true); setError(null);
+    try {
+      const res  = await fetch(`${API_BASE}/api/agent/calls?agentId=${agentId}`, { headers: authHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setCalls(data.map(c => ({
+        id:           c.sessionId,
+        name:         c.customerName    || 'Unknown',
+        initials:     toInitials(c.customerName),
+        property:     c.propertyTitle   || `Property #${c.propertyId}`,
+        status:       (c.status || '').toLowerCase() === 'completed' ? 'completed'
+                    : (c.status || '').toLowerCase() === 'active'    ? 'ongoing'
+                    : 'missed',
+        duration:     c.durationFormatted || fmtDuration(c.durationSeconds),
+        notes:        c.notes || c.customerNote || '–',
+        time:         fmtTime(c.startedAt),
+        startedAtRaw: c.startedAt || null,
+        online:       (c.status || '').toLowerCase() === 'active',
+      })));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [agentId]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { calls, loading, error, refresh };
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HOOK: useAgentStats
+   ───────────────────────────────────────────────────────────── */
+function useAgentStats(agentId) {
+  const [stats, setStats] = useState({ total: 0, completed: 0, active: 0 });
+
+  useEffect(() => {
+    if (!agentId) return;
+    fetch(`${API_BASE}/api/agent/stats?agentId=${agentId}`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(setStats)
+      .catch(() => {});
+  }, [agentId]);
+
+  return stats;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HOOK: useProperties  — for matching property in video call
+   ───────────────────────────────────────────────────────────── */
+function useProperties() {
+  const [properties, setProperties] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/properties?page=0&size=100`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setProperties(data?.content || data || []))
+      .catch(() => {});
+  }, []);
+
+  const findPropertyById = useCallback((id) => {
+    if (!id) return null;
+    return properties.find(p => String(p.id) === String(id)) || null;
+  }, [properties]);
+
+  const findProperty = useCallback((nameOrSlug) => {
+    if (!nameOrSlug) return null;
+    const q = nameOrSlug.toLowerCase();
+    return properties.find(p =>
+      p.slug?.toLowerCase().includes(q) || p.title?.toLowerCase().includes(q)
+    ) || null;
+  }, [properties]);
+
+  return { properties, findProperty, findPropertyById };
+
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -298,10 +361,7 @@ function AvatarCircle({ initials, size = 42, online = false, busy = false }) {
   const dotClass = online ? 'online' : busy ? 'busy' : 'offline';
   return (
     <div className="call-avatar-wrap">
-      <div
-        className="avatar-circle"
-        style={{ width: size, height: size, background: bg, color: fg, fontSize: size * 0.35 }}
-      >
+      <div className="avatar-circle" style={{ width: size, height: size, background: bg, color: fg, fontSize: size * 0.35 }}>
         {initials}
       </div>
       <span className={`avatar-status-dot ${dotClass}`} />
@@ -313,28 +373,27 @@ function AvatarCircle({ initials, size = 42, online = false, busy = false }) {
    COMPONENT: LoginPage
    ───────────────────────────────────────────────────────────── */
 function LoginPage({ onLogin }) {
-  const [email, setEmail]     = useState('');
-  const [password, setPass]   = useState('');
-  const [showPass, setShowP]  = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+  const [email,    setEmail]   = useState('');
+  const [password, setPass]    = useState('');
+  const [showPass, setShowP]   = useState(false);
+  const [loading,  setLoading] = useState(false);
+  const [error,    setError]   = useState('');
 
   const handleSubmit = async () => {
     setError('');
-    if (!email || !password) { setError('Please fill in all fields.'); return; }
+    if (!email.trim() || !password) { setError('Please enter your email and password.'); return; }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/agent/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       if (!res.ok) throw new Error('Invalid credentials');
       const data = await res.json();
-      localStorage.setItem('agent_token', data.token);
-      onLogin(data); // data = { agentId, name, email, phone, designation, token }
+      onLogin(data);
     } catch {
-      setError('Invalid email or password.');
+      setError('Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -349,13 +408,12 @@ function LoginPage({ onLogin }) {
 
       <div className="login-card">
         <div className="login-icon"><Icon.GearPerson /></div>
-        <h1 className="login-title">Admin Login</h1>
+        <h1 className="login-title">Agent Login</h1>
 
         <div className="login-form-card">
           {error && (
-            <div className="login-error">
-              <Icon.X />
-              {error}
+            <div className="login-error" role="alert">
+              <Icon.X /> {error}
             </div>
           )}
 
@@ -365,10 +423,12 @@ function LoginPage({ onLogin }) {
               <input
                 className="login-input"
                 type="email"
-                placeholder="Email"
+                placeholder="Email address"
                 value={email}
+                autoComplete="email"
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                aria-label="Email address"
               />
             </div>
           </div>
@@ -381,17 +441,19 @@ function LoginPage({ onLogin }) {
                 type={showPass ? 'text' : 'password'}
                 placeholder="Password"
                 value={password}
+                autoComplete="current-password"
                 onChange={e => setPass(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                aria-label="Password"
               />
-              <button className="login-eye" onClick={() => setShowP(p => !p)} type="button">
+              <button className="login-eye" onClick={() => setShowP(p => !p)} type="button" aria-label={showPass ? 'Hide password' : 'Show password'}>
                 {showPass ? <Icon.EyeOff /> : <Icon.Eye />}
               </button>
             </div>
           </div>
 
           <button className="login-btn" onClick={handleSubmit} disabled={loading}>
-            {loading ? <><span className="login-spinner" />Logging in…</> : 'Login'}
+            {loading ? <><span className="login-spinner" /> Signing in…</> : 'Sign In'}
           </button>
 
           <button className="login-forgot" type="button">Forgot password?</button>
@@ -405,16 +467,16 @@ function LoginPage({ onLogin }) {
    COMPONENT: Sidebar
    ───────────────────────────────────────────────────────────── */
 const NAV_ITEMS = [
-  { id: 'dashboard',      label: 'Dashboard',     icon: 'Dashboard'     },
-  { id: 'call-history',   label: 'Call History',  icon: 'CallHistory'   },
-  { id: 'availability',   label: 'Availability',  icon: 'Availability'  },
-  { id: 'settings',       label: 'Settings',      icon: 'Settings'      },
-  { id: 'upcoming-calls', label: 'Upcoming Calls',icon: 'UpcomingCalls' },
+  { id: 'dashboard',      label: 'Dashboard',      icon: 'Dashboard'      },
+  { id: 'call-history',   label: 'Call History',   icon: 'CallHistory'    },
+  { id: 'availability',   label: 'Availability',   icon: 'Availability'   },
+  { id: 'upcoming-calls', label: 'Upcoming Calls', icon: 'UpcomingCalls'  },
+  { id: 'settings',       label: 'Settings',       icon: 'Settings'       },
 ];
 
-function Sidebar({ active, onNav, onLogout }) {
+function Sidebar({ active, onNav, onLogout, wsStatus }) {
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" role="navigation" aria-label="Main navigation">
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon"><Icon.GearPerson /></div>
       </div>
@@ -427,6 +489,7 @@ function Sidebar({ active, onNav, onLogout }) {
               key={item.id}
               className={`sidebar-item${active === item.id ? ' active' : ''}`}
               onClick={() => onNav(item.id)}
+              aria-current={active === item.id ? 'page' : undefined}
             >
               <span className="sidebar-icon"><IconComp /></span>
               <span>{item.label}</span>
@@ -436,24 +499,18 @@ function Sidebar({ active, onNav, onLogout }) {
       </nav>
 
       <div className="sidebar-divider" />
-      <div className="sidebar-bottom">
-        <button
-          className={`sidebar-item${active === 'settings' ? ' active' : ''}`}
-          onClick={() => onNav('settings')}
-        >
-          <span className="sidebar-icon"><Icon.Settings /></span>
-          <span>Settings</span>
-        </button>
 
-        <button className="sidebar-logout-btn" onClick={onLogout}>
-          <span className="sidebar-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
+      <div className="sidebar-bottom">
+        {/* WebSocket live status */}
+        <div className="ws-status-row" title={`Live connection: ${wsStatus}`}>
+          <span className={`ws-dot ws-dot--${wsStatus === 'connected' ? 'green' : wsStatus === 'connecting' ? 'yellow' : 'red'}`} />
+          <span className="ws-label">
+            {wsStatus === 'connected' ? 'Live' : wsStatus === 'connecting' ? 'Connecting…' : 'Offline'}
           </span>
-          <span>Logout</span>
+        </div>
+        <button className="sidebar-logout-btn" onClick={onLogout}>
+          <span className="sidebar-icon"><Icon.Logout /></span>
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>
@@ -463,17 +520,18 @@ function Sidebar({ active, onNav, onLogout }) {
 /* ─────────────────────────────────────────────────────────────
    COMPONENT: AvailabilityToggle
    ───────────────────────────────────────────────────────────── */
-function AvailabilityToggle({ available, onToggle }) {
+function AvailabilityToggle({ available, onToggle, saving }) {
   return (
     <div className="avail-toggle-wrap">
-      <span>{available ? 'Available' : 'Offline'}</span>
+      <span>{saving ? 'Saving…' : available ? 'Available' : 'Offline'}</span>
       <div
-        className={`toggle-track-outer ${available ? 'on' : 'off'}`}
-        onClick={onToggle}
+        className={`toggle-track-outer ${available ? 'on' : 'off'}${saving ? ' toggle-saving' : ''}`}
+        onClick={!saving ? onToggle : undefined}
         role="switch"
         aria-checked={available}
+        aria-label="Toggle availability"
         tabIndex={0}
-        onKeyDown={e => e.key === 'Enter' && onToggle()}
+        onKeyDown={e => e.key === 'Enter' && !saving && onToggle()}
       >
         <div className="toggle-thumb-circle" />
       </div>
@@ -486,10 +544,12 @@ function AvailabilityToggle({ available, onToggle }) {
    ───────────────────────────────────────────────────────────── */
 function FilterTabs({ tabs, active, onChange }) {
   return (
-    <div className="filter-tabs">
+    <div className="filter-tabs" role="tablist">
       {tabs.map(tab => (
         <button
           key={tab}
+          role="tab"
+          aria-selected={active === tab}
           className={`filter-tab${active === tab ? ' active' : ''}`}
           onClick={() => onChange(tab)}
         >
@@ -506,36 +566,58 @@ function FilterTabs({ tabs, active, onChange }) {
 function SearchBar({ value, onChange, placeholder = 'Search…' }) {
   return (
     <div className="search-wrap">
-      <span className="search-icon"><Icon.Search /></span>
+      <span className="search-icon" aria-hidden="true"><Icon.Search /></span>
       <input
         className="search-input"
-        type="text"
+        type="search"
         placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
+        aria-label={placeholder}
       />
+      {value && (
+        <button className="search-clear" onClick={() => onChange('')} aria-label="Clear search">
+          <Icon.X />
+        </button>
+      )}
     </div>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────
    COMPONENT: IncomingCallModal
+   NEW: shows caller photo if available, ring animation,
+        auto-dismiss after 45 s if not answered
    ───────────────────────────────────────────────────────────── */
 function IncomingCallModal({ caller, onAccept, onDecline }) {
-  const [seconds, setSeconds] = useState(0);
+  const [seconds,    setSeconds]    = useState(0);
+  const [dismissed,  setDismissed]  = useState(false);
+  const AUTO_DISMISS = 45;
 
   useEffect(() => {
     const t = setInterval(() => setSeconds(s => s + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const fmt = s => `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+  // Auto-dismiss if agent ignores for 45 s
+  useEffect(() => {
+    if (seconds >= AUTO_DISMISS && !dismissed) {
+      setDismissed(true);
+      onDecline();
+    }
+  }, [seconds, dismissed, onDecline]);
+
+  const pct  = Math.min((seconds / AUTO_DISMISS) * 100, 100);
+  const fmt  = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   const { bg, fg } = avatarColor(caller.initials);
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onDecline()}>
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Incoming video call">
       <div className="incoming-call-card">
-        <button className="close-modal-btn" onClick={onDecline}><Icon.X /></button>
+        {/* Auto-dismiss progress bar */}
+        <div className="autodismiss-bar" style={{ width: `${100 - pct}%` }} />
+
+        <button className="close-modal-btn" onClick={onDecline} aria-label="Decline call"><Icon.X /></button>
 
         <div className="incoming-label">
           <Icon.Video />
@@ -543,38 +625,49 @@ function IncomingCallModal({ caller, onAccept, onDecline }) {
         </div>
 
         <div className="caller-avatar-wrap">
-          <div className="caller-ring" />
-          <div className="caller-ring2" />
-          <div className="caller-avatar-circle" style={{ background: bg, color: fg }}>
+          <div className="caller-ring"  aria-hidden="true" />
+          <div className="caller-ring2" aria-hidden="true" />
+          {caller.photoUrl ? (
+            <img
+              src={caller.photoUrl}
+              alt={caller.name}
+              className="caller-avatar-img"
+              onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+            />
+          ) : null}
+          <div className="caller-avatar-circle" style={{ background: bg, color: fg, display: caller.photoUrl ? 'none' : 'flex' }}>
             {caller.initials}
           </div>
         </div>
 
         <div className="caller-name">{caller.name}</div>
         <div className="caller-property">{caller.property}</div>
+        {caller.mobile && <div className="caller-mobile">{caller.mobile}</div>}
+
+        {caller.queuePosition > 0 && (
+          <div className="caller-queue-badge">
+            Queue position #{caller.queuePosition}
+          </div>
+        )}
 
         <div className="call-timer-display">
-          <div className="timer-dots">
-            <div className="timer-dot" />
-            <div className="timer-dot" />
-            <div className="timer-dot" />
+          <div className="timer-dots" aria-hidden="true">
+            {[0, 0.15, 0.3].map((d, i) => <div key={i} className="timer-dot" style={{ animationDelay: `${d}s` }} />)}
           </div>
-          <span className="timer-text">{fmt(seconds)}</span>
-          <div className="timer-dots">
-            <div className="timer-dot" />
-            <div className="timer-dot" />
-            <div className="timer-dot" />
+          <span className="timer-text" aria-live="polite">{fmt(seconds)}</span>
+          <div className="timer-dots" aria-hidden="true">
+            {[0, 0.15, 0.3].map((d, i) => <div key={i} className="timer-dot" style={{ animationDelay: `${d}s` }} />)}
           </div>
         </div>
 
+        <p className="autodismiss-hint">Auto-dismiss in {AUTO_DISMISS - seconds}s</p>
+
         <div className="call-action-btns">
           <button className="btn-decline" onClick={onDecline}>
-            <Icon.PhoneOff />
-            Decline
+            <Icon.PhoneOff /> Decline
           </button>
           <button className="btn-accept" onClick={onAccept}>
-            <Icon.Video />
-            Accept
+            <Icon.Video /> Accept
           </button>
         </div>
       </div>
@@ -586,23 +679,52 @@ function IncomingCallModal({ caller, onAccept, onDecline }) {
    COMPONENT: CallRow
    ───────────────────────────────────────────────────────────── */
 function CallRow({ call }) {
+  const statusLabel = { completed: 'Completed', missed: 'Missed', ongoing: 'In Progress', cancelled: 'Cancelled' };
   return (
-    <div className="call-row">
+    <div className="call-row" role="row">
       <AvatarCircle initials={call.initials} online={call.online} />
       <div className="call-info">
         <div className="call-name">{call.name}</div>
         <div className="call-property">{call.property}</div>
       </div>
-      <div className={`status-badge ${call.status}`}>
+      <div className={`status-badge ${call.status}`} role="status">
         <span className="status-dot" />
-        {call.status === 'completed' ? 'Completed'
-          : call.status === 'missed' ? 'Missed'
-          : call.status === 'ongoing' ? 'In Progress'
-          : 'Cancelled'}
+        {statusLabel[call.status] || call.status}
       </div>
       <div className="call-duration">{call.duration}</div>
-      <div className="call-notes">{call.notes || '—'}</div>
+      <div className="call-notes">{call.notes}</div>
       <div className="call-time">{call.time}</div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   COMPONENT: EmptyState
+   ───────────────────────────────────────────────────────────── */
+function EmptyState({ icon, title, subtitle, action }) {
+  return (
+    <div className="empty-state">
+      <div className="empty-icon">{icon}</div>
+      <div className="empty-title">{title}</div>
+      {subtitle && <div className="empty-subtitle">{subtitle}</div>}
+      {action}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   COMPONENT: ErrorBanner
+   ───────────────────────────────────────────────────────────── */
+function ErrorBanner({ message, onRetry }) {
+  return (
+    <div className="error-banner" role="alert">
+      <Icon.WifiOff />
+      <span>{message}</span>
+      {onRetry && (
+        <button className="error-retry-btn" onClick={onRetry}>
+          <Icon.Refresh /> Retry
+        </button>
+      )}
     </div>
   );
 }
@@ -610,88 +732,110 @@ function CallRow({ call }) {
 /* ─────────────────────────────────────────────────────────────
    PAGE: Dashboard
    ───────────────────────────────────────────────────────────── */
-function DashboardPage({ agent, available, onToggleAvailable, onIncomingAccept, showIncoming, agentId }) {
-  const [filter, setFilter] = useState('Today');
-  const [search, setSearch]  = useState('');
+function DashboardPage({ agent, available, onToggleAvailable, availSaving }) {
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
 
-  const stats                              = useAgentStats(agentId);
-  const { calls: allCalls, loading: callsLoading } = useCallHistory(agentId);
+  const agentId = agent.agentId || agent.id;
+  const stats   = useAgentStats(agentId);
+  const { calls: rawCalls, loading, error, refresh } = useCallHistory(agentId);
 
   const calls = useMemo(() => {
-    const source = allCalls.length > 0 ? allCalls : MOCK_CALLS;
-    if (!search) return source;
+    let src = rawCalls;
+    const now = new Date();
+    if (filter === 'Today') {
+      const start = new Date(now); start.setHours(0, 0, 0, 0);
+      src = src.filter(c => !c.startedAtRaw || new Date(c.startedAtRaw) >= start);
+    } else if (filter === 'Yesterday') {
+      const end   = new Date(now); end.setHours(0, 0, 0, 0);
+      const start = new Date(end); start.setDate(start.getDate() - 1);
+      src = src.filter(c => !c.startedAtRaw || (new Date(c.startedAtRaw) >= start && new Date(c.startedAtRaw) < end));
+    } else if (filter === 'Last 7 days') {
+      const start = new Date(now); start.setDate(start.getDate() - 7);
+      src = src.filter(c => !c.startedAtRaw || new Date(c.startedAtRaw) >= start);
+    }
+    if (!search.trim()) return src;
     const q = search.toLowerCase();
-    return source.filter(c =>
-      c.name.toLowerCase().includes(q) || c.property.toLowerCase().includes(q)
-    );
-  }, [search, allCalls]);
+    return src.filter(c => c.name.toLowerCase().includes(q) || c.property.toLowerCase().includes(q));
+  }, [rawCalls, filter, search]);
 
   return (
     <div className="page">
       <div className="page-header">
         <h1 className="page-title"><span>Agent</span> Dashboard</h1>
-        <AvailabilityToggle available={available} onToggle={onToggleAvailable} />
+        <AvailabilityToggle available={available} onToggle={onToggleAvailable} saving={availSaving} />
       </div>
 
       <div className="dashboard-grid">
         {/* LEFT — call list */}
         <div>
           <div className="toolbar">
-            <FilterTabs tabs={['Today','Yesterday','Last 7 days']} active={filter} onChange={setFilter} />
-            <SearchBar value={search} onChange={setSearch} placeholder="Search name or property" />
+            <FilterTabs tabs={['Today', 'Yesterday', 'Last 7 days', 'All']} active={filter} onChange={setFilter} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <SearchBar value={search} onChange={setSearch} placeholder="Search name or property" />
+              <button className="icon-btn" onClick={refresh} title="Refresh" aria-label="Refresh calls">
+                <Icon.Refresh />
+              </button>
+            </div>
           </div>
 
           <div className="content-card">
-            <div className="table-header">
+            <div className="table-header" role="rowgroup">
               <div style={{ flex: 1 }}>Name</div>
               <div style={{ minWidth: 105 }}>Status</div>
               <div style={{ minWidth: 85 }}>Duration</div>
               <div style={{ flex: 1, maxWidth: 175 }}>Notes</div>
               <div style={{ minWidth: 65, textAlign: 'right' }}>Time</div>
             </div>
-            {callsLoading
-              ? <div style={{ padding: '32px', textAlign: 'center', color: 'var(--gray-400)', fontFamily: 'var(--font-ui)', fontSize: 14 }}>Loading calls…</div>
-              : calls.length === 0
-              ? <div style={{ padding: '32px', textAlign: 'center', color: 'var(--gray-400)', fontFamily: 'var(--font-ui)', fontSize: 14 }}>No calls found</div>
-              : calls.map(call => <CallRow key={call.id} call={call} />)
-            }
+
+            {loading ? (
+              <div className="table-loading">
+                <span className="login-spinner" style={{ borderTopColor: 'var(--blue-500)' }} /> Loading calls…
+              </div>
+            ) : error ? (
+              <ErrorBanner message={`Failed to load calls: ${error}`} onRetry={refresh} />
+            ) : calls.length === 0 ? (
+              <EmptyState icon="📋" title="No calls found" subtitle={search ? 'Try a different search term.' : 'Call history will appear here.'} />
+            ) : (
+              calls.map(call => <CallRow key={call.id} call={call} />)
+            )}
           </div>
         </div>
 
-        {/* RIGHT — agent profile */}
+        {/* RIGHT — agent profile + stats */}
         <div>
           <div className="agent-profile-card">
             <div className="agent-profile-title">
-              Agent profile
-              <button style={{ background:'none',border:'none',cursor:'pointer',color:'var(--gray-400)',display:'flex' }}>
-                <Icon.Settings />
-              </button>
+              Agent Profile
             </div>
+
             <div className="agent-profile-info">
-              <div className="agent-avatar-lg">{agent.name.split(' ').map(w=>w[0]).join('')}</div>
+              <div className="agent-avatar-lg">
+                {agent.photoUrl
+                  ? <img src={agent.photoUrl} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  : toInitials(agent.name)}
+              </div>
               <div>
                 <div className="agent-name">{agent.name}</div>
-                <div className="agent-role">{agent.designation || agent.role || 'Agent'}</div>
+                <div className="agent-role">{agent.designation || agent.role || 'Property Advisor'}</div>
                 <div className={`agent-status-badge ${available ? 'available' : 'busy'}`}>
-                  <span style={{ width:8,height:8,borderRadius:'50%',background: available ? 'var(--green-500)' : 'var(--orange-500)',display:'inline-block' }} />
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: available ? 'var(--green-500)' : 'var(--orange-500)', display: 'inline-block' }} />
                   {available ? 'Available' : 'Offline'}
                 </div>
               </div>
             </div>
 
             <div className="stats-row">
-              <div className="stat-box">
-                <div className="stat-value">{stats.total ?? 0}</div>
-                <div className="stat-label">Total Calls</div>
-              </div>
-              <div className="stat-box">
-                <div className="stat-value">{stats.completed ?? 0}</div>
-                <div className="stat-label">Completed</div>
-              </div>
-              <div className="stat-box">
-                <div className="stat-value">{stats.active ?? 0}</div>
-                <div className="stat-label">Active</div>
-              </div>
+              {[
+                { label: 'Total Calls', value: stats.total ?? 0 },
+                { label: 'Completed',   value: stats.completed ?? 0 },
+                { label: 'Active',      value: stats.active ?? 0 },
+              ].map(s => (
+                <div key={s.label} className="stat-box">
+                  <div className="stat-value">{s.value}</div>
+                  <div className="stat-label">{s.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -701,19 +845,31 @@ function DashboardPage({ agent, available, onToggleAvailable, onIncomingAccept, 
 }
 
 /* ─────────────────────────────────────────────────────────────
-   PAGE: Call History
+   PAGE: Call History  (standalone, with export hint)
    ───────────────────────────────────────────────────────────── */
-function CallHistoryPage() {
-  const [filter, setFilter] = useState('Today');
-  const [search, setSearch]  = useState('');
+function CallHistoryPage({ agentId }) {
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+  const { calls: rawCalls, loading, error, refresh } = useCallHistory(agentId);
 
   const calls = useMemo(() => {
-    if (!search) return MOCK_CALLS;
+    let src = rawCalls;
+    const now = new Date();
+    if (filter === 'Today') {
+      const start = new Date(now); start.setHours(0, 0, 0, 0);
+      src = src.filter(c => !c.startedAtRaw || new Date(c.startedAtRaw) >= start);
+    } else if (filter === 'Yesterday') {
+      const end   = new Date(now); end.setHours(0, 0, 0, 0);
+      const start = new Date(end); start.setDate(start.getDate() - 1);
+      src = src.filter(c => !c.startedAtRaw || (new Date(c.startedAtRaw) >= start && new Date(c.startedAtRaw) < end));
+    } else if (filter === 'Last 7 days') {
+      const start = new Date(now); start.setDate(start.getDate() - 7);
+      src = src.filter(c => !c.startedAtRaw || new Date(c.startedAtRaw) >= start);
+    }
+    if (!search.trim()) return src;
     const q = search.toLowerCase();
-    return MOCK_CALLS.filter(c =>
-      c.name.toLowerCase().includes(q) || c.property.toLowerCase().includes(q)
-    );
-  }, [search]);
+    return src.filter(c => c.name.toLowerCase().includes(q) || c.property.toLowerCase().includes(q));
+  }, [rawCalls, filter, search]);
 
   return (
     <div className="page">
@@ -722,8 +878,11 @@ function CallHistoryPage() {
       </div>
 
       <div className="ch-toolbar">
-        <FilterTabs tabs={['Today','Yesterday','Last 7 days']} active={filter} onChange={setFilter} />
-        <SearchBar value={search} onChange={setSearch} placeholder="Search name or property" />
+        <FilterTabs tabs={['Today', 'Yesterday', 'Last 7 days', 'All']} active={filter} onChange={setFilter} />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search name or property" />
+          <button className="icon-btn" onClick={refresh} title="Refresh" aria-label="Refresh"><Icon.Refresh /></button>
+        </div>
       </div>
 
       <div className="content-card">
@@ -734,59 +893,94 @@ function CallHistoryPage() {
           <div style={{ flex: 1, maxWidth: 175 }}>Notes</div>
           <div style={{ minWidth: 65, textAlign: 'right' }}>Time</div>
         </div>
-        {calls.map(call => <CallRow key={call.id} call={call} />)}
+
+        {loading ? (
+          <div className="table-loading"><span className="login-spinner" style={{ borderTopColor: 'var(--blue-500)' }} /> Loading…</div>
+        ) : error ? (
+          <ErrorBanner message={`Failed to load: ${error}`} onRetry={refresh} />
+        ) : calls.length === 0 ? (
+          <EmptyState icon="📞" title="No calls found" subtitle={search ? 'Try a different search.' : 'Your call history will appear here.'} />
+        ) : (
+          calls.map(call => <CallRow key={call.id} call={call} />)
+        )}
       </div>
     </div>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────
-   PAGE: Availability
+   PAGE: Availability  (week schedule editor)
    ───────────────────────────────────────────────────────────── */
-function AvailabilityPage() {
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [schedule, setSchedule]     = useState(() => buildWeekSchedule(0));
-  const [editRow, setEditRow]        = useState(null); // index of row being edited
-  const [popupStart, setPopupStart] = useState('9:00 AM');
-  const [popupEnd,   setPopupEnd]   = useState('6:00 PM');
+const TIME_OPTIONS = [
+  '6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM',
+  '12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM',
+  '6:00 PM','7:00 PM','8:00 PM','9:00 PM',
+];
 
+function AvailabilityPage({ agentId }) {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [schedule,   setSchedule]   = useState(() => buildWeekSchedule(0));
+  const [editRow,    setEditRow]     = useState(null);
+  const [popStart,   setPopStart]   = useState('9:00 AM');
+  const [popEnd,     setPopEnd]     = useState('6:00 PM');
+  const [saving,     setSaving]     = useState(false);
+  const [saveMsg,    setSaveMsg]    = useState('');
+
+  // Rebuild schedule grid on week change
+  useEffect(() => { setSchedule(buildWeekSchedule(weekOffset)); setEditRow(null); }, [weekOffset]);
+
+  // Fetch saved schedule from backend
   useEffect(() => {
-    setSchedule(buildWeekSchedule(weekOffset));
-    setEditRow(null);
-  }, [weekOffset]);
+    if (!agentId) return;
+    fetch(`${API_BASE}/api/agent/schedule?agentId=${agentId}`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        // Merge backend data into local week grid
+        setSchedule(prev => prev.map(row => {
+          const saved = data.find(s => s.dayOfWeek === row.day || s.isoDate === row.isoDate);
+          if (!saved) return row;
+          return { ...row, startTime: saved.startTime || row.startTime, endTime: saved.endTime || row.endTime, status: saved.active ? 'available' : 'unavailable' };
+        }));
+      })
+      .catch(() => {});
+  }, [agentId, weekOffset]);
 
   const weekLabel = useMemo(() => {
     const arr = buildWeekSchedule(weekOffset);
     return `${arr[0].date} – ${arr[6].date}, ${new Date().getFullYear()}`;
   }, [weekOffset]);
 
-  function openEdit(idx) {
-    setPopupStart(schedule[idx].startTime);
-    setPopupEnd(schedule[idx].endTime);
-    setEditRow(idx);
-  }
+  const openEdit = (idx) => { setPopStart(schedule[idx].startTime); setPopEnd(schedule[idx].endTime); setEditRow(idx); };
 
-  function saveEdit() {
-    setSchedule(s => s.map((row, i) =>
-      i === editRow
-        ? { ...row, startTime: popupStart, endTime: popupEnd, status: 'available' }
-        : row
-    ));
+  const saveEdit = async () => {
+    const updated = schedule.map((row, i) =>
+      i === editRow ? { ...row, startTime: popStart, endTime: popEnd, status: 'available' } : row
+    );
+    setSchedule(updated);
     setEditRow(null);
-  }
 
-  function clearEdit() {
-    setSchedule(s => s.map((row, i) =>
-      i === editRow ? { ...row, status: 'not-set' } : row
-    ));
+    // Persist to backend
+    setSaving(true);
+    try {
+      const slots = updated.map(r => ({ dayOfWeek: r.day, isoDate: r.isoDate, startTime: r.startTime, endTime: r.endTime, active: r.status === 'available' }));
+      await fetch(`${API_BASE}/api/agent/schedule?agentId=${agentId}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(slots),
+      });
+      setSaveMsg('Schedule saved ✓');
+    } catch {
+      setSaveMsg('Save failed — changes kept locally.');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveMsg(''), 3000);
+    }
+  };
+
+  const clearEdit = () => {
+    setSchedule(s => s.map((row, i) => i === editRow ? { ...row, status: 'not-set' } : row));
     setEditRow(null);
-  }
-
-  const TIMES = [
-    '6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM',
-    '12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM',
-    '6:00 PM','7:00 PM','8:00 PM','9:00 PM',
-  ];
+  };
 
   return (
     <div className="page">
@@ -795,34 +989,34 @@ function AvailabilityPage() {
         <button className="apply-all-btn">Apply to all <Icon.ChevDown /></button>
       </div>
 
+      {saveMsg && (
+        <div className={`save-toast ${saveMsg.includes('✓') ? 'save-toast--ok' : 'save-toast--err'}`} role="status">
+          {saveMsg}
+        </div>
+      )}
+
       <div className="content-card" onClick={() => setEditRow(null)}>
-        {/* Header row */}
+        {/* Week nav */}
         <div className="avail-header-row" onClick={e => e.stopPropagation()}>
           <div className="week-nav">
-            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o - 1)}><Icon.ChevLeft /></button>
-            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o - 1)}><Icon.ChevLeft /></button>
+            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o - 1)} aria-label="Previous week"><Icon.ChevLeft /></button>
             <span className="week-label">{weekLabel}</span>
-            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o + 1)}><Icon.ChevRight /></button>
-            <button className="week-nav-btn" style={{ border: '1.5px solid var(--gray-200)', background: 'white', width:30, height:30, borderRadius:8, display:'flex',alignItems:'center',justifyContent:'center', cursor:'pointer' }}><Icon.Calendar /></button>
+            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o + 1)} aria-label="Next week"><Icon.ChevRight /></button>
+            <button className="week-nav-btn" aria-label="Open calendar"><Icon.Calendar /></button>
           </div>
-          <div className="default-hours-text">Default Hours: 9:00 AM – 6:00 PM</div>
+          <div className="default-hours-text">Default: 9:00 AM – 6:00 PM</div>
         </div>
 
         {/* Legend */}
         <div className="avail-legend">
-          <div className="legend-item"><span className="legend-dot green" /> Available</div>
-          <div className="legend-item"><span className="legend-dot red"   /> Unavailable</div>
-          <div className="legend-item"><span className="legend-dot gray"  /> Not Set</div>
+          {[['green','Available'],['red','Unavailable'],['gray','Not Set']].map(([c,l]) => (
+            <div key={c} className="legend-item"><span className={`legend-dot ${c}`} />{l}</div>
+          ))}
         </div>
 
         {/* Rows */}
         {schedule.map((row, idx) => (
-          <div
-            key={row.id}
-            className="avail-row"
-            style={row.isToday ? { background: 'rgba(37,99,235,0.03)' } : {}}
-            onClick={e => e.stopPropagation()}
-          >
+          <div key={row.id} className="avail-row" style={row.isToday ? { background: 'rgba(37,99,235,0.03)' } : {}} onClick={e => e.stopPropagation()}>
             <div className="avail-date-col">
               <div className={`avail-date${row.isToday ? ' today-date' : ''}`}>{row.date}</div>
               {row.isToday && <span className="today-pill">Today</span>}
@@ -831,55 +1025,134 @@ function AvailabilityPage() {
             <div className="avail-day-col">{row.day}</div>
 
             <div className="avail-slot-col avail-popup-anchor">
-              <div
-                className={`time-slot-pill ${row.status}`}
-                onClick={() => openEdit(idx)}
-              >
+              <div className={`time-slot-pill ${row.status}`} onClick={() => openEdit(idx)}>
                 <span>{row.startTime}</span>
                 <span className="arrow-divider">→</span>
                 <span>{row.endTime}</span>
-                {row.status === 'available' && (
-                  <span className="slot-check-icon green"><Icon.Check /></span>
-                )}
-                {row.status === 'not-set' && (
-                  <span className="slot-check-icon gray-c" style={{ fontSize: 13, fontWeight: 600 }}>·</span>
-                )}
+                {row.status === 'available' && <span className="slot-check-icon green"><Icon.Check /></span>}
+                {row.status === 'not-set'   && <span className="slot-check-icon gray-c">·</span>}
               </div>
 
               {row.status === 'available' && (
-                <button className="add-break-btn">
-                  <Icon.Plus /> Add Break
-                </button>
+                <button className="add-break-btn"><Icon.Plus /> Add Break</button>
               )}
 
               {editRow === idx && (
-                <div className="edit-avail-popup" onClick={e => e.stopPropagation()}>
+                <div className="edit-avail-popup" onClick={e => e.stopPropagation()} role="dialog" aria-label="Edit availability">
                   <div className="edit-popup-title">
-                    Edit Availability – {row.day.slice(0,3)}, {row.date}
-                    <button className="close-popup-btn" onClick={() => setEditRow(null)}><Icon.X /></button>
+                    Edit — {row.day.slice(0, 3)}, {row.date}
+                    <button className="close-popup-btn" onClick={() => setEditRow(null)} aria-label="Close"><Icon.X /></button>
                   </div>
                   <div className="avail-from-label">Available from</div>
                   <div className="time-select-row">
-                    <select className="time-select" value={popupStart} onChange={e => setPopupStart(e.target.value)}>
-                      {TIMES.map(t => <option key={t}>{t}</option>)}
+                    <select className="time-select" value={popStart} onChange={e => setPopStart(e.target.value)} aria-label="Start time">
+                      {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
                     </select>
                     <span className="time-arrow">→</span>
-                    <select className="time-select" value={popupEnd} onChange={e => setPopupEnd(e.target.value)}>
-                      {TIMES.map(t => <option key={t}>{t}</option>)}
+                    <select className="time-select" value={popEnd} onChange={e => setPopEnd(e.target.value)} aria-label="End time">
+                      {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
                     </select>
                   </div>
                   <div className="popup-actions">
                     <button className="btn-popup-clear" onClick={clearEdit}>Clear</button>
                     <button className="btn-popup-cancel" onClick={() => setEditRow(null)}>Cancel</button>
-                    <button className="btn-popup-save" onClick={saveEdit}>Save</button>
+                    <button className="btn-popup-save" onClick={saveEdit} disabled={saving}>
+                      {saving ? 'Saving…' : 'Save'}
+                    </button>
                   </div>
                 </div>
               )}
             </div>
 
-            <button className="more-dots-btn">···</button>
+            <button className="more-dots-btn" aria-label="More options">···</button>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MODAL: Schedule Call
+   ───────────────────────────────────────────────────────────── */
+function ScheduleCallModal({ agentId, onClose, onSaved }) {
+  const [form, setForm] = useState({ customerName: '', customerMobile: '', customerEmail: '', propertyId: '', note: '', scheduledAt: '' });
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleSave = async () => {
+    if (!form.customerName.trim() || !form.customerMobile.trim() || !form.scheduledAt) {
+      setError('Name, mobile and date/time are required.'); return;
+    }
+    setSaving(true); setError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/agent/book-call`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          agentId,
+          propertyId:     form.propertyId ? Number(form.propertyId) : null,
+          customerName:   form.customerName.trim(),
+          customerMobile: form.customerMobile.trim(),
+          customerEmail:  form.customerEmail.trim() || null,
+          note:           form.note.trim() || null,
+          scheduledAt:    form.scheduledAt,
+          source:         'AGENT_SCHEDULED',
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      onSaved(data);
+    } catch (e) {
+      setError(`Failed to save: ${e.message}. Please try again.`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const iStyle = { width: '100%', padding: '10px 14px', borderRadius: 8, boxSizing: 'border-box', border: '1.5px solid var(--gray-200)', fontFamily: 'var(--font-body)', fontSize: 14, outline: 'none', background: 'var(--gray-50)' };
+  const lStyle = { display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--gray-500)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.4px' };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose} role="dialog" aria-modal="true" aria-label="Schedule a call">
+      <div style={{ background: '#fff', borderRadius: 18, padding: '28px 30px', width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 18, color: 'var(--blue-950)' }}>Schedule a Call</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }} aria-label="Close"><Icon.X /></button>
+        </div>
+
+        {error && <div style={{ padding: '10px 14px', background: '#fee2e2', borderRadius: 8, fontSize: 13, color: '#dc2626', marginBottom: 16 }} role="alert">{error}</div>}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          {[
+            ['customerName',   'Customer Name *', 'text',          'Priya Kapoor'],
+            ['customerMobile', 'Mobile *',        'tel',           '9876543210'],
+            ['customerEmail',  'Email',           'email',         'optional'],
+            ['propertyId',     'Property ID',     'number',        'e.g. 42'],
+          ].map(([key, label, type, ph]) => (
+            <div key={key}>
+              <label style={lStyle}>{label}</label>
+              <input style={iStyle} type={type} placeholder={ph} value={form[key]} onChange={e => set(key, e.target.value)} />
+            </div>
+          ))}
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={lStyle}>Date &amp; Time *</label>
+            <input style={iStyle} type="datetime-local" value={form.scheduledAt} onChange={e => set('scheduledAt', e.target.value)} />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={lStyle}>Note</label>
+            <input style={iStyle} placeholder="e.g. Wants 2BHK walkthrough" value={form.note} onChange={e => set('note', e.target.value)} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '10px 22px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+            {saving ? 'Saving…' : 'Save Call'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -890,33 +1163,25 @@ function AvailabilityPage() {
    ───────────────────────────────────────────────────────────── */
 function UpcomingCallsPage({ onJoinCall, agentId }) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const [calls, setCalls]           = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [showModal, setShowModal]   = useState(false);
+  const [calls,      setCalls]      = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);
+  const [showModal,  setShowModal]  = useState(false);
 
   const weekLabel = useMemo(() => {
     const arr = buildWeekSchedule(weekOffset);
     return `${arr[0].date} – ${arr[6].date}`;
   }, [weekOffset]);
 
-  // ── Fetch real upcoming calls ──
   const fetchCalls = useCallback(async () => {
     if (!agentId) return;
-    setLoading(true);
+    setLoading(true); setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/agent/upcoming?agentId=${agentId}`);
-      const data = await res.json();
-      setCalls(data);
-    } catch {
-      setCalls(MOCK_UPCOMING.map(u => ({
-        id: u.id,
-        customerName: u.name,
-        propertyTitle: u.property,
-        note: u.note,
-        scheduledAtFormatted: u.time,
-        minutesUntil: u.nextIn,
-        status: 'UPCOMING',
-      })));
+      const res  = await fetch(`${API_BASE}/api/agent/upcoming?agentId=${agentId}`, { headers: authHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setCalls(await res.json());
+    } catch (e) {
+      setError(e.message);
     } finally {
       setLoading(false);
     }
@@ -924,64 +1189,75 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
 
   useEffect(() => { fetchCalls(); }, [fetchCalls]);
 
-  // ── Cancel call ──
   const handleCancel = async (id) => {
-    await fetch(`${API_BASE}/api/agent/upcoming/${id}/cancel`, { method: 'PUT' });
-    setCalls(prev => prev.filter(c => c.id !== id));
+    try {
+      await fetch(`${API_BASE}/api/agent/upcoming/${id}/cancel`, { method: 'PUT', headers: authHeaders() });
+      setCalls(prev => prev.filter(c => c.id !== id));
+    } catch {
+      // Show error toast if needed
+    }
   };
 
   const upNext = calls.find(c => c.minutesUntil > 0 && c.minutesUntil <= 30);
 
+  const sourceLabel = {
+    CUSTOMER_BOOKING: '🌐 Customer Booking',
+    QUEUE_JOIN:       '⚡ Queue',
+    AGENT_SCHEDULED:  '✏️ Scheduled',
+    AUTO_QUEUE:       '🤖 Auto-Queue',
+  };
+  const sourceBg = { CUSTOMER_BOOKING: '#eff6ff', QUEUE_JOIN: '#f0fdf4', AGENT_SCHEDULED: '#fdf4ff', AUTO_QUEUE: '#fff7ed' };
+  const sourceFg = { CUSTOMER_BOOKING: '#0b63e5', QUEUE_JOIN: '#15803d', AGENT_SCHEDULED: '#7c3aed', AUTO_QUEUE: '#ea580c' };
+
   return (
     <div className="page">
-      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="page-header">
         <h1 className="page-title">Upcoming Calls</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            padding: '9px 18px', borderRadius: 10, border: 'none',
-            background: 'var(--blue-600)', color: '#fff',
-            fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700,
-            cursor: 'pointer', boxShadow: '0 2px 10px rgba(11,99,229,0.3)',
-          }}
-        >
-          <Icon.Plus /> Schedule Call
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="icon-btn" onClick={fetchCalls} title="Refresh" aria-label="Refresh"><Icon.Refresh /></button>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(11,99,229,0.3)' }}
+          >
+            <Icon.Plus /> Schedule Call
+          </button>
+        </div>
       </div>
 
       <div className="content-card">
         {/* Week nav */}
         <div className="avail-header-row" style={{ padding: '12px 22px' }}>
           <div className="week-nav">
-            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o - 1)}><Icon.ChevLeft /></button>
+            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o - 1)} aria-label="Previous week"><Icon.ChevLeft /></button>
             <span className="week-label">{weekLabel}</span>
-            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o + 1)}><Icon.ChevRight /></button>
+            <button className="week-nav-btn" onClick={() => setWeekOffset(o => o + 1)} aria-label="Next week"><Icon.ChevRight /></button>
           </div>
           <span style={{ fontSize: 13, color: 'var(--gray-400)', fontFamily: 'var(--font-body)' }}>
-            {calls.length} scheduled
+            {loading ? '…' : `${calls.length} scheduled`}
           </span>
         </div>
 
-        {/* Up next banner */}
+        {/* Up-next banner */}
         {upNext && (
-          <div className="up-next-banner">
+          <div className="up-next-banner" role="alert">
             <Icon.Bell />
-            Up Next in {upNext.minutesUntil} mins — {upNext.customerName}
+            Up Next in {upNext.minutesUntil} min — {upNext.customerName}
           </div>
         )}
 
-        {/* Rows */}
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)', fontFamily: 'var(--font-body)' }}>
-            Loading…
-          </div>
+          <div className="table-loading"><span className="login-spinner" style={{ borderTopColor: 'var(--blue-500)' }} /> Loading…</div>
+        ) : error ? (
+          <ErrorBanner message={`Failed to load: ${error}`} onRetry={fetchCalls} />
         ) : calls.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)', fontFamily: 'var(--font-body)' }}>
-            No upcoming calls. Click "Schedule Call" to add one.
-          </div>
+          <EmptyState
+            icon="📅"
+            title="No upcoming calls"
+            subtitle='Click "Schedule Call" to add one.'
+            action={<button onClick={() => setShowModal(true)} style={{ marginTop: 12, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}><Icon.Plus /> Schedule Call</button>}
+          />
         ) : calls.map(item => {
-          const initials = (item.customerName || '??').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+          const initials = toInitials(item.customerName);
           const isNext   = item.minutesUntil > 0 && item.minutesUntil <= 30;
           const { bg, fg } = avatarColor(initials);
           return (
@@ -989,10 +1265,7 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
               <div className="upcoming-time-col">{item.scheduledAtFormatted}</div>
 
               <div className="call-avatar-wrap" style={{ marginRight: 12 }}>
-                <div className="avatar-circle"
-                  style={{ width: 42, height: 42, background: bg, color: fg, fontSize: 15, fontFamily: 'var(--font-ui)', fontWeight: 700 }}>
-                  {initials}
-                </div>
+                <div className="avatar-circle" style={{ width: 42, height: 42, background: bg, color: fg, fontSize: 15, fontWeight: 700 }}>{initials}</div>
                 <span className="avatar-status-dot online" />
               </div>
 
@@ -1001,47 +1274,39 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
                 <div className="upcoming-property">{item.propertyTitle}</div>
                 {item.note && <div className="upcoming-note">{item.note}</div>}
                 {item.source && (
-                  <span style={{
-                    fontSize: 10.5, fontWeight: 700, padding: '2px 8px',
-                    borderRadius: 20, marginTop: 4, display: 'inline-block',
-                    background: item.source === 'CUSTOMER_BOOKING' ? '#eff6ff' : item.source === 'QUEUE_JOIN' ? '#f0fdf4' : '#fdf4ff',
-                    color: item.source === 'CUSTOMER_BOOKING' ? '#0b63e5' : item.source === 'QUEUE_JOIN' ? '#15803d' : '#7c3aed',
-                  }}>
-                    {item.source === 'CUSTOMER_BOOKING' ? '🌐 Customer Booking'
-                     : item.source === 'QUEUE_JOIN' ? '⚡ Queue Join'
-                     : '✏️ Agent Scheduled'}
+                  <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 20, marginTop: 4, display: 'inline-block', background: sourceBg[item.source] || '#f1f5f9', color: sourceFg[item.source] || '#334155' }}>
+                    {sourceLabel[item.source] || item.source}
                   </span>
                 )}
               </div>
 
               <div className="upcoming-actions">
-                <button className="btn-join" onClick={() => onJoinCall({
-                  name: item.customerName,
-                  initials,
-                  property: item.propertyTitle,
-                  mobile: item.customerMobile,
-                  email: item.customerEmail,
-                })}>Join</button>
+                <button
+                  className="btn-join"
+                  onClick={() => onJoinCall({ name: item.customerName, initials, property: item.propertyTitle, mobile: item.customerMobile, email: item.customerEmail })}
+                >
+                  Join
+                </button>
                 <button
                   className="btn-reschedule"
                   onClick={() => handleCancel(item.id)}
                   style={{ color: '#ef4444', borderColor: '#fecaca' }}
-                >Cancel</button>
+                  aria-label={`Cancel call with ${item.customerName}`}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Schedule Call Modal */}
       {showModal && (
         <ScheduleCallModal
           agentId={agentId}
           onClose={() => setShowModal(false)}
-          onSaved={(newCall) => {
-            setCalls(prev => [...prev, newCall].sort((a, b) =>
-              new Date(a.scheduledAt) - new Date(b.scheduledAt)
-            ));
+          onSaved={newCall => {
+            setCalls(prev => [...prev, newCall].sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt)));
             setShowModal(false);
           }}
         />
@@ -1051,147 +1316,13 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   MODAL: Schedule Call (agent manual)
-   ───────────────────────────────────────────────────────────── */
-function ScheduleCallModal({ agentId, onClose, onSaved }) {
-  const [form, setForm] = useState({
-    customerName: '', customerMobile: '', customerEmail: '',
-    propertyId: '', note: '', scheduledAt: '',
-  });
-  const [saving, setSaving]   = useState(false);
-  const [error,  setError]    = useState('');
-
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  const handleSave = async () => {
-    if (!form.customerName || !form.customerMobile || !form.scheduledAt) {
-      setError('Name, mobile and date/time are required.');
-      return;
-    }
-    setSaving(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_BASE}/api/agent/book-call`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agentId,
-          propertyId: form.propertyId ? Number(form.propertyId) : null,
-          customerName: form.customerName,
-          customerMobile: form.customerMobile,
-          note: form.note,
-          scheduledAt: form.scheduledAt,
-          source: 'AGENT_SCHEDULED',
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      onSaved(data);
-    } catch {
-      setError('Failed to save. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const inputStyle = {
-    width: '100%', padding: '10px 14px', borderRadius: 8, boxSizing: 'border-box',
-    border: '1.5px solid var(--gray-200)', fontFamily: 'var(--font-body)',
-    fontSize: 14, outline: 'none', background: 'var(--gray-50)',
-  };
-  const labelStyle = {
-    display: 'block', fontSize: 12, fontWeight: 700,
-    color: 'var(--gray-500)', marginBottom: 5, fontFamily: 'var(--font-ui)',
-    textTransform: 'uppercase', letterSpacing: '0.4px',
-  };
-
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-    }}
-      onClick={onClose}
-    >
-      <div style={{
-        background: '#fff', borderRadius: 18, padding: '28px 30px',
-        width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(15,23,42,0.18)',
-        animation: 'loginSlideIn 0.25s ease',
-      }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-          <h2 style={{ margin: 0, fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 18, color: 'var(--blue-950)' }}>
-            Schedule a Call
-          </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}>
-            <Icon.X />
-          </button>
-        </div>
-
-        {error && (
-          <div style={{ padding: '10px 14px', background: '#fee2e2', borderRadius: 8, fontSize: 13, color: '#dc2626', marginBottom: 16 }}>
-            {error}
-          </div>
-        )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <div>
-            <label style={labelStyle}>Customer Name *</label>
-            <input style={inputStyle} placeholder="Priya Kapoor"
-              value={form.customerName} onChange={e => set('customerName', e.target.value)} />
-          </div>
-          <div>
-            <label style={labelStyle}>Mobile *</label>
-            <input style={inputStyle} placeholder="9876543210"
-              value={form.customerMobile} onChange={e => set('customerMobile', e.target.value)} />
-          </div>
-          <div>
-            <label style={labelStyle}>Email</label>
-            <input style={inputStyle} placeholder="optional"
-              value={form.customerEmail} onChange={e => set('customerEmail', e.target.value)} />
-          </div>
-          <div>
-            <label style={labelStyle}>Property ID</label>
-            <input style={inputStyle} placeholder="e.g. 1"
-              value={form.propertyId} onChange={e => set('propertyId', e.target.value)} />
-          </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Date & Time *</label>
-            <input style={inputStyle} type="datetime-local"
-              value={form.scheduledAt} onChange={e => set('scheduledAt', e.target.value)} />
-          </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Note</label>
-            <input style={inputStyle} placeholder="e.g. Wants 2BHK walkthrough"
-              value={form.note} onChange={e => set('note', e.target.value)} />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-end' }}>
-          <button onClick={onClose}
-            style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>
-            Cancel
-          </button>
-          <button onClick={handleSave} disabled={saving}
-            style={{ padding: '10px 22px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-            {saving ? 'Saving…' : 'Save Call'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
    PAGE: Settings
    ───────────────────────────────────────────────────────────── */
 function SettingsPage({ agent, onAgentUpdate }) {
-  const [notifs,   setNotifs]  = useState(true);
-  const [sounds,   setSounds]  = useState(true);
-  const [darkMode, setDark]    = useState(false);
-
-  // Editable profile fields
-  const [editField, setEditField] = useState(null); // 'name' | 'phone' | null
+  const [notifs,   setNotifs]   = useState(true);
+  const [sounds,   setSounds]   = useState(true);
+  const [darkMode, setDark]     = useState(false);
+  const [editField, setEditField] = useState(null);
   const [nameVal,   setNameVal]   = useState(agent.name  || '');
   const [phoneVal,  setPhoneVal]  = useState(agent.phone || '');
   const [saving,    setSaving]    = useState(false);
@@ -1200,24 +1331,16 @@ function SettingsPage({ agent, onAgentUpdate }) {
   const agentId = agent.agentId || agent.id;
 
   const handleSave = async (field) => {
-    setSaving(true);
-    setSaveMsg('');
+    setSaving(true); setSaveMsg('');
     try {
-      const body = {
-        agentId,
-        name:  field === 'name'  ? nameVal  : agent.name,
-        phone: field === 'phone' ? phoneVal : agent.phone,
-      };
-      const res = await fetch(`${API_BASE}/api/agent/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const body = { agentId, name: field === 'name' ? nameVal : agent.name, phone: field === 'phone' ? phoneVal : agent.phone };
+      const res  = await fetch(`${API_BASE}/api/agent/profile`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) });
       if (!res.ok) throw new Error();
-      onAgentUpdate?.({ ...agent, ...body }); // update parent state
+      const data = await res.json();
+      onAgentUpdate?.({ ...agent, ...data });
       setSaveMsg('Saved ✓');
     } catch {
-      setSaveMsg('Save failed. Try again.');
+      setSaveMsg('Save failed. Please try again.');
     } finally {
       setSaving(false);
       setEditField(null);
@@ -1225,30 +1348,20 @@ function SettingsPage({ agent, onAgentUpdate }) {
     }
   };
 
-  const handleCancel = () => {
-    setNameVal(agent.name   || '');
-    setPhoneVal(agent.phone || '');
-    setEditField(null);
-  };
+  const handleCancel = () => { setNameVal(agent.name || ''); setPhoneVal(agent.phone || ''); setEditField(null); };
+
+  const iStyle = { flex: 1, padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--blue-300)', fontFamily: 'var(--font-ui)', fontSize: 14, outline: 'none' };
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1 className="page-title">Settings</h1>
-      </div>
+      <div className="page-header"><h1 className="page-title">Settings</h1></div>
 
       {/* ── Profile ── */}
       <div className="settings-section">
         <div className="settings-section-title">Profile</div>
         <div className="content-card">
-
           {saveMsg && (
-            <div style={{
-              padding: '10px 16px', marginBottom: 12,
-              borderRadius: 8, fontSize: 13, fontFamily: 'var(--font-ui)',
-              background: saveMsg.includes('✓') ? '#dcfce7' : '#fee2e2',
-              color:      saveMsg.includes('✓') ? '#15803d' : '#dc2626',
-            }}>
+            <div style={{ padding: '10px 16px', marginBottom: 0, borderRadius: 0, fontSize: 13, fontFamily: 'var(--font-ui)', background: saveMsg.includes('✓') ? '#dcfce7' : '#fee2e2', color: saveMsg.includes('✓') ? '#15803d' : '#dc2626' }} role="status">
               {saveMsg}
             </div>
           )}
@@ -1259,41 +1372,20 @@ function SettingsPage({ agent, onAgentUpdate }) {
               <div className="settings-row-label">Display Name</div>
               {editField === 'name' ? (
                 <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
-                  <input
-                    autoFocus
-                    value={nameVal}
-                    onChange={e => setNameVal(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSave('name'); if (e.key === 'Escape') handleCancel(); }}
-                    style={{ flex: 1, padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--blue-300)', fontFamily: 'var(--font-ui)', fontSize: 14, outline: 'none' }}
-                  />
-                  <button
-                    onClick={() => handleSave('name')}
-                    disabled={saving}
-                    style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
-                  >{saving ? '…' : 'Save'}</button>
-                  <button
-                    onClick={handleCancel}
-                    style={{ padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}
-                  >Cancel</button>
+                  <input autoFocus value={nameVal} onChange={e => setNameVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleSave('name'); if (e.key === 'Escape') handleCancel(); }} style={iStyle} aria-label="Display name" />
+                  <button onClick={() => handleSave('name')} disabled={saving} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>{saving ? '…' : 'Save'}</button>
+                  <button onClick={handleCancel} style={{ padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
                 </div>
               ) : (
                 <div className="settings-row-desc">{agent.name}</div>
               )}
             </div>
-            {editField !== 'name' && (
-              <button
-                onClick={() => setEditField('name')}
-                style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: 'white', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}
-              >Edit</button>
-            )}
+            {editField !== 'name' && <button onClick={() => setEditField('name')} style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: 'white', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Edit</button>}
           </div>
 
           {/* Email — read only */}
           <div className="settings-row">
-            <div>
-              <div className="settings-row-label">Email</div>
-              <div className="settings-row-desc">{agent.email}</div>
-            </div>
+            <div><div className="settings-row-label">Email</div><div className="settings-row-desc">{agent.email}</div></div>
           </div>
 
           {/* Phone */}
@@ -1302,43 +1394,21 @@ function SettingsPage({ agent, onAgentUpdate }) {
               <div className="settings-row-label">Phone</div>
               {editField === 'phone' ? (
                 <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
-                  <input
-                    autoFocus
-                    value={phoneVal}
-                    onChange={e => setPhoneVal(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSave('phone'); if (e.key === 'Escape') handleCancel(); }}
-                    style={{ flex: 1, padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--blue-300)', fontFamily: 'var(--font-ui)', fontSize: 14, outline: 'none' }}
-                  />
-                  <button
-                    onClick={() => handleSave('phone')}
-                    disabled={saving}
-                    style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
-                  >{saving ? '…' : 'Save'}</button>
-                  <button
-                    onClick={handleCancel}
-                    style={{ padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}
-                  >Cancel</button>
+                  <input autoFocus value={phoneVal} onChange={e => setPhoneVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleSave('phone'); if (e.key === 'Escape') handleCancel(); }} style={iStyle} type="tel" aria-label="Phone number" />
+                  <button onClick={() => handleSave('phone')} disabled={saving} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>{saving ? '…' : 'Save'}</button>
+                  <button onClick={handleCancel} style={{ padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
                 </div>
               ) : (
                 <div className="settings-row-desc">{agent.phone || '—'}</div>
               )}
             </div>
-            {editField !== 'phone' && (
-              <button
-                onClick={() => setEditField('phone')}
-                style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: 'white', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}
-              >Edit</button>
-            )}
+            {editField !== 'phone' && <button onClick={() => setEditField('phone')} style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: 'white', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Edit</button>}
           </div>
 
           {/* Designation — read only */}
           <div className="settings-row">
-            <div>
-              <div className="settings-row-label">Role</div>
-              <div className="settings-row-desc">{agent.designation || '—'}</div>
-            </div>
+            <div><div className="settings-row-label">Role</div><div className="settings-row-desc">{agent.designation || '—'}</div></div>
           </div>
-
         </div>
       </div>
 
@@ -1352,15 +1422,8 @@ function SettingsPage({ agent, onAgentUpdate }) {
             { label: 'Dark Mode',           desc: 'Coming soon',                    val: darkMode, set: setDark    },
           ].map(row => (
             <div key={row.label} className="settings-row">
-              <div>
-                <div className="settings-row-label">{row.label}</div>
-                <div className="settings-row-desc">{row.desc}</div>
-              </div>
-              <div
-                className={`toggle-track-outer ${row.val ? 'on' : 'off'}`}
-                style={{ cursor: 'pointer' }}
-                onClick={() => row.set(v => !v)}
-              >
+              <div><div className="settings-row-label">{row.label}</div><div className="settings-row-desc">{row.desc}</div></div>
+              <div className={`toggle-track-outer ${row.val ? 'on' : 'off'}`} style={{ cursor: 'pointer' }} onClick={() => row.set(v => !v)} role="switch" aria-checked={row.val} aria-label={row.label} tabIndex={0} onKeyDown={e => e.key === 'Enter' && row.set(v => !v)}>
                 <div className="toggle-thumb-circle" />
               </div>
             </div>
@@ -1372,206 +1435,192 @@ function SettingsPage({ agent, onAgentUpdate }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   COMPONENT: PropertyMiniCard
+   ───────────────────────────────────────────────────────────── */
+function PropertyMiniCard({ property }) {
+  if (!property) return null;
+  const fmt = p => {
+    const n = Number(p);
+    if (!p || isNaN(n)) return 'Price on request';
+    if (n >= 10_000_000) return `₹ ${(n / 10_000_000).toFixed(2)} Cr`;
+    if (n >= 100_000)    return `₹ ${(n / 100_000).toFixed(2)} L`;
+    return `₹ ${n.toLocaleString('en-IN')}`;
+  };
+  const img = property.mainImages?.[0] || property.images?.[0] || property.image;
+  return (
+    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', marginBottom: 12 }}>
+      {img && <img src={img} alt={property.title} style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }} />}
+      <div style={{ padding: '10px 12px' }}>
+        <div style={{ fontWeight: 800, fontSize: 14, color: '#0f172a', marginBottom: 4 }}>{property.title}</div>
+        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>📍 {property.location}</div>
+        <div style={{ fontWeight: 800, fontSize: 14, color: '#0b63e5' }}>{fmt(property.price)}</div>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>{property.type} · {property.sqft} sqft</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
    PAGE: Video Call Screen
    ───────────────────────────────────────────────────────────── */
 function VideoCallScreen({ caller, agent, property, onEnd }) {
-  const [micOn,   setMicOn]   = useState(true);
-  const [camOn,   setCamOn]   = useState(true);
-  const [elapsed, setElapsed] = useState(0);
-  const [chatMsg, setChatMsg] = useState('');
-  const [messages, setMessages] = useState([]);
+  const [micOn,     setMicOn]    = useState(true);
+  const [camOn,     setCamOn]    = useState(true);
+  const [elapsed,   setElapsed]  = useState(0);
+  const [chatMsg,   setChatMsg]  = useState('');
+  const [messages,  setMessages] = useState([]);
 
-  const jitsiRef = useRef(null);
-  const jitsiApi = useRef(null);
+  const jitsiRef   = useRef(null);
+  const jitsiApi   = useRef(null);
+  // Stable refs so the mount effect has zero external dependencies
+  // and never needs to re-run when props change
+  const onEndRef   = useRef(onEnd);
+  const callerRef  = useRef(caller);
+  const agentRef   = useRef(agent);
 
-  // Timer
+  // Keep refs in sync with latest props every render
+  useEffect(() => { onEndRef.current  = onEnd;   });
+  useEffect(() => { callerRef.current = caller;  });
+  useEffect(() => { agentRef.current  = agent;   });
+
+  // Elapsed timer — runs once on mount, no deps needed
   useEffect(() => {
     const t = setInterval(() => setElapsed(s => s + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Jitsi
+  // Mount Jitsi — intentionally runs once on mount only.
+  // All props are accessed through stable refs to avoid stale closures
+  // without requiring any dependency array entries.
   useEffect(() => {
-    const roomName = `ogm-live-tour-${caller.property.toLowerCase().replace(/\s+/g,'-')}-${Date.now()}`;
-    const loadJitsi = () => {
+    // Room name MUST match what the customer joined on the property page:
+    // format: ogm-live-{propertyId}-{YYYYMMDD}
+    const today    = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const propId   = callerRef.current.propertyId || callerRef.current.property || 'tour';
+    const roomName = `ogm-live-${propId}-${today}`;
+
+    const load = () => {
       if (!jitsiRef.current) return;
-      jitsiApi.current = new window.JitsiMeetExternalAPI('meet.jit.si', {
+      jitsiApi.current = new window.JitsiMeetExternalAPI(JITSI_HOST, {
         roomName,
         parentNode: jitsiRef.current,
         width: '100%',
         height: '100%',
-        userInfo: { displayName: agent.name },
+        userInfo: { displayName: agentRef.current.name },
         configOverwrite: {
-          prejoinPageEnabled: false,
-          prejoinConfig: { enabled: false },
+          prejoinPageEnabled:  false,
+          prejoinConfig:       { enabled: false },
           startWithAudioMuted: false,
           startWithVideoMuted: false,
-          disableDeepLinking: true,
-          enableClosePage: false,
-          toolbarButtons: [
-            'microphone','camera','desktop','chat',
-            'raisehand','tileview','participants-pane','hangup',
-          ],
+          disableDeepLinking:  true,
+          enableClosePage:     false,
+          toolbarButtons: ['microphone','camera','desktop','chat','raisehand','tileview','participants-pane','hangup'],
         },
         interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_BRAND_WATERMARK: false,
-          SHOW_POWERED_BY: false,
+          SHOW_JITSI_WATERMARK:             false,
+          SHOW_BRAND_WATERMARK:             false,
+          SHOW_POWERED_BY:                  false,
           DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-          TOOLBAR_ALWAYS_VISIBLE: true,
-          SHOW_CHROME_EXTENSION_BANNER: false,
-          MOBILE_APP_PROMO: false,
-          filmStripOnly: false,
+          TOOLBAR_ALWAYS_VISIBLE:           true,
+          SHOW_CHROME_EXTENSION_BANNER:     false,
+          MOBILE_APP_PROMO:                 false,
         },
+      });
+
+      jitsiApi.current.addEventListeners({
+        participantLeft: () => onEndRef.current?.(),
+        readyToClose:    () => onEndRef.current?.(),
       });
     };
 
     if (!window.JitsiMeetExternalAPI) {
-      const s = document.createElement('script');
-      s.src = 'https://meet.jit.si/external_api.js';
-      s.async = true;
-      s.onload = loadJitsi;
+      const s    = document.createElement('script');
+      s.src      = `https://${JITSI_HOST}/external_api.js`;
+      s.async    = true;
+      s.onload   = load;
       document.body.appendChild(s);
     } else {
-      loadJitsi();
+      load();
     }
 
     return () => { jitsiApi.current?.dispose(); };
-  }, []);
+  }, []); // mount-only — props accessed via refs above
 
-  const fmtElapsed = s => {
-    const m = Math.floor(s / 60), sec = s % 60;
-    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  };
+  const fmtElapsed = s => `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
 
   const sendMsg = () => {
     if (!chatMsg.trim()) return;
-    const now = new Date();
-    const time = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-    setMessages(m => [...m, {
-      id: Date.now(),
-      author: agent.name.split(' ').map(w=>w[0]).join(''),
-      name: agent.name,
-      time,
-      text: chatMsg.trim(),
-    }]);
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    setMessages(m => [...m, { id: Date.now(), author: toInitials(agent.name), name: agent.name, time, text: chatMsg.trim() }]);
     setChatMsg('');
   };
 
   return (
-    <div className="vc-screen">
-      {/* Top Bar */}
+    <div className="vc-screen" role="main" aria-label="Live video call">
+      {/* Top bar */}
       <div className="vc-topbar">
-        <div className="vc-header-left" style={{ display:'flex', alignItems:'center', gap:14 }}>
-          <div className="vc-brand-badge">
-            <span className="vc-live-dot" />
-            Live Property Tour
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div className="vc-brand-badge"><span className="vc-live-dot" aria-hidden="true" />Live Property Tour</div>
           <div className="vc-status-text">
-            <span style={{ width:8,height:8,borderRadius:'50%',background:'var(--green-500)',display:'inline-block' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green-500)', display: 'inline-block' }} aria-hidden="true" />
             Live Tour in Progress
           </div>
         </div>
         <div className="vc-topbar-right">
-          <div className="vc-connected">
-            <span style={{ width:8,height:8,borderRadius:'50%',background:'var(--green-500)',display:'inline-block' }} />
-            Connected
-          </div>
-          <div className="vc-record">
-            <span className="rec-dot" /> Record
-          </div>
-          <span className="vc-elapsed">{fmtElapsed(elapsed)}</span>
+          <div className="vc-connected"><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green-500)', display: 'inline-block' }} aria-hidden="true" />Connected</div>
+          <div className="vc-record"><span className="rec-dot" aria-hidden="true" /> REC</div>
+          <span className="vc-elapsed" aria-live="polite">{fmtElapsed(elapsed)}</span>
         </div>
       </div>
 
       {/* Body */}
       <div className="vc-body">
-        {/* Video Main */}
+        {/* Video */}
         <div className="vc-video-main">
           <div className="vc-jitsi-container" ref={jitsiRef} />
-
           <div className="vc-room-label">{caller.property || 'Live Tour'}</div>
+          <div className="vc-pip"><span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Your camera</span></div>
 
-          <div className="vc-pip">
-            <span>Your camera</span>
-          </div>
-
-          {/* Controls */}
-          <div className="vc-controls-bar">
-            <button
-              className={`vc-ctrl-btn${!micOn ? ' active-off' : ''}`}
-              onClick={() => { setMicOn(v=>!v); jitsiApi.current?.executeCommand('toggleAudio'); }}
-              title={micOn ? 'Mute' : 'Unmute'}
-            >
-              {micOn ? <Icon.Mic /> : <Icon.MicOff />}
-            </button>
-
-            <button
-              className={`vc-ctrl-btn${!camOn ? ' active-off' : ''}`}
-              onClick={() => { setCamOn(v=>!v); jitsiApi.current?.executeCommand('toggleVideo'); }}
-              title={camOn ? 'Stop camera' : 'Start camera'}
-            >
-              {camOn ? <Icon.Video /> : <Icon.VideoOff />}
-            </button>
-
-            <button className="vc-ctrl-btn" title="Speaker"><Icon.Volume /></button>
-            <button className="vc-ctrl-btn" title="Chat"><Icon.MessageSquare /></button>
-            <button className="vc-ctrl-btn" title="Screen share"><Icon.Monitor /></button>
-
-            <div className="vc-sep" />
-
-            <button className="vc-end-call-btn" onClick={onEnd} title="End call">
+          {/* End call button only — Jitsi renders its own mic/camera/share controls */}
+          <div className="vc-controls-bar" role="toolbar" aria-label="Call controls">
+            <button className="vc-end-call-btn" onClick={onEnd} title="End call" aria-label="End call">
               <Icon.PhoneOff />
             </button>
           </div>
         </div>
 
-        {/* Right Sidebar */}
-        <aside className="vc-sidebar">
+        {/* Sidebar */}
+        <aside className="vc-sidebar" aria-label="Call details">
           {/* Property */}
           <div className="vc-prop-section">
-            <div className="vc-prop-heading">Property Details</div>
-            {property ? (
-              <PropertyMiniCard property={property} compact />
-            ) : (
-              <>
-                <div className="vc-prop-img">
-                  <span style={{ fontSize:13, color:'var(--gray-400)' }}>Property image</span>
-                </div>
-                <div className="vc-prop-name">{caller.property}</div>
-                <div className="vc-prop-price">—</div>
-                <div className="vc-prop-meta">Details not available</div>
-              </>
-            )}
+            <div className="vc-prop-heading">Property</div>
+            {property
+              ? <PropertyMiniCard property={property} />
+              : <><div className="vc-prop-img"><span style={{ fontSize: 13, color: 'var(--gray-400)' }}>No property image</span></div><div className="vc-prop-name">{caller.property}</div></>
+            }
           </div>
 
           {/* Client */}
           <div className="vc-client-section">
-            <div className="vc-client-name-row">
-              <Icon.PhoneIcon />
-              {caller.name}
-            </div>
-            {caller.mobile && (
-              <div className="vc-contact-row"><Icon.PhoneIcon /> {caller.mobile}</div>
-            )}
-            {caller.email && (
-              <div className="vc-contact-row"><Icon.Mail /> {caller.email}</div>
-            )}
-            {!caller.mobile && !caller.email && (
-              <div className="vc-contact-row" style={{ color: 'var(--gray-400)', fontSize: 12 }}>
-                No contact details available
-              </div>
-            )}
+            <div className="vc-client-name-row"><Icon.PhoneIcon />{caller.name}</div>
+            {caller.mobile && <div className="vc-contact-row"><Icon.PhoneIcon />{caller.mobile}</div>}
+            {caller.email  && <div className="vc-contact-row"><Icon.Mail />{caller.email}</div>}
+            {!caller.mobile && !caller.email && <div className="vc-contact-row" style={{ color: 'var(--gray-400)', fontSize: 12 }}>No contact details</div>}
           </div>
 
-          {/* Chat */}
+          {/* In-call chat */}
           <div className="vc-chat-section">
-            <div className="vc-chat-heading">Chat</div>
-            <div className="vc-chat-messages">
+            <div className="vc-chat-heading">Notes / Chat</div>
+            <div className="vc-chat-messages" aria-live="polite">
+              {messages.length === 0 && (
+                <div style={{ fontSize: 12, color: 'var(--gray-400)', textAlign: 'center', marginTop: 12 }}>
+                  Add notes or send a message…
+                </div>
+              )}
               {messages.map(msg => (
                 <div key={msg.id} className="chat-msg">
                   <div className="chat-avatar">{msg.author}</div>
-                  <div className="chat-body">
+                  <div>
                     <div className="chat-header">
                       <span className="chat-name">{msg.name}</span>
                       <span className="chat-time">{msg.time}</span>
@@ -1584,12 +1633,13 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
             <div className="vc-chat-input-row">
               <input
                 className="vc-chat-input"
-                placeholder="Type a message…"
+                placeholder="Type a note…"
                 value={chatMsg}
                 onChange={e => setChatMsg(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendMsg()}
+                aria-label="Chat message"
               />
-              <button className="vc-send-btn" onClick={sendMsg}><Icon.Send /></button>
+              <button className="vc-send-btn" onClick={sendMsg} aria-label="Send message"><Icon.Send /></button>
             </div>
           </div>
         </aside>
@@ -1598,261 +1648,68 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    ROOT: AgentAdminApp
-   ───────────────────────────────────────────────────────────── */
-/* ─────────────────────────────────────────────────────────────
-   HOOK: useAgentStats — fetches real call stats from backend
-   ───────────────────────────────────────────────────────────── */
-function useAgentStats(agentId) {
-  const [stats, setStats] = useState({ total: 0, completed: 0, active: 0 });
+   ═════════════════════════════════════════════════════════════ */
+export default function AgentAdminApp() {
+  const [agent,         setAgent]         = useState(null);
+  const [page,          setPage]          = useState('dashboard');
+  const [available,     setAvailable]     = useState(true);
+  const [availSaving,   setAvailSaving]   = useState(false);
+  const [activeCaller,  setActiveCaller]  = useState(null);
+  const [incomingCaller,setIncomingCaller]= useState(null);
+  const [restoring,     setRestoring]     = useState(true);
 
-  useEffect(() => {
-    if (!agentId) return;
-    fetch(`${API_BASE}/api/agent/stats?agentId=${agentId}`)
-      .then(r => r.json())
-      .then(data => setStats(data))
-      .catch(() => {});
-  }, [agentId]);
+  const { findProperty, findPropertyById } = useProperties();
 
-  return stats;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   HOOK: useCallHistory — fetches real call history from backend
-   ───────────────────────────────────────────────────────────── */
-function useCallHistory(agentId) {
-  const [calls, setCalls]     = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!agentId) return;
-    fetch(`${API_BASE}/api/agent/calls?agentId=${agentId}`)
-      .then(r => r.json())
-      .then(data => {
-        // Map backend CallHistoryDto → shape used by CallRow
-        const mapped = data.map(c => ({
-          id:       c.sessionId,
-          name:     c.customerName,
-          initials: c.customerName?.split(' ').map(w => w[0]).join('').toUpperCase() || '??',
-          property: c.propertyTitle || `Property #${c.propertyId}`,
-          status:   c.status?.toLowerCase() === 'completed' ? 'completed'
-                  : c.status?.toLowerCase() === 'active'    ? 'ongoing'
-                  : 'missed',
-          duration: c.durationFormatted || '–',
-          notes:    '–',
-          time:     c.startedAt
-                    ? new Date(c.startedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                    : '–',
-          online:   c.status?.toLowerCase() === 'active',
-        }));
-        setCalls(mapped);
-      })
-      .catch(() => setCalls(MOCK_CALLS)) // fallback to mock if API fails
-      .finally(() => setLoading(false));
-  }, [agentId]);
-
-  return { calls, loading };
-}
-
-
-function useProperties() {
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading]       = useState(true);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/properties?page=0&size=50`)
-      .then(r => r.json())
-      .then(data => setProperties(data?.content || data || []))
-      .catch(() => setProperties([]))
-      .finally(() => setLoading(false));
+  /* ── WebSocket incoming call handler ── */
+  const handleIncomingCallWS = useCallback((data) => {
+    setIncomingCaller({
+      name:          data.callerName  || 'Unknown Caller',
+      initials:      toInitials(data.callerName),
+      property:      data.propertyId?.toString() || 'Unknown Property',
+      propertyId:    data.propertyId  || null,   // ← store numeric ID for exact lookup
+      mobile:        data.callerMobile || null,
+      email:         null,
+      photoUrl:      data.callerPhotoUrl || null,
+      queuePosition: data.queuePosition || 0,
+    });
   }, []);
 
-  // Find a property by slug or title keyword
-  const findProperty = useCallback((nameOrSlug) => {
-    if (!nameOrSlug) return null;
-    const q = nameOrSlug.toLowerCase();
-    return properties.find(p =>
-      p.slug?.toLowerCase().includes(q) ||
-      p.title?.toLowerCase().includes(q)
-    ) || null;
-  }, [properties]);
+  /* ── WebSocket availability push (e.g. admin forced offline) ── */
+  const handleAvailabilityWS = useCallback((data) => {
+    setAvailable(!!data.online);
+  }, []);
 
-  return { properties, loading, findProperty };
-}
+  const agentId  = agent?.agentId || agent?.id;
+  const { wsStatus } = useWebSocket(agentId, handleIncomingCallWS, handleAvailabilityWS);
 
-/* ─────────────────────────────────────────────────────────────
-   COMPONENT: PropertyMiniCard — used in Dashboard + VideoCall
-   ───────────────────────────────────────────────────────────── */
-function PropertyMiniCard({ property, compact = false }) {
-  if (!property) return null;
-
-  const formatPrice = (price) => {
-    const n = Number(price);
-    if (!price || isNaN(n)) return 'Price on request';
-    if (n >= 10_000_000) return `₹ ${(n / 10_000_000).toFixed(2)} Cr`;
-    if (n >= 100_000)    return `₹ ${(n / 100_000).toFixed(2)} Lakhs`;
-    return `₹ ${n.toLocaleString('en-IN')}`;
-  };
-
-  const img = property.mainImages?.[0] || property.images?.[0] || property.image;
-
-  if (compact) {
-    // Small inline version for VideoCall sidebar
-    return (
-      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0', marginBottom: 12 }}>
-        {img && (
-          <img
-            src={img}
-            alt={property.title}
-            style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }}
-          />
-        )}
-        <div style={{ padding: '10px 12px' }}>
-          <div style={{ fontWeight: 800, fontSize: 14, color: '#0f172a', marginBottom: 4, lineHeight: 1.3 }}>
-            {property.title}
-          </div>
-          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
-            📍 {property.location}
-          </div>
-          <div style={{ fontWeight: 800, fontSize: 14, color: '#0b63e5' }}>
-            {formatPrice(property.price)}
-          </div>
-          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>
-            {property.type} • {property.sqft} sqft
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Full card for Dashboard grid
-  return (
-    <a
-      href={`/property/${property.slug}`}
-      target="_blank"
-      rel="noreferrer"
-      style={{ textDecoration: 'none', color: 'inherit' }}
-    >
-      <div style={{
-        borderRadius: 14,
-        overflow: 'hidden',
-        border: '1px solid #e2e8f0',
-        background: '#fff',
-        boxShadow: '0 2px 12px rgba(15,23,42,0.06)',
-        transition: 'transform 0.18s, box-shadow 0.18s',
-        cursor: 'pointer',
-      }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(15,23,42,0.12)'; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 12px rgba(15,23,42,0.06)'; }}
-      >
-        <div style={{ position: 'relative', height: 160, background: '#f1f5f9' }}>
-          {img
-            ? <img src={img} alt={property.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🏠</div>
-          }
-          {property.reraApproved && (
-            <span style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-              RERA Approved
-            </span>
-          )}
-          {property.soldOut && (
-            <span style={{ position: 'absolute', top: 8, right: 8, background: 'linear-gradient(135deg,#ff4d4d,#d90429)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
-              Sold Out
-            </span>
-          )}
-        </div>
-        <div style={{ padding: '12px 14px' }}>
-          <div style={{ fontWeight: 800, fontSize: 14, color: '#0f172a', marginBottom: 4, lineHeight: 1.35,
-            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {property.title}
-          </div>
-          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 6 }}>📍 {property.location}</div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontWeight: 800, fontSize: 14, color: '#0b63e5' }}>{formatPrice(property.price)}</span>
-            <span style={{ fontSize: 11, background: '#f1f5f9', color: '#334155', padding: '3px 8px', borderRadius: 20, fontWeight: 700 }}>{property.type}</span>
-          </div>
-          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{property.sqft} sqft</div>
-        </div>
-      </div>
-    </a>
-  );
-}
-
-export default function AgentAdminApp() {
-  const [agent,     setAgent]     = useState(null);
-  const [page,      setPage]      = useState('dashboard');
-  const [available, setAvailable] = useState(true);
-  const [showIncoming, setShowIncoming] = useState(false);
-  const [activeCaller,  setActiveCaller]  = useState(null);
-  const [restoring, setRestoring] = useState(true); // ← prevent login flash
-  const incomingTimer = useRef(null);
-
-  // ── Restore session from localStorage on page refresh ──────────────
+  /* ── Restore session from localStorage ── */
   useEffect(() => {
-    const token   = localStorage.getItem('agent_token');
-    const cached  = localStorage.getItem('agent_data');
+    const token  = localStorage.getItem('agent_token');
+    const cached = localStorage.getItem('agent_data');
     if (token && cached) {
       try {
-        const agentData = JSON.parse(cached);
-        // Re-validate token with backend
-        fetch(`${API_BASE}/api/agent/profile?agentId=${agentData.agentId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const parsed = JSON.parse(cached);
+        fetch(`${API_BASE}/api/agent/profile?agentId=${parsed.agentId}`, { headers: authHeaders() })
           .then(r => r.ok ? r.json() : Promise.reject())
-          .then(data => {
-            setAgent({ ...data, token });
-          })
+          .then(data => setAgent({ ...data, token }))
           .catch(() => {
-            // Token expired or invalid — clear and show login
             localStorage.removeItem('agent_token');
             localStorage.removeItem('agent_data');
           })
           .finally(() => setRestoring(false));
-      } catch {
-        setRestoring(false);
-      }
+      } catch { setRestoring(false); }
     } else {
       setRestoring(false);
     }
   }, []);
 
-  const [incomingCaller, setIncomingCaller] = useState(MOCK_INCOMING_CALL);
-
-  const { properties, loading: propsLoading, findProperty } = useProperties();
-
-  // Simulate incoming call after 5 seconds (replace with real WebSocket)
-  useEffect(() => {
-    if (!agent) return;
-    incomingTimer.current = setTimeout(() => setShowIncoming(true), 5000);
-    return () => clearTimeout(incomingTimer.current);
-  }, [agent]);
-
-  // --- Real WebSocket (STOMP) integration ---
-  // useEffect(() => {
-  //   if (!agent) return;
-  //   const socket = new SockJS(`${API_BASE}/live-queue`);
-  //   const stompClient = Stomp.over(socket);
-  //   stompClient.connect({}, () => {
-  //     stompClient.subscribe(`/topic/agent/${agent.agentId}/incoming-call`, (msg) => {
-  //       const data = JSON.parse(msg.body);
-  //       setIncomingCaller({
-  //         name:     data.callerName,
-  //         initials: data.callerName.split(' ').map(w=>w[0]).join('').toUpperCase(),
-  //         property: data.propertyId?.toString(),
-  //         mobile:   data.callerMobile,
-  //         email:    null,
-  //       });
-  //       setShowIncoming(true);
-  //     });
-  //   });
-  //   return () => stompClient.disconnect();
-  // }, [agent]);
-
-  const handleLogin = useCallback((agentData) => {
-    localStorage.setItem('agent_token', agentData.token);
-    localStorage.setItem('agent_data', JSON.stringify(agentData));
-    setAgent(agentData);
+  /* ── Auth ── */
+  const handleLogin = useCallback((data) => {
+    localStorage.setItem('agent_token', data.token);
+    localStorage.setItem('agent_data', JSON.stringify(data));
+    setAgent(data);
     setPage('dashboard');
   }, []);
 
@@ -1860,112 +1717,119 @@ export default function AgentAdminApp() {
     localStorage.removeItem('agent_token');
     localStorage.removeItem('agent_data');
     setAgent(null);
-    setShowIncoming(false);
+    setIncomingCaller(null);
     setActiveCaller(null);
   }, []);
 
+  /* ── Availability toggle (persists to backend) ── */
+  const handleToggleAvailable = useCallback(async () => {
+    const next = !available;
+    setAvailable(next);
+    setAvailSaving(true);
+    try {
+      await fetch(`${API_BASE}/api/agent/availability`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ agentId, online: next, busy: false }),
+      });
+    } catch {
+      // Revert on failure
+      setAvailable(!next);
+    } finally {
+      setAvailSaving(false);
+    }
+  }, [available, agentId]);
+
+  /* ── Call actions ── */
   const handleAcceptCall = useCallback(() => {
-    setShowIncoming(false);
     setActiveCaller(incomingCaller);
-  }, [incomingCaller]);
+    setIncomingCaller(null);
+    setAvailable(false); // agent is now busy
+    // Persist busy status
+    fetch(`${API_BASE}/api/agent/availability`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ agentId, online: true, busy: true }),
+    }).catch(() => {});
+  }, [incomingCaller, agentId]);
 
   const handleDeclineCall = useCallback(() => {
-    setShowIncoming(false);
+    setIncomingCaller(null);
   }, []);
 
   const handleEndCall = useCallback(() => {
     setActiveCaller(null);
-    // === REAL API ===
-    // fetch(`${API_BASE}/api/live-tour/end-session/${sessionId}`, { method:'POST' })
+    setAvailable(true);
+    // Mark agent available again
+    fetch(`${API_BASE}/api/agent/availability`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ agentId, online: true, busy: false }),
+    }).catch(() => {});
+  }, [agentId]);
+
+  const handleJoinFromUpcoming = useCallback((item) => {
+    setActiveCaller(item);
   }, []);
 
   const handleAgentUpdate = useCallback((updated) => {
     setAgent(updated);
+    localStorage.setItem('agent_data', JSON.stringify(updated));
   }, []);
 
-  const handleJoinFromUpcoming = useCallback((item) => {
-    setActiveCaller({ name: item.name, initials: item.initials, property: item.property });
-  }, []);
-
-  const handleToggleAvailable = useCallback(() => {
-    setAvailable(v => {
-      const next = !v;
-      // === REAL API ===
-      // fetch(`${API_BASE}/api/agent/availability`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      //   body: JSON.stringify({ online: next, busy: false }),
-      // });
-      return next;
-    });
-  }, []);
-
-  /* ── RESTORING SESSION ── */
+  /* ── Restoring session ── */
   if (restoring) {
     return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', background: '#edf0f8',
-      }}>
-        <div style={{
-          width: 44, height: 44,
-          border: '3px solid rgba(59,130,246,0.2)',
-          borderTopColor: '#3b82f6',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-        }} />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#edf0f8' }}>
+        <span className="login-spinner" style={{ borderTopColor: '#3b82f6', width: 44, height: 44, borderWidth: 3 }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  /* ── NOT LOGGED IN ── */
+  /* ── Not logged in ── */
   if (!agent) return <LoginPage onLogin={handleLogin} />;
 
-  /* ── VIDEO CALL ACTIVE ── */
+  /* ── Video call active — full screen ── */
   if (activeCaller) {
     return (
       <VideoCallScreen
         caller={activeCaller}
         agent={agent}
-        property={findProperty(activeCaller.property)}
+        property={findPropertyById(activeCaller.propertyId) || findProperty(activeCaller.property)}
         onEnd={handleEndCall}
       />
     );
   }
 
-  /* ── MAIN DASHBOARD ── */
+  /* ── Main dashboard ── */
   const renderPage = () => {
+    const aid = agent.agentId || agent.id;
     switch (page) {
       case 'dashboard':
-        return (
-          <DashboardPage
-            agent={agent}
-            available={available}
-            onToggleAvailable={handleToggleAvailable}
-            showIncoming={showIncoming}
-            agentId={agent.agentId || agent.id}
-          />
-        );
-      case 'call-history':   return <CallHistoryPage />;
-      case 'availability':   return <AvailabilityPage />;
-      case 'upcoming-calls': return <UpcomingCallsPage onJoinCall={handleJoinFromUpcoming} agentId={agent.agentId || agent.id} />;
-      case 'settings':       return <SettingsPage agent={agent} onAgentUpdate={handleAgentUpdate} />;
-      default:               return null;
+        return <DashboardPage agent={agent} available={available} onToggleAvailable={handleToggleAvailable} availSaving={availSaving} />;
+      case 'call-history':
+        return <CallHistoryPage agentId={aid} />;
+      case 'availability':
+        return <AvailabilityPage agentId={aid} />;
+      case 'upcoming-calls':
+        return <UpcomingCallsPage onJoinCall={handleJoinFromUpcoming} agentId={aid} />;
+      case 'settings':
+        return <SettingsPage agent={agent} onAgentUpdate={handleAgentUpdate} />;
+      default:
+        return null;
     }
   };
 
   return (
     <>
       <div className="app-layout">
-        <Sidebar active={page} onNav={setPage} onLogout={handleLogout} />
-        <main className="main-content">
+        <Sidebar active={page} onNav={setPage} onLogout={handleLogout} wsStatus={wsStatus} />
+        <main className="main-content" id="main-content">
           {renderPage()}
         </main>
       </div>
 
       {/* Incoming call overlay */}
-      {showIncoming && (
+      {incomingCaller && (
         <IncomingCallModal
           caller={incomingCaller}
           onAccept={handleAcceptCall}
