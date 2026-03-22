@@ -1286,7 +1286,16 @@ body {
 .vc-body { flex: 1; display: flex; overflow: hidden; }
 
 .vc-video-main { flex: 1; position: relative; background: #12161e; overflow: hidden; }
-.vc-jitsi-container { width: 100%; height: 100%; }
+.vc-jitsi-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+/* Hide our custom pip and controls bar — Jitsi renders its own */
+.vc-pip,
+.vc-room-label,
+.vc-controls-bar { display: none; }
 
 .vc-room-label {
   position: absolute; bottom: 76px; left: 18px;

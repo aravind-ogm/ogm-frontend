@@ -1577,16 +1577,24 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
       <div className="vc-body">
         {/* Video */}
         <div className="vc-video-main">
+          {/* Jitsi fills the entire container — it renders its own controls, pip, and room label */}
           <div className="vc-jitsi-container" ref={jitsiRef} />
-          <div className="vc-room-label">{caller.property || 'Live Tour'}</div>
-          <div className="vc-pip"><span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Your camera</span></div>
 
-          {/* End call button only — Jitsi renders its own mic/camera/share controls */}
-          <div className="vc-controls-bar" role="toolbar" aria-label="Call controls">
-            <button className="vc-end-call-btn" onClick={onEnd} title="End call" aria-label="End call">
-              <Icon.PhoneOff />
-            </button>
-          </div>
+          {/* Our only overlay — End Call button, sits above Jitsi's toolbar on the right */}
+          <button
+            className="vc-end-call-btn"
+            onClick={onEnd}
+            title="End call"
+            aria-label="End call"
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              right: 20,
+              zIndex: 9999,
+            }}
+          >
+            <Icon.PhoneOff />
+          </button>
         </div>
 
         {/* Sidebar */}
