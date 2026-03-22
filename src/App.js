@@ -1,38 +1,25 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-  useNavigate,
+  BrowserRouter as Router, Routes, Route,
+  useLocation, useNavigate,
 } from "react-router-dom";
 
-// Components
 import SearchBarContainer from "./search/SearchBarContainer";
 import PropertyCard       from "./components/PropertyCard";
 import FloatingWhatsapp   from "./components/FloatingWhatsapp";
 import Footer             from "./components/Footer";
 import AuthContainer      from "./components/ogm-auth/AuthContainer";
-
-// Pages
-import Contact         from "./pages/Contact";
-import PropertyDetails from "./pages/PropertyDetails";
-import About           from "./pages/About";
-import PrivacyPolicy   from "./pages/PrivacyPolicy";
-import AiSearchPage    from "./components/ai/AiSearchPage";
-
-// Agent Admin
-import AgentAdminApp from "./components/admindashboard/Agentadminapp";
-import BookTourPage  from "./components/admindashboard/BookTourPage";
-
+import Contact            from "./pages/Contact";
+import PropertyDetails    from "./pages/PropertyDetails";
+import About              from "./pages/About";
+import PrivacyPolicy      from "./pages/PrivacyPolicy";
+import AiSearchPage       from "./components/ai/AiSearchPage";
+import AgentAdminApp      from "./components/admindashboard/Agentadminapp";
+import BookTourPage       from "./components/admindashboard/BookTourPage";
 import "./styles/App.css";
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const BASE_URL           = process.env.REACT_APP_API_BASE || "http://localhost:8080";
 const HIDE_FOOTER_ROUTES = new Set(["/ai-search", "/dashboard", "/admin", "/agent-admin", "/book"]);
-
-// ─── Meta Pixel Tracker ───────────────────────────────────────────────────────
 
 function MetaPixelTracker() {
   const location = useLocation();
@@ -40,32 +27,20 @@ function MetaPixelTracker() {
   return null;
 }
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
-
-function App() {
-  return (
-    <Router>
-      <AppContent />
-    </Router>
-  );
-}
-
-// ─── App Content ──────────────────────────────────────────────────────────────
+function App() { return <Router><AppContent /></Router>; }
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [properties,      setProperties]      = useState([]);
-  const [isSearching,     setIsSearching]      = useState(false);
-  const [isAuthenticated, setIsAuthenticated]  = useState(
+  const [properties,      setProperties]     = useState([]);
+  const [isSearching,     setIsSearching]    = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
     () => Boolean(localStorage.getItem("token"))
   );
 
   const isAgentAdmin     = location.pathname.startsWith("/agent-admin");
   const shouldHideFooter = HIDE_FOOTER_ROUTES.has(location.pathname);
-
-  // ─── Data fetching ─────────────────────────────────────────────────────────
 
   const loadProperties = useCallback(async (query = "") => {
     try {
@@ -75,73 +50,37 @@ function AppContent() {
       const data = await res.json();
       setProperties(data?.content ?? []);
     } catch (err) {
-      console.error("Failed to fetch properties:", err);
+      console.error("Failed to fetch:", err);
       setProperties([]);
     }
   }, []);
 
-  useEffect(() => {
-    if (!isAgentAdmin) loadProperties();
-  }, [loadProperties, isAgentAdmin]);
-
-  // ─── Search handler ────────────────────────────────────────────────────────
+  useEffect(() => { if (!isAgentAdmin) loadProperties(); }, [loadProperties, isAgentAdmin]);
 
   const handleSearch = useCallback((data) => {
-    if (data === null) {
-      setIsSearching(false);
-      loadProperties();
-      return;
-    }
+    if (data === null) { setIsSearching(false); loadProperties(); return; }
     setIsSearching(true);
     loadProperties(data);
   }, [loadProperties]);
 
-  // ─── Auth handlers ─────────────────────────────────────────────────────────
-
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem("token");
-    setIsAuthenticated(false);
-    navigate("/");
-  }, [navigate]);
-
-  const handleAuthSuccess = useCallback(() => {
-    setIsAuthenticated(true);
-  }, []);
-
-  // ─── Agent admin: standalone (no header/footer) ────────────────────────────
-
-  if (isAgentAdmin) {
-    return (
-      <>
-        <MetaPixelTracker />
-        <AgentAdminApp />
-      </>
-    );
-  }
-
-  // ─── Main app ──────────────────────────────────────────────────────────────
+  if (isAgentAdmin) return <><MetaPixelTracker /><AgentAdminApp /></>;
 
   return (
     <>
       <MetaPixelTracker />
-
       <div className="app-container">
         <Header
           isAuthenticated={isAuthenticated}
-          onLogout={handleLogout}
+          onLogout={() => {
+            localStorage.removeItem("token");
+            setIsAuthenticated(false);
+            navigate("/");
+          }}
           onLogoClick={() => { handleSearch(null); navigate("/", { replace: true }); }}
         />
-
         <Routes>
-          <Route
-            path="/"
-            element={
-              <HomePage
-                properties={properties}
-                isSearching={isSearching}
-                onSearch={handleSearch}
-              />
-            }
+          <Route path="/"
+            element={<HomePage properties={properties} isSearching={isSearching} onSearch={handleSearch} />}
           />
           <Route path="/property/:slug" element={<PropertyDetails />} />
           <Route path="/book/:slug"     element={<BookTourPage />} />
@@ -149,12 +88,10 @@ function AppContent() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/contact"        element={<Contact />} />
           <Route path="/ai-search"      element={<AiSearchPage />} />
-          <Route
-            path="/auth"
-            element={<AuthContainer onAuthSuccess={handleAuthSuccess} />}
+          <Route path="/auth"
+            element={<AuthContainer onAuthSuccess={() => setIsAuthenticated(true)} />}
           />
         </Routes>
-
         <FloatingWhatsapp />
         {!shouldHideFooter && <Footer />}
       </div>
@@ -162,14 +99,15 @@ function AppContent() {
   );
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
-
+/* ── Header ─────────────────────────────────────────────────
+   Logo: /logo.png image (which contains the OGM branding)
+   Below it centered: "One Global Marketplace"
+   No duplicate text — just image + subtitle.
+*/
 function Header({ isAuthenticated, onLogout, onLogoClick }) {
   const navigate = useNavigate();
-
   return (
     <header className="topbar">
-      {/* Logo + name */}
       <div
         className="header-left"
         onClick={onLogoClick}
@@ -178,45 +116,41 @@ function Header({ isAuthenticated, onLogout, onLogoClick }) {
         onKeyDown={(e) => e.key === "Enter" && onLogoClick()}
         aria-label="Go to homepage"
       >
-        <img src="/logo.png" alt="OGM Logo" className="logo-img" />
-        <span className="header-title">One Global Marketplace</span>
+        {/*
+          /logo.png already contains the full OGM logo (blue circle, orange dot, GM text).
+          We show ONLY the image — no extra text beside it.
+          "One Global Marketplace" subtitle is centered below.
+        */}
+        <img src="/logo.png" alt="OGM" className="logo-img" />
+        <span className="header-sub">One Global Marketplace</span>
       </div>
 
-      {/* Actions */}
       <div className="header-actions">
-        {isAuthenticated ? (
-          <button className="contact" onClick={onLogout}>Logout</button>
-        ) : (
-          <button className="contact" onClick={() => navigate("/auth")}>Login</button>
-        )}
+        {isAuthenticated
+          ? <button className="contact" onClick={onLogout}>Logout</button>
+          : <button className="contact" onClick={() => navigate("/auth")}>Login</button>
+        }
       </div>
     </header>
   );
 }
 
-// ─── Home Page ────────────────────────────────────────────────────────────────
-
+/* ── Home Page ─────────────────────────────────────────────── */
 function HomePage({ properties, isSearching, onSearch }) {
   return (
     <main className="main-section">
-      {/* Search bar — sits right below header on white background */}
       <SearchBarContainer onSearch={onSearch} />
-
-      {/* Section heading */}
       <h2 className="section-title">
         <span className="section-title-text">
           {isSearching ? "Search Results" : "Popular Homes in Bengaluru"}
         </span>
       </h2>
-
-      {/* Listings */}
       <PropertyList properties={properties} />
     </main>
   );
 }
 
-// ─── Property List ────────────────────────────────────────────────────────────
-
+/* ── Property List ─────────────────────────────────────────── */
 function PropertyList({ properties }) {
   if (!properties?.length) {
     return (
@@ -224,23 +158,17 @@ function PropertyList({ properties }) {
         <div className="no-results-content">
           <span className="no-results-icon">🏠</span>
           <h3>No properties found</h3>
-          <p>We couldn't find any listings matching your criteria.<br />Try adjusting your search.</p>
-          <button
-            className="reset-search-btn"
-            onClick={() => window.location.reload()}
-          >
+          <p>We couldn't find any listings matching your criteria.</p>
+          <button className="reset-search-btn" onClick={() => window.location.reload()}>
             Clear all filters
           </button>
         </div>
       </div>
     );
   }
-
   return (
     <div className="property-grid">
-      {properties.map((prop) => (
-        <PropertyCard key={prop.id} property={prop} />
-      ))}
+      {properties.map((prop) => <PropertyCard key={prop.id} property={prop} />)}
     </div>
   );
 }

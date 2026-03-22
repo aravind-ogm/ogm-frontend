@@ -1,62 +1,40 @@
 /* ============================================================
-   PROPERTY CARD — OGM exact match (zoomed UI reference)
-
-   Structure:
-   ┌─────────────────────────────────┐  page bg: #f0f2f8
-   │  ╔═══════════════════════════╗  │
-   │  ║ [RERA ✓]        [♥]      ║  │  fully-rounded floating image
-   │  ║                           ║  │
-   │  ║      property photo       ║  │
-   │  ║                           ║  │
-   │  ║  ₹ 2.3 Cr                ║  │
-   │  ╚═══════════════════════════╝  │
-   │                                 │  gap between image & info box
-   │  ╔═══════════════════════════╗  │
-   │  ║  Hello Bali         🏗️   ║  │  separate white rounded box
-   │  ║  📍 Nariyanahalli, TN     ║  │  with shadow
-   │  ║  [10,000 sqft  2BHK  F]  ║  │  ONE single wide chip pill
-   │  ╚═══════════════════════════╝  │
-   └─────────────────────────────────┘
+   PROPERTY CARD — exact match from zoomed screenshots
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
 
-/* ── Card shell — transparent wrapper ─────────────────────── */
+/* ── Card shell ─────────────────────────────────────────── */
 .pc {
   display: flex;
   flex-direction: column;
-  gap: 10px;                 /* gap between image and info box */
+  gap: 8px;
   text-decoration: none;
   color: inherit;
   height: 100%;
-  position: relative;
   background: transparent;
   border: none;
   box-shadow: none;
   will-change: transform;
   transition: transform 0.26s cubic-bezier(0.34, 1.3, 0.64, 1);
 }
-
 .pc:hover { transform: translateY(-4px); }
 
-/* ── Floating image — fully rounded all 4 corners ─────────── */
+/* ── Image — fully rounded all 4 corners ──────────────── */
 .pc-img-wrap {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background: #d4d8e4;
   flex-shrink: 0;
-  border-radius: 20px;             /* ALL corners — key visual */
+  border-radius: 18px;
   box-shadow:
-    0 4px 16px rgba(15,23,42,0.13),
-    0 1px 4px  rgba(15,23,42,0.08);
+    0 4px 16px rgba(15,23,42,0.12),
+    0 1px 4px  rgba(15,23,42,0.07);
   transition: box-shadow 0.24s ease;
 }
-
 .pc:hover .pc-img-wrap {
-  box-shadow:
-    0 8px 28px rgba(15,23,42,0.18),
-    0 2px 8px  rgba(15,23,42,0.1);
+  box-shadow: 0 8px 28px rgba(15,23,42,0.17), 0 2px 8px rgba(15,23,42,0.09);
 }
 
 .pc-img {
@@ -64,7 +42,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 20px;
+  border-radius: 18px;
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .pc:hover .pc-img { transform: scale(1.05); }
@@ -78,80 +56,73 @@
   background: linear-gradient(135deg, #e4e8f2, #d4d8e4);
   color: #a0a8bc;
   font-size: 28px;
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
-/* ── Gradient for price legibility ─────────────────────────── */
 .pc-gradient {
   position: absolute;
   inset: 0;
-  border-radius: 20px;
-  background: linear-gradient(
-    to top,
-    rgba(0,0,0,0.62) 0%,
-    rgba(0,0,0,0.08) 36%,
-    transparent 58%
-  );
+  border-radius: 18px;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.06) 38%, transparent 58%);
   pointer-events: none;
   z-index: 1;
 }
 
-/* ── Price — bottom left on image ───────────────────────────── */
+/* ── Price ─────────────────────────────────────────────── */
 .pc-price {
   position: absolute;
   bottom: 13px;
   left: 14px;
   z-index: 2;
   font-family: 'DM Sans', sans-serif;
-  font-size: clamp(14px, 1.35vw, 19px);
+  font-size: clamp(14px, 1.3vw, 18px);
   font-weight: 800;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.3px;
   line-height: 1;
   text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-/* ── RERA badge — top left ───────────────────────────────────
-   White pill · "RERA" text · dark filled circle with white ✓
-   Matches zoomed UI exactly
+/* ── RERA badge ─────────────────────────────────────────────
+   From Image 2 (zoomed):
+   - White rounded pill
+   - Bold "RERA" text
+   - Crescent + checkmark icon (half-arc on left, tick inside)
+   The icon is drawn as: a partial arc (crescent/half circle)
+   on the left side + a checkmark — like a classic "verified" ✓
+   in a partial circle.
 */
 .pc-rera {
   position: absolute;
   top: 11px;
   left: 11px;
   z-index: 3;
-  background: rgba(255, 255, 255, 0.97);
+  background: rgba(255,255,255,0.97);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: #1e293b;
+  color: #0f172a;
   font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 800;
-  padding: 5px 10px 5px 8px;
+  padding: 5px 11px 5px 9px;
   border-radius: 999px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
 }
 
-/* Dark circle with white checkmark — matches UI exactly */
-.pc-rera-check {
-  width: 22px;
-  height: 22px;
+.pc-rera-icon {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.pc-rera-check svg {
-  width: 22px;
-  height: 22px;
-  overflow: visible;
-}
 
-/* ── Sold Out — center of image ──────────────────────────── */
+/* ── Sold Out ───────────────────────────────────────────── */
 .pc-sold {
   position: absolute;
   top: 50%;
@@ -169,9 +140,7 @@
   white-space: nowrap;
 }
 
-/* ── Heart — top right of image ──────────────────────────────
-   White circle · orange heart outline (matches UI)
-*/
+/* ── Heart button ───────────────────────────────────────── */
 .pc-fav {
   position: absolute;
   top: 11px;
@@ -180,7 +149,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #fff;
   border: none;
   cursor: pointer;
   display: flex;
@@ -190,36 +159,36 @@
   transition: transform 0.18s ease, box-shadow 0.18s;
   padding: 0;
 }
-.pc-fav:hover {
-  transform: scale(1.14);
-  box-shadow: 0 3px 12px rgba(249,115,22,0.28);
-}
+.pc-fav:hover { transform: scale(1.14); box-shadow: 0 3px 12px rgba(249,115,22,0.28); }
 
-/* ── Info box — separate WHITE ROUNDED BOX below image ───────
-   This is the key visual: a distinct card with shadow,
-   not just floating text.
+/* ── Info box ───────────────────────────────────────────────
+   From Image 4 (zoomed card body):
+   - Pure white background
+   - Rounded corners (matches the card on screen)
+   - NO visible border or shadow — it floats cleanly
+   - Generous padding
 */
 .pc-body {
   background: #ffffff;
   border-radius: 16px;
-  padding: 13px 14px 14px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   flex: 1;
-  box-shadow:
-    0 2px 8px rgba(15,23,42,0.06),
-    0 1px 3px rgba(15,23,42,0.04);
+  /* Very subtle shadow so it doesn't look flat but matches UI */
+  box-shadow: 0 1px 4px rgba(15,23,42,0.05);
 }
 
-/* ── Title row ───────────────────────────────────────────── */
+/* ── Title row ─────────────────────────────────────────── */
 .pc-title-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
 }
 
+/* From Image 4: title is VERY bold, large, pure black */
 .pc-title {
   font-family: 'DM Sans', sans-serif;
   font-size: clamp(13px, 1.1vw, 15px);
@@ -233,16 +202,15 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  letter-spacing: -0.15px;
+  letter-spacing: -0.2px;
 }
 
-/* Property type icon — orange tinted circle */
+/* Property type icon — small orange emoji in circle */
 .pc-type-icon {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #fff2e8;
-  border: 1.5px solid #fdd5aa;
+  background: #fff3e8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,107 +219,78 @@
   line-height: 1;
 }
 
-/* ── Location ────────────────────────────────────────────── */
+/* ── Location ───────────────────────────────────────────
+   From Image 4: medium gray text (#94a3b8), blue pin icon
+*/
 .pc-location {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
 }
 .pc-location svg { flex-shrink: 0; }
 .pc-location span {
   font-family: 'DM Sans', sans-serif;
-  font-size: clamp(10.5px, 0.85vw, 12.5px);
-  font-weight: 500;
-  color: #94a3b8;              /* light gray — matches UI */
+  font-size: clamp(11px, 0.88vw, 12.5px);
+  font-weight: 400;
+  color: #94a3b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ── Spec chips — ONE single wide pill ───────────────────────
-   The UI shows a SINGLE elongated pill containing all specs:
-   [  10,000 sqft     2 BHK     Farmhouse  ]
-   Items are separated by spacing inside one pill shape.
+/* ── Spec chips ─────────────────────────────────────────────
+   From Image 4 (zoomed):
+   - ONE single pill container: light blue-gray #e8ecf5
+   - No visible dividers between items — just spacing
+   - Generous padding top/bottom
+   - Font is medium weight, dark gray
+   - Border-radius 999px full pill
 */
 .pc-specs {
   display: flex;
-  align-items: stretch;
-  background: #eef0f6;
+  align-items: center;
+  background: #e8ecf5;
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 1px;
+  padding: 0 4px;
 }
 
 .pc-chip {
   font-family: 'DM Sans', sans-serif;
-  font-size: clamp(9.5px, 0.8vw, 11.5px);
+  font-size: clamp(10px, 0.82vw, 11.5px);
   font-weight: 500;
-  color: #475569;
+  color: #334155;
   background: transparent;
   border: none;
-  padding: 6px 12px;
+  padding: 7px 14px;
   white-space: nowrap;
   flex: 1;
   text-align: center;
   line-height: 1;
-  /* Vertical dividers between chips */
-  position: relative;
+  /* No dividers — matches Image 4 exactly */
 }
 
-/* Thin divider between chips */
-.pc-chip + .pc-chip::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 20%;
-  height: 60%;
-  width: 1px;
-  background: #d4d8e4;
-}
-
-/* ── Subtle lift on hover ────────────────────────────────── */
-.pc:hover .pc-body {
-  box-shadow:
-    0 4px 16px rgba(15,23,42,0.1),
-    0 2px 6px rgba(15,23,42,0.06);
-}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
+/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 1279px) {
-  /* 4-col ~290px */
-  .pc-title  { font-size: clamp(13px, 1.1vw, 15px); }
-  .pc-chip   { font-size: 10.5px; }
-  .pc-body   { padding: 12px 13px 13px; }
+  .pc-body  { padding: 12px 14px 14px; }
+  .pc-chip  { font-size: 10.5px; padding: 6px 12px; }
 }
-
 @media (max-width: 1023px) {
-  /* 3-col */
-  .pc-img-wrap { border-radius: 18px; }
-  .pc-img      { border-radius: 18px; }
-  .pc-gradient { border-radius: 18px; }
+  .pc-img-wrap, .pc-img, .pc-gradient { border-radius: 16px; }
 }
-
 @media (max-width: 767px) {
-  /* 2-col */
-  .pc-img-wrap { border-radius: 16px; }
-  .pc-img      { border-radius: 16px; }
-  .pc-gradient { border-radius: 16px; }
-  .pc-price    { font-size: 15px; }
-  .pc-rera     { font-size: 10px; }
-  .pc-fav      { width: 30px; height: 30px; }
-  .pc-title    { font-size: 13px; }
-  .pc-chip     { font-size: 9.5px; padding: 5px 9px; }
-  .pc-body     { padding: 10px 11px 12px; gap: 6px; border-radius: 14px; }
+  .pc-img-wrap, .pc-img, .pc-gradient { border-radius: 15px; }
+  .pc-price { font-size: 15px; }
+  .pc-rera  { font-size: 10px; }
+  .pc-fav   { width: 30px; height: 30px; }
+  .pc-title { font-size: 13px; }
+  .pc-chip  { font-size: 9.5px; padding: 5px 9px; }
+  .pc-body  { padding: 10px 12px 12px; gap: 6px; border-radius: 13px; }
 }
-
 @media (max-width: 479px) {
-  /* 1-col */
-  .pc-price    { font-size: 18px; }
-  .pc-title    { font-size: 15px; }
-  .pc-chip     { font-size: 11.5px; padding: 7px 14px; }
-  .pc-body     { padding: 13px 14px 14px; gap: 8px; }
+  .pc-price { font-size: 18px; }
+  .pc-title { font-size: 15px; }
+  .pc-chip  { font-size: 11px; padding: 7px 14px; }
+  .pc-body  { padding: 13px 14px 14px; gap: 8px; }
 }

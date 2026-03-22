@@ -2,7 +2,6 @@ import React, { useState, useCallback, memo } from "react";
 import { Link } from "react-router-dom";
 import "../styles/PropertyCard.css";
 
-// ─── Price formatter ───────────────────────────────────────────────────────────
 const formatPrice = (price) => {
   const n = Number(price);
   if (!price || isNaN(n)) return "Price on request";
@@ -11,23 +10,70 @@ const formatPrice = (price) => {
   return `₹ ${n.toLocaleString("en-IN")}`;
 };
 
-// ─── Property type → emoji ─────────────────────────────────────────────────────
-// Covers all types present in the Property model's "type" column
 const getTypeIcon = (type = "") => {
   const t = type.toLowerCase();
-  if (t.includes("villa"))                          return "🏡";
-  if (t.includes("plot") || t.includes("land"))     return "🗺️";
-  if (t.includes("commercial"))                     return "🏢";
-  if (t.includes("farmhouse"))                      return "🌾";
-  if (t.includes("penthouse"))                      return "🏙️";
-  if (t.includes("studio"))                         return "🛋️";
+  if (t.includes("villa"))                              return "🏡";
+  if (t.includes("plot") || t.includes("land"))         return "🗺️";
+  if (t.includes("commercial"))                         return "🏢";
+  if (t.includes("farmhouse"))                          return "🌾";
+  if (t.includes("penthouse"))                          return "🏙️";
+  if (t.includes("studio"))                             return "🛋️";
   if (t.includes("independent") || t.includes("house")) return "🏠";
-  if (t.includes("duplex"))                         return "🏘️";
-  if (t.includes("weekend") || t.includes("holiday")) return "🌴";
-  return "🏗️"; // apartment / residential building / default
+  if (t.includes("duplex"))                             return "🏘️";
+  if (t.includes("weekend") || t.includes("holiday"))   return "🌴";
+  return "🏗️";
 };
 
-// ─── Image with fallback ───────────────────────────────────────────────────────
+/*
+  ReraBadgeIcon
+  ─────────────
+  From the zoomed Image 2:
+  The icon is a CRESCENT (partial arc on the left side, not a full circle)
+  + a checkmark tick inside/overlapping it.
+  It looks like the Unicode ✔ inside a partial arc — a "half-circle verified" icon.
+
+  SVG breakdown:
+  - A large arc from bottom-left to top-left (the crescent left half)
+  - A smaller arc inside it (inner edge of crescent)
+  - A checkmark polyline overlapping the icon
+  This creates the exact crescent+tick seen in the UI.
+*/
+function ReraBadgeIcon() {
+  return (
+    <svg
+      width="20" height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/*
+        Outer partial circle arc — goes from ~200° to ~340°
+        (bottom-left, sweeping counterclockwise to top-left)
+        This forms the crescent/half-circle left arc.
+      */}
+      <path
+        d="M 10 18
+           A 8 8 0 1 1 10 2"
+        stroke="#0f172a"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/*
+        Checkmark — positioned right of centre, inside the arc
+      */}
+      <polyline
+        points="6,10 9,13 15,7"
+        stroke="#0f172a"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 function PropertyImage({ src, alt }) {
   const [err, setErr] = useState(false);
   if (!src || err) {
@@ -47,7 +93,6 @@ function PropertyImage({ src, alt }) {
   );
 }
 
-// ─── Main Card ─────────────────────────────────────────────────────────────────
 function PropertyCard({ property }) {
   const [fav, setFav] = useState(false);
 
@@ -61,19 +106,13 @@ function PropertyCard({ property }) {
     setFav((v) => !v);
   }, []);
 
-  // Build chips array — rendered as ONE single pill with dividers
-  // BHK comes from property.bedrooms (the Java model field)
-  // Fallback chain: bedrooms → bhk (legacy) → null
+  // BHK from bedrooms (Java model), fallback to bhk legacy field
   const bedroomCount = property.bedrooms ?? property.bhk ?? null;
 
   const chips = [
-    property.sqft
-      ? `${Number(property.sqft).toLocaleString("en-IN")} sqft`
-      : null,
-    bedroomCount
-      ? `${bedroomCount} BHK`
-      : null,
-    property.type || property.propertyType || null,
+    property.sqft  ? `${Number(property.sqft).toLocaleString("en-IN")} sqft` : null,
+    bedroomCount   ? `${bedroomCount} BHK`                                   : null,
+    property.type  || property.propertyType                                  || null,
   ].filter(Boolean);
 
   const typeIcon = getTypeIcon(property.type || property.propertyType || "");
@@ -81,83 +120,60 @@ function PropertyCard({ property }) {
   return (
     <Link to={`/property/${property.slug}`} className="pc" aria-label={property.title}>
 
-      {/* ── Floating image ─────────────────────────────────── */}
+      {/* ── Floating image ─────────────────────────────── */}
       <div className="pc-img-wrap">
         <PropertyImage src={img} alt={property.title} />
         <div className="pc-gradient" />
 
-        {/* Price — bottom left */}
         <div className="pc-price">{price}</div>
 
-        {/* RERA — top left: white pill + circled checkmark icon */}
+        {/* RERA — white pill + crescent+tick icon */}
         {property.reraApproved && (
           <div className="pc-rera">
             RERA
-            {/* Circled checkmark: dark stroke circle with ✓ inside, no fill */}
-            <span className="pc-rera-check">
-              <svg viewBox="0 0 24 24" fill="none"
-                stroke="#1e293b" strokeWidth="2.2"
-                strokeLinecap="round" strokeLinejoin="round">
-                {/* Outer circle */}
-                <circle cx="12" cy="12" r="10" />
-                {/* Checkmark inside */}
-                <polyline points="7,12.5 10.5,16 17,9" />
-              </svg>
-            </span>
+            <span className="pc-rera-icon"><ReraBadgeIcon /></span>
           </div>
         )}
 
-        {/* Sold Out OR heart — top right */}
+        {/* Sold Out OR heart */}
         {soldOut ? (
           <div className="pc-sold">Sold Out</div>
         ) : (
-          <button
-            className="pc-fav"
-            onClick={toggleFav}
+          <button className="pc-fav" onClick={toggleFav}
             aria-label={fav ? "Remove from wishlist" : "Add to wishlist"}
-            type="button"
-          >
-            {/* Orange heart outline — matches UI */}
-            <svg width="16" height="16" viewBox="0 0 24 24"
+            type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24"
               fill={fav ? "#ef4444" : "none"}
               stroke={fav ? "#ef4444" : "#f97316"}
-              strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67
-                       l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06
-                       L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
+                       a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
+                       1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
           </button>
         )}
       </div>
 
-      {/* ── Separate white rounded info box ────────────────── */}
+      {/* ── White info box ──────────────────────────────── */}
       <div className="pc-body">
 
-        {/* Title + type icon */}
         <div className="pc-title-row">
           <h3 className="pc-title">{property.title}</h3>
           <div className="pc-type-icon" aria-hidden="true">{typeIcon}</div>
         </div>
 
-        {/* Location — blue pin, light gray text */}
         {property.location && (
           <div className="pc-location">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="#1a56db" stroke="none">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75
-                       7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12
-                       -2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12
-                       2.5-2.5 2.5z"/>
+                       7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5
+                       s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
             <span>{property.location}</span>
           </div>
         )}
 
-        {/*
-          Spec chips — ONE single wide pill with all specs inside.
-          Each spec is flex:1 centered, separated by CSS dividers.
-          Matches the UI: [ 10,000 sqft  |  2 BHK  |  Farmhouse ]
-        */}
+        {/* Single wide pill — no dividers, just spacing */}
         {chips.length > 0 && (
           <div className="pc-specs">
             {chips.map((chip, i) => (

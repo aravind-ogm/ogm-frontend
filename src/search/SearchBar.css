@@ -1,68 +1,57 @@
 /* ============================================================
-   OGM SEARCH BAR — exact match from zoomed screenshot
-
-   Orange cap shape:  concave inward curve on left edge
-                      (like a stadium shape with left side scooped in)
-                      achieved with clip-path polygon/SVG
-
-   Slash:             thick solid navy line (SVG, not text)
-   RERA:              dark circled checkmark icon
+   OGM SEARCH BAR
+   The concave shape is handled via clip-path in OrangeCap (JS).
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
 :root {
-  --sb-orange:    #f97316;
-  --sb-orange-dk: #ea580c;
-  --sb-muted:     #a8b4c4;
-  --sb-text:      #1e293b;
-  --sb-font:      'DM Sans', sans-serif;
+  --sb-muted:  #a8b4c4;
+  --sb-text:   #1e293b;
+  --sb-font:   'DM Sans', sans-serif;
 }
 
-/* ── Wrapper ─────────────────────────────────────────────── */
 .search-wrap {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 20px 24px 16px;
+  padding: 18px 24px 16px;
   box-sizing: border-box;
   font-family: var(--sb-font);
 }
 
-/* ── Two-pill row ─────────────────────────────────────────── */
 .dual-search-bar {
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 920px;
+  max-width: 940px;
+  gap: 0;
 }
 
-/* ── Pill shell ───────────────────────────────────────────── */
+/* ── White pill — overflow hidden clips the concave junction ── */
 .search-pill {
   flex: 1;
   display: flex;
   align-items: center;
   background: #ffffff;
   border-radius: 999px;
-  height: 60px;
-  overflow: hidden;
+  height: 58px;
+  overflow: hidden;     /* CRITICAL: clips orange cap at pill boundary */
   box-shadow:
-    0 2px 10px rgba(15,23,42,0.09),
+    0 2px 12px rgba(15,23,42,0.09),
     0 1px 3px  rgba(15,23,42,0.05);
   min-width: 0;
   transition: box-shadow 0.22s ease, transform 0.22s ease;
-  position: relative;
 }
-
 .search-pill:hover,
 .search-pill:focus-within {
   box-shadow:
-    0 6px 24px rgba(15,23,42,0.14),
+    0 6px 24px rgba(15,23,42,0.13),
     0 2px 6px  rgba(15,23,42,0.07);
   transform: translateY(-1px);
 }
 
-/* ── Input area ───────────────────────────────────────────── */
+/* ── Input area ─────────────────────────────────────────── */
 .pill-content {
   flex: 1;
   min-width: 0;
@@ -70,9 +59,8 @@
   display: flex;
   align-items: center;
 }
-
 .search-pill.ai .pill-content {
-  padding: 0 10px 0 8px;
+  padding: 0 10px 0 6px;
 }
 
 .input-wrapper {
@@ -93,7 +81,7 @@
   width: 100%;
   min-width: 0;
   text-overflow: ellipsis;
-  caret-color: var(--sb-orange);
+  caret-color: #f97316;
   line-height: 1;
 }
 .pill-input::placeholder { color: var(--sb-muted); font-weight: 400; }
@@ -116,87 +104,38 @@
 }
 .clear-btn:hover { background: #dde5f0; color: var(--sb-text); }
 
-/* ── AI robot avatar ──────────────────────────────────────── */
+/* ── Robot avatar ───────────────────────────────────────── */
 .ai-avatar {
-  width: 50px;
-  height: 60px;
+  width: 52px;
+  height: 58px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 0 6px 8px;
+  padding: 5px 0 5px 8px;
 }
 .ai-avatar img {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
   display: block;
 }
 
-/* ── Orange cap wrapper ───────────────────────────────────────
-   Positioned relative so the SVG shape can be absolute inside.
-   The cap is wider than its content to accommodate the concave
-   curve on the left side.
-*/
-.pill-cap {
-  position: relative;
-  flex-shrink: 0;
-  /* Width: enough for concave indent + content + right padding */
-  width: 80px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* The left portion of the cap overlaps the white area slightly
-     so the concave curve meets the white pill seamlessly */
-  margin-left: -4px;
-}
-
-/* AI pill cap is wider to fit 3 icons */
-.pill-cap.ai-cap {
-  width: 130px;
-  padding-right: 6px;
-}
-
-/* SVG shape fills the entire cap area */
-.pill-cap-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Icons sit on top of the SVG background */
-.pill-cap-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 11px;
-  width: 100%;
-  padding-left: 12px;   /* push content past the concave notch */
-}
-
-/* ── Search button (inside cap) ───────────────────────────── */
+/* ── Buttons inside orange cap ──────────────────────────── */
 .pill-btn {
   background: none;
   border: none;
   cursor: pointer;
   color: #fff;
-  width: 36px;
-  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  flex-shrink: 0;
-  transition: transform 0.18s ease;
+  transition: transform 0.16s ease;
 }
-.pill-btn:hover  { transform: scale(1.12); }
+.pill-btn:hover  { transform: scale(1.1); }
 .pill-btn:active { transform: scale(0.92); }
 
-/* ── AI action buttons ────────────────────────────────────── */
 .ai-action-btn {
   background: none;
   border: none;
@@ -209,13 +148,13 @@
   justify-content: center;
   padding: 0;
   flex-shrink: 0;
-  transition: transform 0.15s ease, opacity 0.15s;
+  transition: transform 0.15s ease;
 }
 .ai-action-btn:hover  { transform: scale(1.2); }
 .ai-action-btn:active { transform: scale(0.9); }
-.ai-action-btn:disabled { opacity: 0.6; cursor: default; }
+.ai-action-btn:disabled { opacity: 0.5; cursor: default; }
 
-/* ── Waveform bars ────────────────────────────────────────── */
+/* ── Waveform ───────────────────────────────────────────── */
 .waveform {
   display: flex;
   align-items: center;
@@ -249,34 +188,25 @@
 }
 @keyframes sb-dot { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-/* ── Blue diagonal slash ──────────────────────────────────── */
-/*
-  Rendered as an inline SVG in SearchBarContainer.
-  This class styles the wrapper.
-*/
+/* ── Slash ──────────────────────────────────────────────── */
 .search-slash {
   flex-shrink: 0;
-  width: 44px;
-  height: 60px;
+  width: 38px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* ── Mobile ───────────────────────────────────────────────── */
+/* ── Mobile ─────────────────────────────────────────────── */
 @media (max-width: 700px) {
-  .search-wrap      { padding: 14px 14px 12px; }
-  .dual-search-bar  { flex-direction: column; gap: 10px; }
-  .search-slash     { display: none; }
-  .search-pill,
-  .search-pill.ai   { width: 100%; height: 54px; }
-  .pill-cap         { height: 54px; }
-  .pill-cap.ai-cap  { height: 54px; }
-  .ai-avatar        { height: 54px; }
+  .search-wrap { padding: 14px 14px 12px; }
+  .dual-search-bar { flex-direction: column; gap: 10px; align-items: stretch; }
+  .search-slash { display: none; }
+  .search-pill, .search-pill.ai { width: 100%; height: 52px; }
+  .ai-avatar { height: 52px; }
+  .ai-avatar img { width: 40px; height: 40px; }
 }
-
 @media (max-width: 400px) {
-  .pill-input    { font-size: 13px; }
-  .ai-avatar     { width: 44px; padding: 5px 0 5px 6px; }
-  .ai-avatar img { width: 36px; height: 36px; }
+  .pill-input { font-size: 13px; }
 }
