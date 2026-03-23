@@ -48,9 +48,27 @@ import './AgentAdmin.css';
 /* ─────────────────────────────────────────────────────────────
    ENVIRONMENT CONFIG
    ───────────────────────────────────────────────────────────── */
-const API_BASE   = process.env.REACT_APP_API_BASE  || 'http://localhost:8080';
-const WS_BASE    = process.env.REACT_APP_WS_BASE   || 'http://localhost:8080';
-const JITSI_HOST = process.env.REACT_APP_JITSI_HOST || 'meet.jit.si';
+const API_BASE    = process.env.REACT_APP_API_BASE   || 'http://localhost:8080';
+const WS_BASE     = process.env.REACT_APP_WS_BASE    || 'http://localhost:8080';
+const JITSI_HOST  = process.env.REACT_APP_JITSI_HOST  || 'meet.jit.si';
+/* JaaS — set REACT_APP_JAAS_APP_ID in .env to enable (free at jaas.8x8.vc) */
+const JAAS_APP_ID = process.env.REACT_APP_JAAS_APP_ID || '';
+
+/* Fetch JaaS JWT from backend — agent is always moderator */
+async function fetchJaasToken(userName, roomName, isModerator = false) {
+  try {
+    const res = await fetch(`${API_BASE}/api/live-tour/jaas-token`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('agent_token') || ''}` },
+      body:    JSON.stringify({ userName, roomName, moderator: String(isModerator) }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.token || null;
+  } catch {
+    return null;
+  }
+}
 
 /* ─────────────────────────────────────────────────────────────
    TOKEN HELPERS  (centralise all auth header logic)
@@ -1721,24 +1739,30 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
     return () => clearInterval(t);
   }, []);
 
-  // Mount Jitsi — intentionally runs once on mount only.
-  // All props are accessed through stable refs to avoid stale closures
-  // without requiring any dependency array entries.
+  // Mount Jitsi — JaaS powered. Runs once on mount only.
+  // Props accessed through stable refs to avoid stale closures.
   useEffect(() => {
-    // Room name MUST match what the customer joined on the property page:
-    // format: ogm-live-{propertyId}-{YYYYMMDD}
+    // Room name matches customer side: ogm-live-{propertyId}-{YYYYMMDD}
     const today    = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const propId   = callerRef.current.propertyId || callerRef.current.property || 'tour';
     const roomName = `ogm-live-${propId}-${today}`;
 
-    const load = () => {
+    const load = async () => {
       if (!jitsiRef.current) return;
-      jitsiApi.current = new window.JitsiMeetExternalAPI(JITSI_HOST, {
-        roomName,
+
+      // Agent is always moderator — can control the room
+      const jwt = await fetchJaasToken(agentRef.current.name, roomName, true);
+
+      // JaaS room name must be prefixed with App ID
+      const jaasRoom = JAAS_APP_ID ? `${JAAS_APP_ID}/${roomName}` : roomName;
+      const domain   = JAAS_APP_ID ? '8x8.vc' : JITSI_HOST;
+
+      const apiOptions = {
+        roomName:   jaasRoom,
         parentNode: jitsiRef.current,
-        width: '100%',
-        height: '100%',
-        userInfo: { displayName: agentRef.current.name },
+        width:      '100%',
+        height:     '100%',
+        userInfo:   { displayName: agentRef.current.name },
         configOverwrite: {
           prejoinPageEnabled:  false,
           prejoinConfig:       { enabled: false },
@@ -1757,39 +1781,49 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
           SHOW_CHROME_EXTENSION_BANNER:     false,
           MOBILE_APP_PROMO:                 false,
         },
-      });
+      };
+      if (jwt) apiOptions.jwt = jwt;
 
-      // Inject CSS into Jitsi iframe to hide their watermark/logo
-      jitsiApi.current.addListener('videoConferenceJoined', () => {
-        try {
-          const iframe = jitsiRef.current?.querySelector('iframe');
-          if (iframe?.contentDocument) {
-            const style = iframe.contentDocument.createElement('style');
-            style.textContent = `
-              #jitsiLogo, .watermark, .leftwatermark, .rightwatermark,
-              .powered-by-div, [class*="watermark"] { display: none !important; }
-            `;
-            iframe.contentDocument.head.appendChild(style);
-          }
-        } catch { /* cross-origin may block, silent fail */ }
-      });
+      const initApi = () => {
+        jitsiApi.current = new window.JitsiMeetExternalAPI(domain, apiOptions);
 
-      jitsiApi.current.addEventListeners({
-        participantLeft: () => onEndRef.current?.(),
-        readyToClose:    () => onEndRef.current?.(),
-      });
+        jitsiApi.current.addListener('videoConferenceJoined', () => {
+          try {
+            const iframe = jitsiRef.current?.querySelector('iframe');
+            if (iframe?.contentDocument) {
+              const style = iframe.contentDocument.createElement('style');
+              style.textContent = `
+                #jitsiLogo, .watermark, .leftwatermark, .rightwatermark,
+                .powered-by-div, [class*="watermark"],
+                .subject, [class*="subject"], #subject { display: none !important; }
+              `;
+              iframe.contentDocument.head.appendChild(style);
+            }
+          } catch { /* cross-origin — silent fail */ }
+        });
+
+        jitsiApi.current.addEventListeners({
+          participantLeft: () => onEndRef.current?.(),
+          readyToClose:    () => onEndRef.current?.(),
+        });
+      };
+
+      const scriptSrc = JAAS_APP_ID
+        ? `https://8x8.vc/${JAAS_APP_ID}/external_api.js`
+        : `https://${JITSI_HOST}/external_api.js`;
+
+      if (!window.JitsiMeetExternalAPI) {
+        const s  = document.createElement('script');
+        s.src    = scriptSrc;
+        s.async  = true;
+        s.onload = initApi;
+        document.body.appendChild(s);
+      } else {
+        initApi();
+      }
     };
 
-    if (!window.JitsiMeetExternalAPI) {
-      const s    = document.createElement('script');
-      s.src      = `https://${JITSI_HOST}/external_api.js`;
-      s.async    = true;
-      s.onload   = load;
-      document.body.appendChild(s);
-    } else {
-      load();
-    }
-
+    load();
     return () => { jitsiApi.current?.dispose(); };
   }, []); // mount-only — props accessed via refs above
 

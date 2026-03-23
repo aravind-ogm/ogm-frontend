@@ -15,6 +15,27 @@ import AskDiscoverWidget from "./AskDiscoverWidget";
 const API_BASE =
   process.env.REACT_APP_API_BASE || "http://localhost:8080";
 
+/* ─── JaaS App ID — set REACT_APP_JAAS_APP_ID in .env ───────────────────────
+   Get yours free at https://jaas.8x8.vc
+   Format: vpaas-magic-cookie-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx              */
+const JAAS_APP_ID = process.env.REACT_APP_JAAS_APP_ID || "";
+
+/* ─── Fetch a JaaS JWT from the backend ─────────────────────────────────── */
+async function fetchJaasToken(userName, roomName, isModerator = false) {
+  try {
+    const res = await fetch(`${API_BASE}/api/live-tour/jaas-token`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ userName, roomName, moderator: String(isModerator) }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.token || null;
+  } catch {
+    return null; // fall back to no-JWT (will still work on JaaS free tier)
+  }
+}
+
 /* ─── Google Maps key ───────────────────────────────────────────────────────*/
 const GMAPS_KEY =
   process.env.REACT_APP_GOOGLE_MAPS_API_KEY ||
@@ -57,68 +78,87 @@ function loadGoogleMaps() {
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 
-/* ─── Jitsi helper — mounts when joined ─────────────────────────────────── */
+/* ─── Jitsi helper — JaaS powered, no 5-minute limit ────────────────────── */
 function LiveJitsi({ containerRef, apiRef, name, roomName }) {
   useEffect(() => {
-    const load = () => {
+    const load = async () => {
       if (!containerRef.current) return;
-      apiRef.current = new window.JitsiMeetExternalAPI("meet.jit.si", {
-        roomName,
-        parentNode: containerRef.current,
-        userInfo: { displayName: name || "Guest" },
-        configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: false,
-          prejoinPageEnabled: false,
-          prejoinConfig: { enabled: false },
-          disableDeepLinking: true,
-        },
-        interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK:              false,
-          SHOW_BRAND_WATERMARK:              false,
-          SHOW_POWERED_BY:                   false,
-          DISABLE_JOIN_LEAVE_NOTIFICATIONS:  true,
-          TOOLBAR_ALWAYS_VISIBLE:            true,
-          SHOW_CHROME_EXTENSION_BANNER:      false,
-          MOBILE_APP_PROMO:                  false,
-          HIDE_INVITE_MORE_HEADER:           true,
-          GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
-        },
-      });
-      // Intercept Jitsi hang-up → show our thank you screen instead of Jitsi promo
-      apiRef.current.addEventListeners({
-        readyToClose: () => onClose?.(),
-      });
 
-      // Inject CSS to push the self-view pip below our 72px OGM header bar
-      apiRef.current.addListener('videoConferenceJoined', () => {
-        try {
-          const iframe = containerRef.current?.querySelector('iframe');
-          if (!iframe?.contentDocument) return;
-          const style = iframe.contentDocument.createElement('style');
-          style.textContent = `
-            /* Push filmstrip / self-view thumbnails below the OGM header */
-            .remote-videos, .filmstrip, [class*="filmstrip"],
-            .videocontainer.videoContainerFocused { margin-top: 76px !important; }
-            /* Hide Jitsi room info bar top-right */
-            .subject, [class*="subject"], .subject-info-container,
-            #subject, .subject-container { display: none !important; }
-            /* Push participant thumbnail away from top */
-            .remote-thumbnail, .videocontainer:not(.videoContainerFocused) {
-              margin-top: 76px !important;
-            }
-          `;
-          iframe.contentDocument.head.appendChild(style);
-        } catch { /* cross-origin may block, silent fail */ }
-      });
+      // Fetch JaaS JWT from backend (customer = not moderator)
+      const jwt = await fetchJaasToken(name || "Guest", roomName, false);
+
+      // JaaS room name must be prefixed with App ID
+      const jaasRoom = JAAS_APP_ID
+        ? `${JAAS_APP_ID}/${roomName}`
+        : roomName;
+
+      const initApi = () => {
+        const apiOptions = {
+          roomName:   jaasRoom,
+          parentNode: containerRef.current,
+          userInfo:   { displayName: name || "Guest" },
+          configOverwrite: {
+            startWithAudioMuted:  false,
+            startWithVideoMuted:  false,
+            prejoinPageEnabled:   false,
+            prejoinConfig:        { enabled: false },
+            disableDeepLinking:   true,
+          },
+          interfaceConfigOverwrite: {
+            SHOW_JITSI_WATERMARK:              false,
+            SHOW_BRAND_WATERMARK:              false,
+            SHOW_POWERED_BY:                   false,
+            DISABLE_JOIN_LEAVE_NOTIFICATIONS:  true,
+            TOOLBAR_ALWAYS_VISIBLE:            true,
+            SHOW_CHROME_EXTENSION_BANNER:      false,
+            MOBILE_APP_PROMO:                  false,
+            HIDE_INVITE_MORE_HEADER:           true,
+            GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
+          },
+        };
+        // Attach JWT only if we got one from backend
+        if (jwt) apiOptions.jwt = jwt;
+
+        // Use 8x8.vc (JaaS) if App ID configured, else fallback to meet.jit.si
+        const domain = JAAS_APP_ID ? "8x8.vc" : "meet.jit.si";
+        apiRef.current = new window.JitsiMeetExternalAPI(domain, apiOptions);
+
+        apiRef.current.addEventListeners({
+          readyToClose: () => apiRef.current?.dispose(),
+        });
+
+        // Try injecting CSS (may be blocked cross-origin — silent fail is OK)
+        apiRef.current.addListener("videoConferenceJoined", () => {
+          try {
+            const iframe = containerRef.current?.querySelector("iframe");
+            if (!iframe?.contentDocument) return;
+            const style = iframe.contentDocument.createElement("style");
+            style.textContent = `
+              .subject, [class*="subject"], #subject { display: none !important; }
+              .remote-thumbnail { margin-top: 4px !important; }
+            `;
+            iframe.contentDocument.head.appendChild(style);
+          } catch { /* cross-origin — silent */ }
+        });
+      };
+
+      // Load script from JaaS CDN if App ID set, else meet.jit.si
+      const scriptSrc = JAAS_APP_ID
+        ? `https://8x8.vc/${JAAS_APP_ID}/external_api.js`
+        : "https://meet.jit.si/external_api.js";
+
+      if (!window.JitsiMeetExternalAPI) {
+        const s   = document.createElement("script");
+        s.src     = scriptSrc;
+        s.async   = true;
+        s.onload  = initApi;
+        document.body.appendChild(s);
+      } else {
+        initApi();
+      }
     };
-    if (!window.JitsiMeetExternalAPI) {
-      const s = document.createElement("script");
-      s.src = "https://meet.jit.si/external_api.js";
-      s.async = true;
-      s.onload = load;
-      document.body.appendChild(s);
-    } else { load(); }
+
+    load();
     return () => { apiRef.current?.dispose(); };
   }, []);
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
