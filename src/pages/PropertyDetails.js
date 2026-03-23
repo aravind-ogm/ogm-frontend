@@ -89,6 +89,28 @@ function LiveJitsi({ containerRef, apiRef, name, roomName }) {
       apiRef.current.addEventListeners({
         readyToClose: () => onClose?.(),
       });
+
+      // Inject CSS to push the self-view pip below our 72px OGM header bar
+      apiRef.current.addListener('videoConferenceJoined', () => {
+        try {
+          const iframe = containerRef.current?.querySelector('iframe');
+          if (!iframe?.contentDocument) return;
+          const style = iframe.contentDocument.createElement('style');
+          style.textContent = `
+            /* Push filmstrip / self-view thumbnails below the OGM header */
+            .remote-videos, .filmstrip, [class*="filmstrip"],
+            .videocontainer.videoContainerFocused { margin-top: 76px !important; }
+            /* Hide Jitsi room info bar top-right */
+            .subject, [class*="subject"], .subject-info-container,
+            #subject, .subject-container { display: none !important; }
+            /* Push participant thumbnail away from top */
+            .remote-thumbnail, .videocontainer:not(.videoContainerFocused) {
+              margin-top: 76px !important;
+            }
+          `;
+          iframe.contentDocument.head.appendChild(style);
+        } catch { /* cross-origin may block, silent fail */ }
+      });
     };
     if (!window.JitsiMeetExternalAPI) {
       const s = document.createElement("script");
@@ -780,36 +802,40 @@ export default function PropertyDetails() {
                 </div>
               </div>
             ) : (
-              <>
-                {/* Full-width dark cover over Jitsi header */}
+              <div style={{ display:'flex', flexDirection:'column', height:'100%', borderRadius:18, overflow:'hidden' }}>
+                {/* ── OGM Header bar — sits ABOVE Jitsi so pip renders below it ── */}
                 <div style={{
-                  position:'absolute',top:0,left:0,right:0,
-                  height:72,zIndex:9999,
-                  background:'#111827',
-                  pointerEvents:'none',
-                }} />
-                {/* OGM branding on top of cover */}
-                <div style={{
-                  position:'absolute',top:0,left:0,right:0,
-                  height:72,zIndex:10000,
-                  display:'flex',alignItems:'center',gap:10,
-                  padding:'0 16px',
-                  pointerEvents:'none',
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                  background:'#111827', padding:'0 16px',
+                  height:60, flexShrink:0, zIndex:10, position:'relative',
                 }}>
-                  <div style={{
-                    width:36,height:36,borderRadius:10,
-                    background:'linear-gradient(135deg,#3b82f6,#f97316)',
-                    display:'flex',alignItems:'center',justifyContent:'center',
-                    fontSize:12,fontWeight:900,color:'white',flexShrink:0,
-                    boxShadow:'0 2px 8px rgba(59,130,246,0.4)',
-                  }}>OG</div>
-                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                    <span style={{color:'white',fontSize:15,fontWeight:800,lineHeight:1,letterSpacing:0.2}}>OGM Live</span>
-                    <span style={{color:'rgba(255,255,255,0.5)',fontSize:11,lineHeight:1}}>Live Property Tour</span>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{
+                      width:34,height:34,borderRadius:9,flexShrink:0,
+                      background:'linear-gradient(135deg,#3b82f6,#f97316)',
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      fontSize:12,fontWeight:900,color:'white',
+                      boxShadow:'0 2px 8px rgba(59,130,246,0.4)',
+                    }}>OG</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                      <span style={{ color:'white', fontSize:14, fontWeight:800, lineHeight:1, letterSpacing:0.2 }}>OGM Live</span>
+                      <span style={{ color:'rgba(255,255,255,0.5)', fontSize:10, lineHeight:1 }}>Live Property Tour</span>
+                    </div>
                   </div>
+                  <button onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}
+                    style={{
+                      width:34,height:34,borderRadius:'50%',border:'none',
+                      background:'rgba(255,255,255,0.12)',color:'white',
+                      fontSize:16,cursor:'pointer',display:'flex',
+                      alignItems:'center',justifyContent:'center',
+                      transition:'background 0.18s',
+                    }}
+                    onMouseEnter={e => e.target.style.background='#dc2626'}
+                    onMouseLeave={e => e.target.style.background='rgba(255,255,255,0.12)'}
+                  >✕</button>
                 </div>
-                {/* Close — top-right */}
-                <button className="live-close-btn" onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}>✕</button>
+                {/* ── Jitsi renders below header — pip stays in video area ── */}
+                <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
                 <LiveJitsi
                   containerRef={liveTourJitsiRef}
                   apiRef={liveTourApiRef}
@@ -817,7 +843,8 @@ export default function PropertyDetails() {
                   roomName={`ogm-live-${property?.id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`}
                   onClose={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}
                 />
-              </>
+                </div>
+              </div>
             )}
             )}
           </div>
