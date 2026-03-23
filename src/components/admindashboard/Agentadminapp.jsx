@@ -303,7 +303,26 @@ function useCallHistory(agentId) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  return { calls, loading, error, refresh };
+  // Optimistic status update — changes UI immediately, syncs to backend
+  const setCallStatus = useCallback(async (sessionId, newStatus) => {
+    // 1. Update UI immediately
+    setCalls(prev => prev.map(c =>
+      c.id === sessionId ? { ...c, status: newStatus, online: false } : c
+    ));
+    // 2. Sync to backend — end the session if marking completed
+    try {
+      if (newStatus === 'completed') {
+        await fetch(`${API_BASE}/api/live-tour/end-session/${sessionId}`, {
+          method: 'POST',
+          headers: authHeaders(),
+        });
+      }
+    } catch {
+      // Non-critical — UI already updated, backend may auto-resolve
+    }
+  }, []);
+
+  return { calls, loading, error, refresh, setCallStatus };
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -678,8 +697,21 @@ function IncomingCallModal({ caller, onAccept, onDecline }) {
 /* ─────────────────────────────────────────────────────────────
    COMPONENT: CallRow
    ───────────────────────────────────────────────────────────── */
-function CallRow({ call }) {
+function CallRow({ call, onStatusChange }) {
   const statusLabel = { completed: 'Completed', missed: 'Missed', ongoing: 'In Progress', cancelled: 'Cancelled' };
+  const [statusMenu, setStatusMenu] = useState(null);
+  // Live timer for active/ongoing calls
+  const [liveElapsed, setLiveElapsed] = useState(0);
+  useEffect(() => {
+    if (call.status !== 'ongoing') return;
+    const t = setInterval(() => setLiveElapsed(s => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [call.status]);
+
+  const displayDuration = call.status === 'ongoing'
+    ? (() => { const m = Math.floor(liveElapsed/60); const s = liveElapsed%60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; })()
+    : call.duration;
+
   return (
     <div className="call-row" role="row">
       <AvatarCircle initials={call.initials} online={call.online} />
@@ -687,11 +719,29 @@ function CallRow({ call }) {
         <div className="call-name">{call.name}</div>
         <div className="call-property">{call.property}</div>
       </div>
-      <div className={`status-badge ${call.status}`} role="status">
-        <span className="status-dot" />
-        {statusLabel[call.status] || call.status}
+      <div style={{ position: 'relative', minWidth: 105 }}>
+        <div className={`status-badge ${call.status}`} role="status"
+          style={{ cursor: call.status === 'ongoing' ? 'pointer' : 'default' }}
+          onClick={() => call.status === 'ongoing' && setStatusMenu(v => v === call.id ? null : call.id)}
+          title={call.status === 'ongoing' ? 'Click to update status' : ''}
+        >
+          <span className="status-dot" />
+          {statusLabel[call.status] || call.status}
+          {call.status === 'ongoing' && <span style={{ marginLeft: 4, fontSize: 9, opacity: 0.6 }}>▾</span>}
+        </div>
+        {statusMenu === call.id && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', border: '1px solid var(--gray-200)', padding: 4, minWidth: 140 }}>
+            {[['completed','✅ Mark Completed'],['missed','❌ Mark Missed']].map(([s, label]) => (
+              <button key={s} onClick={() => { onStatusChange(call.id, s); setStatusMenu(null); }}
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-ui)', borderRadius: 6, color: 'var(--gray-700)' }}
+                onMouseEnter={e => e.target.style.background = 'var(--gray-50)'}
+                onMouseLeave={e => e.target.style.background = 'none'}
+              >{label}</button>
+            ))}
+          </div>
+        )}
       </div>
-      <div className="call-duration">{call.duration}</div>
+      <div className="call-duration">{displayDuration}</div>
       <div className="call-notes">{call.notes}</div>
       <div className="call-time">{call.time}</div>
     </div>
@@ -732,13 +782,13 @@ function ErrorBanner({ message, onRetry }) {
 /* ─────────────────────────────────────────────────────────────
    PAGE: Dashboard
    ───────────────────────────────────────────────────────────── */
-function DashboardPage({ agent, available, onToggleAvailable, availSaving }) {
+function DashboardPage({ agent, available, onToggleAvailable, availSaving, onAgentUpdate }) {
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
 
   const agentId = agent.agentId || agent.id;
   const stats   = useAgentStats(agentId);
-  const { calls: rawCalls, loading, error, refresh } = useCallHistory(agentId);
+  const { calls: rawCalls, loading, error, refresh, setCallStatus } = useCallHistory(agentId);
 
   const calls = useMemo(() => {
     let src = rawCalls;
@@ -795,9 +845,10 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving }) {
             ) : error ? (
               <ErrorBanner message={`Failed to load calls: ${error}`} onRetry={refresh} />
             ) : calls.length === 0 ? (
-              <EmptyState icon="📋" title="No calls found" subtitle={search ? 'Try a different search term.' : 'Call history will appear here.'} />
+              <EmptyState icon="📋" title="No calls found"
+                subtitle={search ? 'Try a different search term.' : filter === 'Today' ? 'No calls today yet.' : filter === 'Yesterday' ? 'No calls yesterday.' : 'Call history will appear here.'} />
             ) : (
-              calls.map(call => <CallRow key={call.id} call={call} />)
+              calls.map(call => <CallRow key={call.id} call={call} onStatusChange={setCallStatus} />)
             )}
           </div>
         </div>
@@ -810,10 +861,36 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving }) {
             </div>
 
             <div className="agent-profile-info">
-              <div className="agent-avatar-lg">
-                {agent.photoUrl
-                  ? <img src={agent.photoUrl} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                  : toInitials(agent.name)}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div className="agent-avatar-lg">
+                  {(agent.photoUrl || agent._localPhoto)
+                    ? <img src={agent._localPhoto || agent.photoUrl} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    : toInitials(agent.name)}
+                </div>
+                {/* Photo upload button */}
+                <label htmlFor="agent-photo-upload" style={{
+                  position: 'absolute', bottom: -2, right: -2,
+                  width: 22, height: 22, borderRadius: '50%',
+                  background: 'var(--blue-600)', border: '2px solid white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                  zIndex: 1,
+                }} title="Upload photo">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </label>
+                <input id="agent-photo-upload" type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      const dataUrl = ev.target.result;
+                      localStorage.setItem('agent_photo_' + agentId, dataUrl);
+                      onAgentUpdate?.({ ...agent, _localPhoto: dataUrl });
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
               </div>
               <div>
                 <div className="agent-name">{agent.name}</div>
@@ -850,7 +927,7 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving }) {
 function CallHistoryPage({ agentId }) {
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
-  const { calls: rawCalls, loading, error, refresh } = useCallHistory(agentId);
+  const { calls: rawCalls, loading, error, refresh, setCallStatus } = useCallHistory(agentId);
 
   const calls = useMemo(() => {
     let src = rawCalls;
@@ -875,6 +952,20 @@ function CallHistoryPage({ agentId }) {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">Call History</h1>
+        <button
+          onClick={() => {
+            const rows = [['Name','Property','Status','Duration','Time'],
+              ...calls.map(c => [c.name, c.property, c.status, c.duration, c.time])];
+            const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+            a.download = `call-history-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+          }}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'1.5px solid var(--gray-200)', background:'white', fontFamily:'var(--font-ui)', fontSize:13, cursor:'pointer', color:'var(--gray-700)' }}
+        >
+          ⬇ Export CSV
+        </button>
       </div>
 
       <div className="ch-toolbar">
@@ -901,7 +992,7 @@ function CallHistoryPage({ agentId }) {
         ) : calls.length === 0 ? (
           <EmptyState icon="📞" title="No calls found" subtitle={search ? 'Try a different search.' : 'Your call history will appear here.'} />
         ) : (
-          calls.map(call => <CallRow key={call.id} call={call} />)
+          calls.map(call => <CallRow key={call.id} call={call} onStatusChange={setCallStatus} />)
         )}
       </div>
     </div>
@@ -986,7 +1077,13 @@ function AvailabilityPage({ agentId }) {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">Availability</h1>
-        <button className="apply-all-btn">Apply to all <Icon.ChevDown /></button>
+        <button className="apply-all-btn" onClick={() => {
+          const first = schedule.find(r => r.status === 'available');
+          if (!first) return;
+          setSchedule(s => s.map(r => ({ ...r, startTime: first.startTime, endTime: first.endTime, status: 'available' })));
+          setSaveMsg('Applied to all days — click any slot to save.');
+          setTimeout(() => setSaveMsg(''), 3000);
+        }}>Apply to all <Icon.ChevDown /></button>
       </div>
 
       {saveMsg && (
@@ -1002,7 +1099,19 @@ function AvailabilityPage({ agentId }) {
             <button className="week-nav-btn" onClick={() => setWeekOffset(o => o - 1)} aria-label="Previous week"><Icon.ChevLeft /></button>
             <span className="week-label">{weekLabel}</span>
             <button className="week-nav-btn" onClick={() => setWeekOffset(o => o + 1)} aria-label="Next week"><Icon.ChevRight /></button>
-            <button className="week-nav-btn" aria-label="Open calendar"><Icon.Calendar /></button>
+            <label className="week-nav-btn" aria-label="Open calendar" title="Jump to date" style={{ cursor: 'pointer' }}>
+              <Icon.Calendar />
+              <input type="date" style={{ position: 'absolute', opacity: 0, width: 1, height: 1, pointerEvents: 'none' }}
+                onChange={e => {
+                  if (!e.target.value) return;
+                  const selected = new Date(e.target.value);
+                  const today = new Date();
+                  const diffDays = Math.round((selected - today) / (1000*60*60*24));
+                  const diffWeeks = Math.floor(diffDays / 7);
+                  setWeekOffset(diffWeeks);
+                }}
+              />
+            </label>
           </div>
           <div className="default-hours-text">Default: 9:00 AM – 6:00 PM</div>
         </div>
@@ -1127,16 +1236,19 @@ function ScheduleCallModal({ agentId, onClose, onSaved }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           {[
-            ['customerName',   'Customer Name *', 'text',          'Priya Kapoor'],
-            ['customerMobile', 'Mobile *',        'tel',           '9876543210'],
-            ['customerEmail',  'Email',           'email',         'optional'],
-            ['propertyId',     'Property ID',     'number',        'e.g. 42'],
+            ['customerName',   'Customer Name *', 'text',  'Priya Kapoor'],
+            ['customerMobile', 'Mobile *',        'tel',   '9876543210'],
+            ['customerEmail',  'Email',           'email', 'optional'],
           ].map(([key, label, type, ph]) => (
             <div key={key}>
               <label style={lStyle}>{label}</label>
               <input style={iStyle} type={type} placeholder={ph} value={form[key]} onChange={e => set(key, e.target.value)} />
             </div>
           ))}
+          <div>
+            <label style={lStyle}>Property ID</label>
+            <input style={iStyle} type="number" placeholder="e.g. 42" value={form.propertyId} onChange={e => set('propertyId', e.target.value)} />
+          </div>
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={lStyle}>Date &amp; Time *</label>
             <input style={iStyle} type="datetime-local" value={form.scheduledAt} onChange={e => set('scheduledAt', e.target.value)} />
@@ -1162,11 +1274,12 @@ function ScheduleCallModal({ agentId, onClose, onSaved }) {
    PAGE: Upcoming Calls
    ───────────────────────────────────────────────────────────── */
 function UpcomingCallsPage({ onJoinCall, agentId }) {
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [calls,      setCalls]      = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState(null);
-  const [showModal,  setShowModal]  = useState(false);
+  const [weekOffset,   setWeekOffset]   = useState(0);
+  const [calls,        setCalls]        = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState(null);
+  const [showModal,    setShowModal]    = useState(false);
+  const [rescheduleId, setRescheduleId] = useState(null);
 
   const weekLabel = useMemo(() => {
     const arr = buildWeekSchedule(weekOffset);
@@ -1209,6 +1322,24 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
   const sourceBg = { CUSTOMER_BOOKING: '#eff6ff', QUEUE_JOIN: '#f0fdf4', AGENT_SCHEDULED: '#fdf4ff', AUTO_QUEUE: '#fff7ed' };
   const sourceFg = { CUSTOMER_BOOKING: '#0b63e5', QUEUE_JOIN: '#15803d', AGENT_SCHEDULED: '#7c3aed', AUTO_QUEUE: '#ea580c' };
 
+  const [upFilter, setUpFilter] = useState('All');
+
+  const filteredCalls = useMemo(() => {
+    if (upFilter === 'All') return calls;
+    const now = new Date();
+    if (upFilter === 'Today') {
+      const start = new Date(now); start.setHours(0,0,0,0);
+      const end   = new Date(now); end.setHours(23,59,59,999);
+      return calls.filter(c => { const d = new Date(c.scheduledAt); return d >= start && d <= end; });
+    }
+    if (upFilter === 'This Week') {
+      const start = new Date(now); start.setDate(now.getDate() - now.getDay());
+      const end   = new Date(start); end.setDate(start.getDate() + 6);
+      return calls.filter(c => { const d = new Date(c.scheduledAt); return d >= start && d <= end; });
+    }
+    return calls;
+  }, [calls, upFilter]);
+
   return (
     <div className="page">
       <div className="page-header">
@@ -1222,6 +1353,9 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
             <Icon.Plus /> Schedule Call
           </button>
         </div>
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <FilterTabs tabs={['All', 'Today', 'This Week']} active={upFilter} onChange={setUpFilter} />
       </div>
 
       <div className="content-card">
@@ -1289,6 +1423,13 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
                 </button>
                 <button
                   className="btn-reschedule"
+                  onClick={() => setRescheduleId(item.id)}
+                  aria-label={`Reschedule call with ${item.customerName}`}
+                >
+                  Reschedule
+                </button>
+                <button
+                  className="btn-reschedule"
                   onClick={() => handleCancel(item.id)}
                   style={{ color: '#ef4444', borderColor: '#fecaca' }}
                   aria-label={`Cancel call with ${item.customerName}`}
@@ -1311,6 +1452,47 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
           }}
         />
       )}
+
+      {rescheduleId && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}
+          onClick={() => setRescheduleId(null)} role="dialog" aria-modal="true" aria-label="Reschedule call">
+          <div style={{ background:'#fff', borderRadius:18, padding:'28px 30px', width:'100%', maxWidth:380, boxShadow:'0 24px 64px rgba(15,23,42,0.18)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <h2 style={{ margin:0, fontFamily:'var(--font-ui)', fontWeight:800, fontSize:18, color:'var(--blue-950)' }}>Reschedule Call</h2>
+              <button onClick={() => setRescheduleId(null)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--gray-400)' }} aria-label="Close"><Icon.X /></button>
+            </div>
+            <label style={{ display:'block', fontSize:12, fontWeight:700, color:'var(--gray-500)', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.4px' }}>New Date &amp; Time</label>
+            <input type="datetime-local" id="reschedule-dt"
+              style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1.5px solid var(--gray-200)', fontFamily:'var(--font-body)', fontSize:14, outline:'none', background:'var(--gray-50)', boxSizing:'border-box' }}
+              defaultValue={calls.find(c => c.id === rescheduleId)?.scheduledAt?.slice(0,16) || ''}
+            />
+            <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>
+              <button onClick={() => setRescheduleId(null)}
+                style={{ padding:'10px 20px', borderRadius:8, border:'1.5px solid var(--gray-200)', background:'#fff', fontFamily:'var(--font-ui)', fontSize:13, cursor:'pointer' }}>Cancel</button>
+              <button onClick={async () => {
+                const newDt = document.getElementById('reschedule-dt').value;
+                if (!newDt) return;
+                try {
+                  // Cancel old + create new
+                  await fetch(`${API_BASE}/api/agent/upcoming/${rescheduleId}/cancel`, { method:'PUT', headers: authHeaders() });
+                  const old = calls.find(c => c.id === rescheduleId);
+                  const res = await fetch(`${API_BASE}/api/agent/book-call`, {
+                    method:'POST', headers: authHeaders(),
+                    body: JSON.stringify({ agentId, propertyId: old?.propertyId, customerName: old?.customerName, customerMobile: old?.customerMobile, scheduledAt: newDt, source:'AGENT_SCHEDULED', note: 'Rescheduled by agent' })
+                  });
+                  const newCall = await res.json();
+                  setCalls(prev => [...prev.filter(c => c.id !== rescheduleId), newCall].sort((a,b) => new Date(a.scheduledAt) - new Date(b.scheduledAt)));
+                  setRescheduleId(null);
+                } catch { alert('Failed to reschedule. Please try again.'); }
+              }}
+                style={{ padding:'10px 22px', borderRadius:8, border:'none', background:'var(--blue-600)', color:'#fff', fontFamily:'var(--font-ui)', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                Confirm Reschedule
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1321,7 +1503,11 @@ function UpcomingCallsPage({ onJoinCall, agentId }) {
 function SettingsPage({ agent, onAgentUpdate }) {
   const [notifs,   setNotifs]   = useState(true);
   const [sounds,   setSounds]   = useState(true);
-  const [darkMode, setDark]     = useState(false);
+  const [darkMode, setDark]     = useState(() => {
+    const saved = localStorage.getItem('agent_dark_mode');
+    if (saved === '1') { document.documentElement.setAttribute('data-theme', 'dark'); return true; }
+    return false;
+  });
   const [editField, setEditField] = useState(null);
   const [nameVal,   setNameVal]   = useState(agent.name  || '');
   const [phoneVal,  setPhoneVal]  = useState(agent.phone || '');
@@ -1405,9 +1591,50 @@ function SettingsPage({ agent, onAgentUpdate }) {
             {editField !== 'phone' && <button onClick={() => setEditField('phone')} style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: 'white', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Edit</button>}
           </div>
 
-          {/* Designation — read only */}
+          {/* Designation */}
           <div className="settings-row">
-            <div><div className="settings-row-label">Role</div><div className="settings-row-desc">{agent.designation || '—'}</div></div>
+            <div style={{ flex: 1 }}>
+              <div className="settings-row-label">Designation / Role</div>
+              {editField === 'designation' ? (
+                <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                  <input autoFocus value={nameVal} onChange={e => setNameVal(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSave('designation'); if (e.key === 'Escape') handleCancel(); }}
+                    style={iStyle} placeholder="e.g. Senior Property Consultant" aria-label="Designation" />
+                  <button onClick={() => handleSave('designation')} disabled={saving} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--blue-600)', color: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>{saving ? '…' : 'Save'}</button>
+                  <button onClick={handleCancel} style={{ padding: '7px 12px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: '#fff', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+                </div>
+              ) : (
+                <div className="settings-row-desc">{agent.designation || '—'}</div>
+              )}
+            </div>
+            {editField !== 'designation' && <button onClick={() => { setNameVal(agent.designation || ''); setEditField('designation'); }} style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: 'white', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}>Edit</button>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Security ── */}
+      <div className="settings-section">
+        <div className="settings-section-title">Security</div>
+        <div className="content-card">
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Password</div>
+              <div className="settings-row-desc">Last changed: unknown</div>
+            </div>
+            <button
+              onClick={() => alert('Password change via email link — feature coming soon.')}
+              style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid var(--gray-200)', background: 'white', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer' }}
+            >Change</button>
+          </div>
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Active Sessions</div>
+              <div className="settings-row-desc">You are logged in on this device</div>
+            </div>
+            <button
+              onClick={() => { localStorage.clear(); window.location.reload(); }}
+              style={{ padding: '7px 16px', borderRadius: 8, border: '1.5px solid #fca5a5', background: '#fff1f2', color: '#dc2626', fontFamily: 'var(--font-ui)', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
+            >Sign Out All</button>
           </div>
         </div>
       </div>
@@ -1419,7 +1646,12 @@ function SettingsPage({ agent, onAgentUpdate }) {
           {[
             { label: 'Push Notifications', desc: 'Get alerts for incoming calls',  val: notifs,   set: setNotifs  },
             { label: 'Sound Alerts',        desc: 'Ring on incoming video call',    val: sounds,   set: setSounds  },
-            { label: 'Dark Mode',           desc: 'Coming soon',                    val: darkMode, set: setDark    },
+            { label: 'Dark Mode',           desc: 'Toggle dark theme',               val: darkMode, set: (fn) => {
+              const next = typeof fn === 'function' ? fn(darkMode) : fn;
+              setDark(next);
+              document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+              localStorage.setItem('agent_dark_mode', next ? '1' : '0');
+            }},
           ].map(row => (
             <div key={row.label} className="settings-row">
               <div><div className="settings-row-label">{row.label}</div><div className="settings-row-desc">{row.desc}</div></div>
@@ -1759,7 +1991,10 @@ export default function AgentAdminApp() {
         const parsed = JSON.parse(cached);
         fetch(`${API_BASE}/api/agent/profile?agentId=${parsed.agentId}`, { headers: authHeaders() })
           .then(r => r.ok ? r.json() : Promise.reject())
-          .then(data => setAgent({ ...data, token }))
+          .then(data => {
+              const localPhoto = localStorage.getItem('agent_photo_' + data.agentId);
+              setAgent({ ...data, token, _localPhoto: localPhoto || null });
+            })
           .catch(() => {
             localStorage.removeItem('agent_token');
             localStorage.removeItem('agent_data');
@@ -1775,7 +2010,9 @@ export default function AgentAdminApp() {
   const handleLogin = useCallback((data) => {
     localStorage.setItem('agent_token', data.token);
     localStorage.setItem('agent_data', JSON.stringify(data));
-    setAgent(data);
+    // Load stored local photo
+    const localPhoto = localStorage.getItem('agent_photo_' + data.agentId);
+    setAgent({ ...data, _localPhoto: localPhoto || null });
     setPage('dashboard');
   }, []);
 
@@ -1871,7 +2108,7 @@ export default function AgentAdminApp() {
     const aid = agent.agentId || agent.id;
     switch (page) {
       case 'dashboard':
-        return <DashboardPage agent={agent} available={available} onToggleAvailable={handleToggleAvailable} availSaving={availSaving} />;
+        return <DashboardPage agent={agent} available={available} onToggleAvailable={handleToggleAvailable} availSaving={availSaving} onAgentUpdate={handleAgentUpdate} />;
       case 'call-history':
         return <CallHistoryPage agentId={aid} />;
       case 'availability':

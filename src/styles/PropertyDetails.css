@@ -187,8 +187,10 @@
   border: none;
   background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
-  font-weight: 800;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
   font-size: 14px;
+  letter-spacing: 0.2px;
   cursor: pointer;
   box-shadow: 0 6px 22px rgba(249,115,22,0.4);
   transition: all 0.22s;
@@ -305,8 +307,10 @@
   border: none;
   background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
-  font-weight: 800;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
   font-size: 14px;
+  letter-spacing: 0.2px;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
