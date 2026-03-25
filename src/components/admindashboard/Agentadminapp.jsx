@@ -314,7 +314,8 @@ function useCallHistory(agentId) {
                     : (c.status || '').toLowerCase() === 'active'    ? 'ongoing'
                     : 'missed',
         duration:     c.durationFormatted || fmtDuration(c.durationSeconds),
-        notes:        c.notes || c.customerNote || '–',
+        durationRaw:  c.durationSeconds || 0,
+        notes:        (c.notes && c.notes !== '–') ? c.notes : (c.customerNote && c.customerNote !== '–') ? c.customerNote : '',
         time:         fmtTime(c.startedAt),
         startedAtRaw: c.startedAt || null,
         online:       (c.status || '').toLowerCase() === 'active',
@@ -610,7 +611,6 @@ function FilterTabs({ tabs, active, onChange }) {
 function SearchBar({ value, onChange, placeholder = 'Search…' }) {
   return (
     <div className="search-wrap">
-      <span className="search-icon" aria-hidden="true"><Icon.Search /></span>
       <input
         className="search-input"
         type="text"
@@ -767,7 +767,7 @@ function CallRow({ call, onStatusChange }) {
         )}
       </div>
       <div className="call-duration">{displayDuration}</div>
-      <div className="call-notes">{call.notes}</div>
+      <div className="call-notes">{call.notes && call.notes !== '–' ? call.notes : ''}</div>
       <div className="call-time">{call.time}</div>
     </div>
   );
@@ -808,8 +808,10 @@ function ErrorBanner({ message, onRetry }) {
    PAGE: Dashboard
    ───────────────────────────────────────────────────────────── */
 function DashboardPage({ agent, available, onToggleAvailable, availSaving, onAgentUpdate }) {
-  const [filter, setFilter] = useState('All');
-  const [search, setSearch] = useState('');
+  const [filter,  setFilter]  = useState('All');
+  const [search,  setSearch]  = useState('');
+  const [sortBy,  setSortBy]  = useState('time');   // 'time'|'name'|'status'|'duration'
+  const [sortDir, setSortDir] = useState('desc');   // 'asc'|'desc'
 
   const agentId = agent.agentId || agent.id;
   const stats   = useAgentStats(agentId);
@@ -829,10 +831,23 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving, onAge
       const start = new Date(now); start.setDate(start.getDate() - 7);
       src = src.filter(c => !c.startedAtRaw || new Date(c.startedAtRaw) >= start);
     }
-    if (!search.trim()) return src;
-    const q = search.toLowerCase();
-    return src.filter(c => c.name.toLowerCase().includes(q) || c.property.toLowerCase().includes(q));
-  }, [rawCalls, filter, search]);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      src = src.filter(c => c.name.toLowerCase().includes(q) || c.property.toLowerCase().includes(q));
+    }
+    // Sort
+    src = [...src].sort((a, b) => {
+      let va, vb;
+      if (sortBy === 'name')     { va = a.name.toLowerCase(); vb = b.name.toLowerCase(); }
+      else if (sortBy === 'status') { va = a.status; vb = b.status; }
+      else if (sortBy === 'duration') { va = a.durationRaw || 0; vb = b.durationRaw || 0; }
+      else { va = a.startedAtRaw || ''; vb = b.startedAtRaw || ''; }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return src;
+  }, [rawCalls, filter, search, sortBy, sortDir]);
 
   return (
     <div className="page">
@@ -856,11 +871,21 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving, onAge
 
           <div className="content-card">
             <div className="table-header" role="rowgroup">
-              <div style={{ flex: 1 }}>Name</div>
-              <div style={{ minWidth: 105 }}>Status</div>
-              <div style={{ minWidth: 110, maxWidth: 110 }}>Duration</div>
-              <div style={{ flex: 1, maxWidth: 175 }}>Notes</div>
-              <div style={{ minWidth: 65, textAlign: 'right' }}>Time</div>
+              {/* Sortable header helper */}
+              {[
+                { key:'name',     label:'Name',     style:{ flex:1 } },
+                { key:'status',   label:'Status',   style:{ minWidth:120 } },
+                { key:'duration', label:'Duration',  style:{ minWidth:110, maxWidth:110 } },
+                { key:'notes',    label:'Notes',     style:{ flex:1, maxWidth:175 } },
+                { key:'time',     label:'Time',      style:{ minWidth:65, textAlign:'right' } },
+              ].map(col => (
+                <div key={col.key} style={{ ...col.style, cursor:'pointer', userSelect:'none', display:'flex', alignItems:'center', gap:3 }}
+                  onClick={() => { if(sortBy===col.key) setSortDir(d=>d==='asc'?'desc':'asc'); else { setSortBy(col.key); setSortDir('desc'); } }}
+                >
+                  {col.label}
+                  {sortBy===col.key && <span style={{ fontSize:9, opacity:0.7 }}>{sortDir==='asc'?'▲':'▼'}</span>}
+                </div>
+              ))}
             </div>
 
             {loading ? (
