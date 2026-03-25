@@ -51,10 +51,12 @@ export default function LiveTourButton({ property }) {
   const waitTimerRef      = useRef(null);
   const abortRef          = useRef(null);
 
-  // Room name: unique per property. Adding date ensures a fresh room each day
-  // so stale "members-only" locks from previous Jitsi sessions don't block new callers.
-  const today    = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const roomName = `ogm-live-${property?.id}-${today}`;
+  // UUID room name — unguessable per session. Generated fresh each modal open.
+  const [roomName, setRoomName] = useState("");
+  const generateRoomName = useCallback(() => {
+    const uid = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g,'').slice(0,16) : Math.random().toString(36).slice(2,18));
+    return `ogm${property?.id}${uid}`;  // alphanumeric only — JaaS requirement
+  }, [property?.id]);
 
   /* ────────────────────────────────────────────────────────────────
      1. CHECK AVAILABILITY — called when button is clicked
@@ -63,6 +65,7 @@ export default function LiveTourButton({ property }) {
     if (!property?.id) return;
     setScreen(SCREEN.CHECKING);
     setError("");
+    setRoomName(generateRoomName()); // fresh UUID room each call
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
@@ -207,7 +210,8 @@ export default function LiveTourButton({ property }) {
         body: JSON.stringify({
           propertyId: property?.id,
           name:       name.trim(),
-          mobile:     "",  // not collected in PREJOIN flow — that's fine
+          mobile:     "",
+          roomName:   roomName, // UUID room — agent uses this to join same room
         }),
       });
     } catch {
@@ -229,12 +233,14 @@ export default function LiveTourButton({ property }) {
       setTimeout(() => setScreen(SCREEN.CALL), delay);
     };
 
+    const _JAAS = process.env.REACT_APP_JAAS_APP_ID || '';
+    const scriptSrc = _JAAS ? `https://8x8.vc/${_JAAS}/external_api.js` : `https://${JITSI_DOMAIN}/external_api.js`;
     if (!window.JitsiMeetExternalAPI) {
       const s    = document.createElement("script");
-      s.src      = `https://${JITSI_DOMAIN}/external_api.js`;
+      s.src      = scriptSrc;
       s.async    = true;
       s.onload   = proceed;
-      s.onerror  = proceed; // still proceed even if script fails
+      s.onerror  = proceed;
       document.body.appendChild(s);
     } else {
       proceed();
@@ -245,12 +251,27 @@ export default function LiveTourButton({ property }) {
      4c. CALL screen — mount Jitsi into DOM ref
   ──────────────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (screen !== SCREEN.CALL) return;
+    if (screen !== SCREEN.CALL || !roomName) return;
 
-    const loadJitsi = () => {
+    const _JAAS   = process.env.REACT_APP_JAAS_APP_ID || '';
+    const domain  = _JAAS ? '8x8.vc' : JITSI_DOMAIN;
+    const jaasRoom = _JAAS ? `${_JAAS}/${roomName}` : roomName;
+
+    const loadJitsi = async () => {
       if (!jitsiContainerRef.current) return;
-      jitsiApiRef.current = new window.JitsiMeetExternalAPI(JITSI_DOMAIN, {
-        roomName,
+      // Get JaaS JWT if configured
+      let jwt = null;
+      if (_JAAS) {
+        try {
+          const r = await fetch(`${API_BASE}/api/live-tour/jaas-token`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userName: name || 'Guest', roomName, moderator: 'false' }),
+          });
+          if (r.ok) jwt = (await r.json()).token;
+        } catch { /* non-critical */ }
+      }
+      const opts = {
+        roomName:   jaasRoom,
         parentNode: jitsiContainerRef.current,
         width: "100%",
         height: "100%",
@@ -277,24 +298,39 @@ export default function LiveTourButton({ property }) {
           SHOW_CHROME_EXTENSION_BANNER:     false,
           MOBILE_APP_PROMO:                 false,
         },
-      });
-      // Intercept Jitsi hang-up → show our thank you screen
+        parentNode: jitsiContainerRef.current,
+        width: '100%', height: '100%',
+        userInfo: { displayName: name || 'Guest' },
+        configOverwrite: {
+          startWithAudioMuted:      false,
+          startWithVideoMuted:      false,
+          prejoinPageEnabled:       false,
+          prejoinConfig:            { enabled: false },
+          disableDeepLinking:       true,
+          enableClosePage:          false,
+          disableAudioLevels:       false,
+          enableNoisyMicDetection:  false,
+          enableNoAudioDetection:   false,
+          p2p:                      { enabled: false },  // JaaS uses SFU
+          lobby:                    { autoKnock: false, enableChat: false },
+          securityUi:               { hideLobbyButton: true, disableLobbyPassword: true },
+          membersOnly:              false,
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false, SHOW_BRAND_WATERMARK: false,
+          SHOW_POWERED_BY: false, DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+          TOOLBAR_ALWAYS_VISIBLE: true, SHOW_CHROME_EXTENSION_BANNER: false,
+          MOBILE_APP_PROMO: false,
+        },
+      };
+      if (jwt) opts.jwt = jwt;
+      jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, opts);
       jitsiApiRef.current.addListener('readyToClose', () => closeModal());
     };
 
-    if (!window.JitsiMeetExternalAPI) {
-      const script    = document.createElement("script");
-      script.src      = `https://${JITSI_DOMAIN}/external_api.js`;
-      script.async    = true;
-      script.onload   = loadJitsi;
-      document.body.appendChild(script);
-    } else {
-      loadJitsi();
-    }
+    loadJitsi();
 
-    return () => {
-      jitsiApiRef.current?.dispose();
-    };
+    return () => { jitsiApiRef.current?.dispose(); };
   }, [screen, roomName, name]);
 
   /* ────────────────────────────────────────────────────────────────

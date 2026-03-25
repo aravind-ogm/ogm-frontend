@@ -98,11 +98,15 @@ function LiveJitsi({ containerRef, apiRef, name, roomName }) {
           parentNode: containerRef.current,
           userInfo:   { displayName: name || "Guest" },
           configOverwrite: {
-            startWithAudioMuted:  false,
-            startWithVideoMuted:  false,
-            prejoinPageEnabled:   false,
-            prejoinConfig:        { enabled: false },
-            disableDeepLinking:   true,
+            startWithAudioMuted:      false,
+            startWithVideoMuted:      false,
+            prejoinPageEnabled:       false,
+            prejoinConfig:            { enabled: false },
+            disableDeepLinking:       true,
+            disableAudioLevels:       false,
+            enableNoisyMicDetection:  false,
+            enableNoAudioDetection:   false,
+            p2p:                      { enabled: false },  // JaaS uses SFU — p2p breaks it
           },
           interfaceConfigOverwrite: {
             SHOW_JITSI_WATERMARK:              false,
@@ -176,8 +180,69 @@ export default function PropertyDetails() {
   const [liveTourName,      setLiveTourName]      = useState("");
   const [liveTourJoined,    setLiveTourJoined]    = useState(false);
   const [liveTourEnded,     setLiveTourEnded]     = useState(false);
-  const liveTourJitsiRef = useRef(null);
-  const liveTourApiRef   = useRef(null);
+  const [liveTourRoomName,  setLiveTourRoomName]  = useState("");
+  const [isRecording,       setIsRecording]       = useState(false);
+  const [recDuration,       setRecDuration]       = useState(0);
+  const liveTourJitsiRef  = useRef(null);
+  const liveTourApiRef    = useRef(null);
+  const mediaRecorderRef  = useRef(null);
+  const recChunksRef      = useRef([]);
+  const recTimerRef       = useRef(null);
+
+  // Generate UUID room name when modal opens — unguessable, private
+  const generateLiveTourRoom = useCallback(() => {
+    const uid = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g,'').slice(0,16) : Math.random().toString(36).slice(2,18));
+    return `ogm${property?.id}${uid}`;  // alphanumeric only — JaaS requirement
+  }, [property?.id]);
+
+  // ── Recording: captures screen+audio, auto-saves .webm to local device ─────
+  const startRecording = useCallback(async () => {
+    try {
+      // Try screen capture with audio first (works on HTTPS + localhost)
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+        ? 'video/webm;codecs=vp9,opus'
+        : 'video/webm';
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser', cursor: 'always' },
+        audio: { echoCancellation: false, noiseSuppression: false },
+        preferCurrentTab: true,  // Chrome 107+ — pre-selects current tab
+      });
+
+      recChunksRef.current = [];
+      const mr = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
+      mr.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(recChunksRef.current, { type: 'video/webm' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        const now  = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+        a.href     = url;
+        a.download = `ogm-live-tour-${property?.id}-${now}.webm`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        stream.getTracks().forEach(t => t.stop());
+        setIsRecording(false);
+        clearInterval(recTimerRef.current);
+        setRecDuration(0);
+      };
+      // Stop recording automatically when user stops screen share
+      stream.getVideoTracks()[0].onended = () => mr.stop();
+      mr.start(1000);
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecDuration(0);
+      recTimerRef.current = setInterval(() => setRecDuration(s => s + 1), 1000);
+    } catch (err) {
+      if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+        console.warn('Recording failed:', err);
+      }
+    }
+  }, [property?.id]);
+
+  const stopRecording = useCallback(() => {
+    mediaRecorderRef.current?.stop();
+  }, []);
 
   /* ─── Notify agent + join Jitsi ────────────────────────────── */
   const handleJoinLiveTour = async () => {
@@ -192,6 +257,7 @@ export default function PropertyDetails() {
           propertyId: property?.id,
           name:       liveTourName.trim(),
           mobile:     "",
+          roomName:   liveTourRoomName, // UUID — agent joins same room
         }),
       });
     } catch {
@@ -538,7 +604,7 @@ export default function PropertyDetails() {
         </div>
 
         {/* ── LIVE TOUR big orange button ── */}
-        <button className="live-tour-header-btn" onClick={() => setLiveTourOpen(true)}>
+        <button className="live-tour-header-btn" onClick={() => { setLiveTourRoomName(generateLiveTourRoom()); setLiveTourOpen(true); }}>
           <span className="live-tour-header-dot" />
           Live Video Tour
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -843,18 +909,20 @@ export default function PropertyDetails() {
               </div>
             ) : (
               <div style={{ display:'flex', flexDirection:'column', height:'100%', borderRadius:18, overflow:'hidden' }}>
-                {/* ── OGM Header bar — sits ABOVE Jitsi so pip renders below it ── */}
+
+                {/* ── OGM Header bar — full width, covers Jitsi room-name bar ── */}
                 <div style={{
                   display:'flex', alignItems:'center', justifyContent:'space-between',
                   background:'#111827', padding:'0 16px',
                   height:60, flexShrink:0, zIndex:10, position:'relative',
                 }}>
+                  {/* Left: OGM brand */}
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                     <div style={{
-                      width:34,height:34,borderRadius:9,flexShrink:0,
+                      width:34, height:34, borderRadius:9, flexShrink:0,
                       background:'linear-gradient(135deg,#3b82f6,#f97316)',
-                      display:'flex',alignItems:'center',justifyContent:'center',
-                      fontSize:12,fontWeight:900,color:'white',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      fontSize:12, fontWeight:900, color:'white',
                       boxShadow:'0 2px 8px rgba(59,130,246,0.4)',
                     }}>OG</div>
                     <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
@@ -862,30 +930,43 @@ export default function PropertyDetails() {
                       <span style={{ color:'rgba(255,255,255,0.5)', fontSize:10, lineHeight:1 }}>Live Property Tour</span>
                     </div>
                   </div>
-                  <button onClick={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}
-                    style={{
-                      width:34,height:34,borderRadius:'50%',border:'none',
-                      background:'rgba(255,255,255,0.12)',color:'white',
-                      fontSize:16,cursor:'pointer',display:'flex',
-                      alignItems:'center',justifyContent:'center',
-                      transition:'background 0.18s',
-                    }}
-                    onMouseEnter={e => e.target.style.background='#dc2626'}
-                    onMouseLeave={e => e.target.style.background='rgba(255,255,255,0.12)'}
-                  >✕</button>
+
+                  {/* Center: solid cover over Jitsi room-name label */}
+                  <div style={{ position:'absolute', left:'50%', transform:'translateX(-50%)', background:'#111827', padding:'6px 32px', borderRadius:8, pointerEvents:'none' }}>
+                    <span style={{ color:'rgba(255,255,255,0.3)', fontSize:11, letterSpacing:0.3 }}>🔴 Live</span>
+                  </div>
+
+                  {/* Right: REC button + close */}
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <button
+                      onClick={isRecording ? stopRecording : startRecording}
+                      title={isRecording ? 'Stop & save recording' : 'Record this tour'}
+                      style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:6, border:'none', background: isRecording ? 'rgba(220,38,38,0.85)' : 'rgba(255,255,255,0.1)', color:'white', fontSize:11, fontWeight:700, cursor:'pointer' }}
+                    >
+                      <span style={{ width:7, height:7, borderRadius:'50%', background:'#ef4444', display:'inline-block' }} />
+                      {isRecording ? `REC ${String(Math.floor(recDuration/60)).padStart(2,'0')}:${String(recDuration%60).padStart(2,'0')}` : 'REC'}
+                    </button>
+                    <button
+                      onClick={() => { stopRecording(); liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}
+                      style={{ width:34, height:34, borderRadius:'50%', border:'none', background:'rgba(255,255,255,0.12)', color:'white', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'background 0.18s' }}
+                      onMouseEnter={e => e.currentTarget.style.background='#dc2626'}
+                      onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.12)'}
+                    >✕</button>
+                  </div>
                 </div>
-                {/* ── Jitsi renders below header — pip stays in video area ── */}
+
+                {/* ── Jitsi renders below header ── */}
                 <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
-                <LiveJitsi
-                  containerRef={liveTourJitsiRef}
-                  apiRef={liveTourApiRef}
-                  name={liveTourName}
-                  roomName={`ogm-live-${property?.id}-${new Date().toISOString().slice(0,10).replace(/-/g,"")}`}
-                  onClose={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}
-                />
+                  <LiveJitsi
+                    containerRef={liveTourJitsiRef}
+                    apiRef={liveTourApiRef}
+                    name={liveTourName}
+                    roomName={liveTourRoomName}
+                    onClose={() => { liveTourApiRef.current?.dispose(); setLiveTourJoined(false); setLiveTourEnded(true); }}
+                  />
                 </div>
+
               </div>
-            )}
             )}
           </div>
         </div>

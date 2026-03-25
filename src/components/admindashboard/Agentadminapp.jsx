@@ -107,9 +107,14 @@ function buildWeekSchedule(weekOffset = 0) {
 
 function fmtDuration(seconds) {
   if (!seconds) return '–';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  // Guard: backend may store milliseconds — if > 1 day in seconds, divide by 1000
+  const secs = seconds > 86400 ? Math.floor(seconds / 1000) : seconds;
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
 
 function fmtTime(isoString) {
@@ -216,8 +221,10 @@ function useWebSocket(agentId, onIncomingCall, onAvailabilityChange) {
       const stomp  = window.Stomp.over(socket);
       stomp.debug  = null;
 
+      // Send JWT header so server authenticates agent topic subscriptions
+      const _wsToken = localStorage.getItem('agent_token') || '';
       stomp.connect(
-        {},  // no auth header — WebSocket endpoint is public (permitted in SecurityConfig)
+        _wsToken ? { Authorization: `Bearer ${_wsToken}` } : {},
         () => {
           if (!mountedRef.current) return;
           stompRef.current = stomp;
@@ -606,7 +613,7 @@ function SearchBar({ value, onChange, placeholder = 'Search…' }) {
       <span className="search-icon" aria-hidden="true"><Icon.Search /></span>
       <input
         className="search-input"
-        type="search"
+        type="text"
         placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -851,7 +858,7 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving, onAge
             <div className="table-header" role="rowgroup">
               <div style={{ flex: 1 }}>Name</div>
               <div style={{ minWidth: 105 }}>Status</div>
-              <div style={{ minWidth: 85 }}>Duration</div>
+              <div style={{ minWidth: 110, maxWidth: 110 }}>Duration</div>
               <div style={{ flex: 1, maxWidth: 175 }}>Notes</div>
               <div style={{ minWidth: 65, textAlign: 'right' }}>Time</div>
             </div>
@@ -998,7 +1005,7 @@ function CallHistoryPage({ agentId }) {
         <div className="table-header">
           <div style={{ flex: 1 }}>Name</div>
           <div style={{ minWidth: 105 }}>Status</div>
-          <div style={{ minWidth: 85 }}>Duration</div>
+          <div style={{ minWidth: 110, maxWidth: 110 }}>Duration</div>
           <div style={{ flex: 1, maxWidth: 175 }}>Notes</div>
           <div style={{ minWidth: 65, textAlign: 'right' }}>Time</div>
         </div>
@@ -1714,14 +1721,19 @@ function PropertyMiniCard({ property }) {
    PAGE: Video Call Screen
    ───────────────────────────────────────────────────────────── */
 function VideoCallScreen({ caller, agent, property, onEnd }) {
-  const [micOn,     setMicOn]    = useState(true);
-  const [camOn,     setCamOn]    = useState(true);
-  const [elapsed,   setElapsed]  = useState(0);
-  const [chatMsg,   setChatMsg]  = useState('');
-  const [messages,  setMessages] = useState([]);
+  const [micOn,       setMicOn]      = useState(true);
+  const [camOn,       setCamOn]      = useState(true);
+  const [elapsed,     setElapsed]    = useState(0);
+  const [chatMsg,     setChatMsg]    = useState('');
+  const [messages,    setMessages]   = useState([]);
+  const [isRecording, setIsRecording]= useState(false);
+  const [recDuration, setRecDuration]= useState(0);
 
-  const jitsiRef   = useRef(null);
-  const jitsiApi   = useRef(null);
+  const jitsiRef      = useRef(null);
+  const jitsiApi      = useRef(null);
+  const mediaRecRef   = useRef(null);
+  const recChunksRef  = useRef([]);
+  const recTimerRef   = useRef(null);
   // Stable refs so the mount effect has zero external dependencies
   // and never needs to re-run when props change
   const onEndRef   = useRef(onEnd);
@@ -1742,10 +1754,12 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
   // Mount Jitsi — JaaS powered. Runs once on mount only.
   // Props accessed through stable refs to avoid stale closures.
   useEffect(() => {
-    // Room name matches customer side: ogm-live-{propertyId}-{YYYYMMDD}
+    // Use UUID room the customer joined — passed via WebSocket payload.
+    // Falls back to date-based name for backwards compatibility.
+    const callerRoomName = callerRef.current.roomName;
     const today    = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const propId   = callerRef.current.propertyId || callerRef.current.property || 'tour';
-    const roomName = `ogm-live-${propId}-${today}`;
+    const roomName = callerRoomName || `ogmLive${propId}${today}`;  // alphanumeric fallback
 
     const load = async () => {
       if (!jitsiRef.current) return;
@@ -1764,12 +1778,16 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
         height:     '100%',
         userInfo:   { displayName: agentRef.current.name },
         configOverwrite: {
-          prejoinPageEnabled:  false,
-          prejoinConfig:       { enabled: false },
-          startWithAudioMuted: false,
-          startWithVideoMuted: false,
-          disableDeepLinking:  true,
-          enableClosePage:     false,
+          prejoinPageEnabled:          false,
+          prejoinConfig:               { enabled: false },
+          startWithAudioMuted:         false,
+          startWithVideoMuted:         false,
+          disableDeepLinking:          true,
+          enableClosePage:             false,
+          disableAudioLevels:          false,
+          enableNoisyMicDetection:     false,
+          enableNoAudioDetection:      false,
+          p2p:                         { enabled: false },
           toolbarButtons: ['microphone','camera','desktop','chat','raisehand','tileview','participants-pane','hangup'],
         },
         interfaceConfigOverwrite: {
@@ -1788,6 +1806,8 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
         jitsiApi.current = new window.JitsiMeetExternalAPI(domain, apiOptions);
 
         jitsiApi.current.addListener('videoConferenceJoined', () => {
+          // Set clean subject — hides the room hash displayed by JaaS
+          try { jitsiApi.current.executeCommand('subject', 'OGM Live Property Tour'); } catch {}
           try {
             const iframe = jitsiRef.current?.querySelector('iframe');
             if (iframe?.contentDocument) {
@@ -1829,6 +1849,47 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
 
   const fmtElapsed = s => `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
 
+  const startRecording = async () => {
+    try {
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+        ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser', cursor: 'always' },
+        audio: { echoCancellation: false, noiseSuppression: false },
+        preferCurrentTab: true,
+      });
+      recChunksRef.current = [];
+      const mr = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
+      mr.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(recChunksRef.current, { type: 'video/webm' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        const now  = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+        a.href     = url;
+        a.download = `ogm-agent-tour-${now}.webm`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        stream.getTracks().forEach(t => t.stop());
+        setIsRecording(false);
+        clearInterval(recTimerRef.current);
+        setRecDuration(0);
+      };
+      stream.getVideoTracks()[0].onended = () => mr.stop();
+      mr.start(1000);
+      mediaRecRef.current = mr;
+      setIsRecording(true);
+      setRecDuration(0);
+      recTimerRef.current = setInterval(() => setRecDuration(s => s + 1), 1000);
+    } catch (err) {
+      if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+        console.warn('Agent recording failed:', err);
+      }
+    }
+  };
+
+  const stopRecording = () => { mediaRecRef.current?.stop(); };
+
   const sendMsg = () => {
     if (!chatMsg.trim()) return;
     const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -1853,7 +1914,14 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
         </div>
         <div className="vc-topbar-right">
           <div className="vc-connected"><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green-500)', display: 'inline-block' }} aria-hidden="true" />Connected</div>
-          <div className="vc-record"><span className="rec-dot" aria-hidden="true" /> REC</div>
+          <button
+            onClick={isRecording ? stopRecording : startRecording}
+            title={isRecording ? 'Stop & save recording' : 'Record this tour'}
+            style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:6, border:'none', background: isRecording ? 'rgba(220,38,38,0.85)' : 'rgba(255,255,255,0.12)', color:'white', fontSize:11, fontWeight:700, cursor:'pointer' }}
+          >
+            <span style={{ width:7,height:7,borderRadius:'50%',background:'#ef4444',display:'inline-block' }} />
+            {isRecording ? `REC ${fmtElapsed(recDuration)}` : 'REC'}
+          </button>
           <span className="vc-elapsed" aria-live="polite">{fmtElapsed(elapsed)}</span>
         </div>
       </div>
@@ -1864,6 +1932,13 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
         <div className="vc-video-main">
           {/* Jitsi fills the entire container — it renders its own controls, pip, and room label */}
           <div className="vc-jitsi-container" ref={jitsiRef} />
+
+          {/* Center cover — solid dark bar that fully hides Jitsi room-name label */}
+          <div style={{
+            position:'absolute', top:0, left:'20%', right:'20%',
+            height:52, background:'#0d1117',
+            zIndex:10000, pointerEvents:'none',
+          }} />
 
           {/* Premium OGM badge — covers Jitsi logo, frosted glass style */}
           <div style={{

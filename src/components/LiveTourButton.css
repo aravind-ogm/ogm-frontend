@@ -556,13 +556,79 @@
 }
 
 /* ================================================================
-   RESPONSIVE
+   RESPONSIVE — Mobile-first fixes
    ================================================================ */
+
+/* ── Small phones (< 480px) ── */
+@media (max-width: 480px) {
+  /* Modal slides up from bottom — sheet style */
+  .ltb-overlay { align-items: flex-end; padding: 0; }
+  .ltb-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 20px 20px 0 0;
+    align-self: flex-end;
+    overflow: hidden;
+  }
+
+  /* FAB sits above bottom nav bars */
+  .ltb-fab { bottom: 80px; right: 14px; padding: 12px 18px; font-size: 12px; gap: 7px; }
+
+  /* Jitsi container fills screen — no fixed height that overflows */
+  .ltb-jitsi-container {
+    width: 100%;
+    height: calc(95vh - 60px); /* subtract OGM header */
+    min-height: unset;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Jitsi iframe fills container completely */
+  .ltb-jitsi-container iframe {
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+  }
+
+  /* Cards */
+  .ltb-prejoin-card,
+  .ltb-queue-card { padding: 24px 16px; }
+
+  /* OGM header bar — slightly smaller on mobile */
+  .ltb-modal > div[style*="height: 72"] { height: 56px !important; }
+}
+
+/* ── Tablets (480px – 768px) ── */
+@media (min-width: 481px) and (max-width: 768px) {
+  .ltb-modal {
+    width: 96%;
+    max-width: 560px;
+    max-height: 92vh;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .ltb-jitsi-container {
+    height: 55vh;
+    min-height: 380px;
+    overflow: hidden;
+  }
+
+  .ltb-jitsi-container iframe {
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+  }
+}
+
+/* ── General mobile tweak (< 600px) ── */
 @media (max-width: 600px) {
-  .ltb-modal { max-height: 96vh; border-radius: 16px 16px 0 0; align-self: flex-end; }
-  .ltb-overlay { align-items: flex-end; }
-  .ltb-fab { bottom: 90px; right: 16px; padding: 13px 20px; font-size: 12.5px; }
-  .ltb-prejoin-card, .ltb-queue-card { padding: 28px 20px; }
+  .ltb-fab { bottom: 80px; right: 16px; }
 }
 
 /* ================================================================
