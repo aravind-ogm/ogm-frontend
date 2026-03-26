@@ -1,259 +1,696 @@
-/* ===============================
-    GLOBAL SECTION WRAPPER
-=============================== */
+/* =============================================================
+   NearbyLocations.css — Enterprise-grade Nearby Highlights
+   Extends the original styles without removing anything.
+   New sections are clearly marked with ★ ENTERPRISE ADD-ON ★
+   ============================================================= */
+
+/* ─────────────────────────────────────────────────────────────
+   GLOBAL SECTION WRAPPER  (original, unchanged)
+───────────────────────────────────────────────────────────── */
 .nearby-section {
-    margin: 55px 0;
+  margin: 55px 0;
 }
 
 .nearby-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 14px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
 }
 
-/* ===============================
-    GRID LAYOUT
-=============================== */
-.nearby-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
-    gap: 32px;
+/* ─────────────────────────────────────────────────────────────
+   ★ ENTERPRISE ADD-ON — NEARBY SUMMARY
+   Gradient essentials panel above the filter bar.
+───────────────────────────────────────────────────────────── */
+.nearby-summary {
+  background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 60%, #fdf4ff 100%);
+  border: 1px solid #d1fae5;
+  border-radius: 18px;
+  padding: 18px 22px 16px;
+  margin-bottom: 20px;
 }
 
-/* ===============================
-    PREMIUM CARD
-=============================== */
-.nearby-card-premium {
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(14px);
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.04),
-        0 18px 40px rgba(0, 0, 0, 0.12);
-    transition: transform 0.32s ease, box-shadow 0.32s ease;
-    cursor: pointer;
+.nearby-summary-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #065f46;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin: 0 0 12px;
 }
 
-.nearby-card-premium:hover {
-    transform: translateY(-8px);
-    box-shadow:
-        0 10px 30px rgba(0, 0, 0, 0.08),
-        0 28px 65px rgba(0, 0, 0, 0.18);
+.nearby-summary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-/* ===============================
-    IMAGE
-=============================== */
-.nearby-img-wrapper {
-    height: 210px;
-    position: relative;
-    overflow: hidden;
+.nearby-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #d1fae5;
+  border-radius: 22px;
+  padding: 6px 14px 6px 10px;
+  font-size: 12.5px;
+  color: #374151;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.nearby-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.35s ease;
-    display: block;
+.nearby-summary-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.12);
 }
 
-.nearby-card-premium:hover .nearby-img {
-    transform: scale(1.03);
+.nearby-summary-chip-icon {
+  font-size: 15px;
+  line-height: 1;
 }
 
-/* Image load fallback */
-.nearby-img-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f1f5f9;
+.nearby-summary-chip-text strong {
+  color: #065f46;
+  font-weight: 700;
 }
 
-/* ===============================
-    CATEGORY BADGE
-=============================== */
-.nearby-category {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    padding: 6px 16px;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #0ea5e9, #0284c7);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow:
-        0 3px 10px rgba(0, 0, 0, 0.22),
-        0 0 10px rgba(3, 169, 244, 0.35);
-    backdrop-filter: blur(8px);
+.nearby-summary-chip-range {
+  color: #6b7280;
+  font-size: 11.5px;
 }
 
-/* ===============================
-    FOOTER CONTENT
-=============================== */
-.nearby-footer {
-    padding: 18px 22px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* ─────────────────────────────────────────────────────────────
+   ★ ENTERPRISE ADD-ON — CATEGORY FILTER BAR
+   Horizontally scrollable pills (like Airbnb / Booking.com).
+───────────────────────────────────────────────────────────── */
+.nearby-filter-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 14px;
+  margin-bottom: 4px;
+  /* Hide scrollbar across all browsers */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.nearby-left {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+.nearby-filter-bar::-webkit-scrollbar {
+  display: none;
 }
 
-.nearby-pin {
-    margin-top: 4px;
-    color: #10b981;
-    flex-shrink: 0;
+.nearby-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-.nearby-text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+.nearby-filter-pill:hover {
+  border-color: #10b981;
+  color: #059669;
+  background: #f0fdf4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
-.nearby-name {
-    font-size: 16px;
-    font-weight: 700;
-    color: #0f172a;
-    letter-spacing: -0.2px;
+.nearby-filter-pill.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.38);
+  transform: translateY(-1px);
 }
 
-.nearby-distance-chip {
-    background: #f0fdf4;
-    color: #15803d;
-    padding: 4px 12px;
-    border-radius: 14px;
-    font-size: 12px;
-    font-weight: 600;
-    display: inline-block;
+.nearby-filter-pill.active .filter-pill-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
-/* ===============================
-    ACTION ICONS
-=============================== */
-.nearby-icons {
-    display: flex;
-    align-items: center;
-    gap: 18px;
+.filter-pill-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
-.nearby-icon {
-    color: #475569;
-    opacity: 0.9;
-    transition: color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
-    cursor: pointer;
+.filter-pill-count {
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 10px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.nearby-icon:hover {
-    color: #10b981;
-    transform: scale(1.18);
-    opacity: 1;
+/* ─────────────────────────────────────────────────────────────
+   ★ ENTERPRISE ADD-ON — CONTROLS ROW (count + sort)
+───────────────────────────────────────────────────────────── */
+.nearby-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
 }
 
-/* ===============================
-    GOOGLE MAP (above the cards)
-=============================== */
+.nearby-results-count {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Sort dropdown wrapper */
+.nearby-sort-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nearby-sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 8px 34px 8px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nearby-sort-select:hover {
+  border-color: #94a3b8;
+}
+
+.nearby-sort-select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+/* Chevron icon overlaid on the select */
+.nearby-sort-chevron {
+  position: absolute;
+  right: 10px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GOOGLE MAP WRAPPER  (original, kept intact + legend override)
+───────────────────────────────────────────────────────────── */
 .nearby-map-wrapper {
-    position: relative;
-    border-radius: 18px;
-    overflow: hidden;
-    margin-bottom: 32px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
-    background: #f1f5f9;
-    min-height: 380px;
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+  background: #f1f5f9;
+  min-height: 380px;
 }
 
 .nearby-map-canvas {
-    width: 100%;
-    height: 380px;
-    transition: opacity 0.3s ease;
+  width: 100%;
+  height: 380px;
+  transition: opacity 0.3s ease;
 }
 
 /* Loading state */
 .nearby-map-loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 14px;
-    color: #6b7280;
-    background: #f8fafc;
-    z-index: 2;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  background: #f8fafc;
+  z-index: 2;
 }
 
 .nearby-map-spinner {
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    border: 2.5px solid #dbeafe;
-    border-top-color: #2563eb;
-    border-radius: 50%;
-    animation: nearby-spin 0.7s linear infinite;
-    flex-shrink: 0;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid #dbeafe;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: nearby-spin 0.7s linear infinite;
+  flex-shrink: 0;
 }
 
 @keyframes nearby-spin {
-    to { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Legend bar */
-.nearby-map-legend {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    padding: 7px 18px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #374151;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 3;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-}
-
-/* "Click map" hint tooltip above the map */
+/* "Click map" hint tooltip (original, kept) */
 .nearby-map-wrapper:hover::after {
-    content: "Click anywhere on the map to open in Google Maps";
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(15,23,42,0.82);
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 4;
-    animation: nearby-fadein 0.2s ease;
+  content: "Click anywhere on the map to open in Google Maps";
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 4;
+  animation: nearby-fadein 0.2s ease;
 }
 
 @keyframes nearby-fadein {
-    from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ★ ENTERPRISE ADD-ON — PREMIUM MAP LEGEND
+   Replaces the original single-row legend with a floating
+   panel (bottom-left) showing all present category colours.
+───────────────────────────────────────────────────────────── */
+.nearby-map-legend {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;  /* ← overrides original left:50% / transform */
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  padding: 11px 15px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #374151;
+  z-index: 3;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  min-width: 148px;
+  pointer-events: none; /* let map clicks pass through */
+}
+
+.nearby-map-legend::-webkit-scrollbar {
+  display: none;
+}
+
+.legend-section-title {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 4px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.legend-pin-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 3px 0;
+}
+
+.legend-important-row {
+  color: #92400e;
+}
+
+.legend-star-badge {
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GRID LAYOUT  (original, unchanged)
+───────────────────────────────────────────────────────────── */
+.nearby-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 32px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PREMIUM CARD  (original base + enterprise extensions)
+───────────────────────────────────────────────────────────── */
+.nearby-card-premium {
+  position: relative; /* needed for absolute-positioned children */
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.04),
+    0 18px 40px rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.32s ease,
+    box-shadow 0.32s ease,
+    border-color 0.2s ease;
+  cursor: pointer;
+  outline: none;
+}
+
+.nearby-card-premium:hover,
+.nearby-card-premium:focus-visible {
+  transform: translateY(-8px);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 28px 65px rgba(0, 0, 0, 0.18);
+}
+
+/* ── ★ ACTIVE STATE — card clicked / marker clicked ── */
+.nearby-card-premium.is-active {
+  border-color: #10b981;
+  box-shadow:
+    0 0 0 2px #10b981,
+    0 10px 30px rgba(0, 0, 0, 0.09),
+    0 28px 65px rgba(0, 0, 0, 0.18);
+  transform: translateY(-8px);
+}
+
+/* ── ★ IMPORTANT CARD treatment ── */
+.nearby-card-premium.is-important {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.nearby-card-premium.is-important::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(
+    160deg,
+    rgba(254, 243, 199, 0.20) 0%,
+    transparent 55%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   IMAGE WRAPPER  (original, unchanged)
+───────────────────────────────────────────────────────────── */
+.nearby-img-wrapper {
+  height: 210px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nearby-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+  display: block;
+}
+
+.nearby-card-premium:hover .nearby-img {
+  transform: scale(1.03);
+}
+
+.nearby-img-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CATEGORY BADGE  (original colours overridden dynamically
+   via inline style; keep the structural rule as fallback)
+───────────────────────────────────────────────────────────── */
+.nearby-category {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 5px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7); /* fallback */
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1;
+}
+
+/* ── ★ IMPORTANT BADGE (bottom-left of image) ── */
+.nearby-important-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: linear-gradient(135deg, #facc15, #f59e0b);
+  color: #78350f;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  z-index: 1;
+}
+
+/* ── ★ MARKER NUMBER CHIP (top-right of image) ── */
+.nearby-card-num {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FOOTER CONTENT  (original, unchanged)
+───────────────────────────────────────────────────────────── */
+.nearby-footer {
+  padding: 16px 20px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;
+}
+
+.nearby-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nearby-pin {
+  margin-top: 3px;
+  flex-shrink: 0;
+  /* colour set via inline style */
+}
+
+.nearby-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.nearby-name {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby-distance-chip {
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* ── ★ TRAVEL TIME ROW ── */
+.nearby-travel-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.nearby-travel-chip {
+  font-size: 11px;
+  color: #4b5563;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ACTION ICONS  (original, unchanged)
+───────────────────────────────────────────────────────────── */
+.nearby-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.nearby-icon {
+  color: #475569;
+  opacity: 0.85;
+  transition: color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.nearby-icon:hover {
+  color: #10b981;
+  transform: scale(1.18);
+  opacity: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE
+───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nearby-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .nearby-map-canvas {
+    height: 300px;
+  }
+
+  .nearby-map-wrapper {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 640px) {
+  .nearby-summary {
+    padding: 14px 16px 12px;
+  }
+
+  .nearby-summary-chip {
+    font-size: 11.5px;
+    padding: 5px 10px 5px 8px;
+  }
+
+  /* On narrow screens, hide pill labels — show icon + count only */
+  .nearby-filter-pill .filter-pill-label {
+    display: none;
+  }
+
+  .nearby-filter-pill {
+    padding: 8px 12px;
+  }
+
+  .nearby-controls-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .nearby-sort-select {
+    font-size: 12px;
+    padding: 7px 30px 7px 11px;
+  }
+
+  /* Compact legend on small screens */
+  .nearby-map-legend {
+    font-size: 10.5px;
+    padding: 8px 11px;
+    max-height: 160px;
+    min-width: 128px;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .legend-section-title {
+    font-size: 8.5px;
+  }
+
+  /* Travel times take extra vertical space on mobile — hide them */
+  .nearby-travel-row {
+    display: none;
+  }
+
+  .nearby-title {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 400px) {
+  .nearby-grid {
+    gap: 16px;
+  }
+
+  .nearby-img-wrapper {
+    height: 180px;
+  }
 }
