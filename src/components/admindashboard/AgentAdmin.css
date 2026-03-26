@@ -645,18 +645,7 @@ body {
 
 /* ── Table header + call rows ───────────────────────────────── */
 .table-header {
-  display: flex; align-items: center;
-  padding: 10px 22px;
-  background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-100);
-  font-family: var(--font-ui);
-  font-size: 11px; font-weight: 600;
-  color: var(--gray-400);
-  text-transform: uppercase; letter-spacing: 0.6px;
-  gap: 0;
-  /* Must match call-row padding and avatar width exactly:
-     22px row-padding + 42px avatar + 13px margin-right = 77px */
-  padding-left: 77px;
+  display: none; /* replaced by ent-table thead */
 }
 
 .call-row {
@@ -711,9 +700,9 @@ body {
   display: flex; align-items: center; gap: 5px;
   font-family: var(--font-ui);
   font-size: 12.5px; font-weight: 500;
-  min-width: 120px;
+  min-width: 0;
   padding-left: 0;
-  margin-left: -8px;   /* pull status closer to name column */
+  margin-left: 0;
 }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
@@ -1598,3 +1587,138 @@ body {
 [data-theme="dark"] .status-badge.completed { color: #4ade80; }
 [data-theme="dark"] .status-badge.ongoing   { color: #60a5fa; }
 [data-theme="dark"] .status-badge.missed    { color: #f87171; }
+
+/* ================================================================
+   ENTERPRISE TABLE — added for dashboard redesign
+   ================================================================ */
+
+.ent-card { padding: 0 !important; overflow: hidden; }
+
+.ent-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: var(--font-ui);
+}
+
+/* ── Sticky header ──────────────────────────────────────────── */
+.ent-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.ent-th {
+  padding: 10px 16px;
+  box-sizing: border-box;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+}
+.ent-th:hover { color: var(--gray-600); }
+.ent-th-active { color: #6366f1 !important; }
+
+.ent-sort-icon {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 9px;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.ent-th:hover .ent-sort-icon { opacity: 0.8; }
+.ent-th-active .ent-sort-icon { opacity: 1; color: #6366f1; }
+
+/* ── Data rows ──────────────────────────────────────────────── */
+.ent-row {
+  display: table-row !important;   /* override flex from .call-row */
+  cursor: default !important;
+  transition: background 0.1s;
+}
+.ent-row:hover { background: #f8f7ff !important; }
+.ent-row:nth-child(even) { background: #fafafa; }
+.ent-row:nth-child(even):hover { background: #f8f7ff !important; }
+
+/* Each ent-col is a <td> — set via className on the cell divs inside CallRow.
+   We position columns using table cells. */
+.ent-table td {
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--gray-100);
+  vertical-align: middle;
+}
+.ent-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Column cell layouts ────────────────────────────────────── */
+.ent-col-name {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
+.ent-col-status,
+.ent-col-dur,
+.ent-col-notes,
+.ent-col-time {
+  display: block;
+}
+
+/* ── Override old call-row flex for table context ───────────── */
+.ent-table .call-row {
+  display: contents; /* render children as table cells */
+  border-bottom: none;
+  padding: 0;
+  cursor: default;
+}
+.ent-table .call-row:hover { background: none; }
+
+
+/* ── Enterprise table — mobile responsive ────────────────── */
+@media (max-width: 768px) {
+  .ent-table thead { display: none; }
+
+  .ent-table, .ent-table tbody,
+  .ent-table tr, .ent-table td { display: block; width: 100%; }
+
+  .ent-row {
+    border: 0.5px solid var(--gray-100) !important;
+    border-radius: 10px !important;
+    margin: 8px 12px !important;
+    width: calc(100% - 24px) !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .ent-row td {
+    padding: 8px 14px !important;
+    border-bottom: 0.5px solid var(--gray-100) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  .ent-row td:last-child { border-bottom: none !important; }
+
+  .ent-row td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    letter-spacing: 0.4px;
+    min-width: 64px;
+    flex-shrink: 0;
+  }
+
+  .ent-row td:first-child::before { display: none; }
+  .ent-row td:first-child { padding: 12px 14px !important; }
+}
+
+/* Time column — always no-wrap */
+.ent-table td:last-child span { white-space: nowrap; }
+.ent-table td { white-space: nowrap; }
+.ent-table .call-notes-cell { white-space: normal; }

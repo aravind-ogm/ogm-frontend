@@ -1,6 +1,6 @@
 /* ============================================================
-   OGM FOOTER — Premium Dark, Full-Width Breakout
-   Brand: #1B3A6B navy · #f97316 orange · DM Sans
+   OGM FOOTER — Exact logo navy #2B3990, no border line
+   Logo blends seamlessly into footer background
 ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -16,11 +16,24 @@
   box-sizing: border-box;
   margin-top: 0;
   padding: 64px 0 0;
-  background: #0d1f3c;
-  border-top: 3px solid #1B3A6B;
+
+  /* ✅ Exact OGM logo navy — logo circle blends seamlessly */
+  background: #2B3990;
+  /* ✅ Orange border-top REMOVED */
+  border-top: none;
+
   color: #e2e8f0;
   overflow: hidden;
   font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+/* Subtle texture overlay for depth */
+.premium-footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 /* ── Main container ── */
@@ -33,6 +46,7 @@
   gap: 48px;
   align-items: start;
   margin-bottom: 48px;
+  position: relative;
 }
 
 /* ── Brand column ── */
@@ -43,22 +57,39 @@
 }
 
 .footer-logo {
-  height: 48px;
+  height: 56px;
   width: auto;
   object-fit: contain;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   display: block;
-  opacity: 0.9;
+  /* Bright on the dark navy bg */
+
+  filter: none;
+  opacity: 1;
   transition: opacity 0.2s;
 }
-.footer-logo:hover { opacity: 1; }
+.footer-logo:hover { opacity: 0.88; }
+
+/* Fallback: text logo when image not found */
+.footer-logo-text {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  margin-bottom: 18px;
+  line-height: 1;
+}
+.footer-logo-text span {
+  color: #f97316;
+}
 
 .footer-brand-text {
   font-size: 14px;
   line-height: 1.75;
-  color: #94a3b8;
+  color: rgba(255,255,255,0.55);
   max-width: 280px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 /* ── Social icons ── */
@@ -73,12 +104,12 @@
   width: 36px;
   height: 36px;
   border-radius: 9px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: rgba(255,255,255,0.6);
   text-decoration: none;
   transition: all 0.2s;
 }
@@ -87,6 +118,7 @@
   border-color: #f97316;
   color: #fff;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(249,115,22,0.4);
 }
 .footer-social a i {
   font-size: 16px;
@@ -105,11 +137,11 @@
   font-weight: 700;
   color: #f97316;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  margin-bottom: 16px;
+  letter-spacing: 1.4px;
+  margin-bottom: 18px;
 }
 
-/* ── Glass links card (now used for nav columns) ── */
+/* ── Nav links ── */
 .footer-links-card {
   background: transparent;
   border: none;
@@ -126,30 +158,40 @@
   display: block;
   font-size: 14px;
   font-weight: 400;
-  color: #94a3b8;
+  color: rgba(255,255,255,0.55);
   text-decoration: none;
-  padding: 5px 0;
+  padding: 6px 0;
   border-bottom: none;
   transition: color 0.18s, transform 0.18s;
 }
 .footer-links-card a:hover {
   color: #ffffff;
-  transform: translateX(3px);
+  transform: translateX(4px);
+}
+
+/* ── Divider line ── */
+.footer-divider {
+  max-width: 1320px;
+  margin: 0 auto 0;
+  padding: 0 40px;
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 /* ── Bottom bar ── */
 .footer-bottom {
-  background: rgba(0,0,0,0.2);
-  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.18);
+  border-top: 1px solid rgba(255,255,255,0.07);
   padding: 20px 40px;
   width: 100%;
   text-align: center;
   box-sizing: border-box;
+  position: relative;
 }
 
 .footer-disclaimer {
   font-size: 12px;
-  color: #475569;
+  color: rgba(255,255,255,0.33);
   max-width: 680px;
   margin: 0 auto 6px;
   line-height: 1.6;
@@ -157,8 +199,14 @@
 
 .footer-copy {
   font-size: 13px;
-  color: #64748b;
+  color: rgba(255,255,255,0.45);
   font-weight: 500;
+}
+
+/* Orange dot separator */
+.footer-copy-dot {
+  color: #f97316;
+  margin: 0 6px;
 }
 
 /* ── Responsive ── */
@@ -181,7 +229,7 @@
   }
   .footer-brand { grid-column: 1 / -1; }
   .footer-bottom { padding: 16px 20px; }
-  .footer-logo { height: 40px; }
+  .footer-logo { height: 44px; }
 }
 
 @media (max-width: 400px) {

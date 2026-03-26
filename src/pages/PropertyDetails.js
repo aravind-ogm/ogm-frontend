@@ -576,6 +576,7 @@ export default function PropertyDetails() {
             </button>
             <span className="tooltip">{favorite ? "Wishlisted" : "Wishlist"}</span>
           </div>
+
         </div>
       </div>
 
@@ -603,14 +604,18 @@ export default function PropertyDetails() {
           </div>
         </div>
 
-        {/* ── LIVE TOUR big orange button ── */}
-        <button className="live-tour-header-btn" onClick={() => { setLiveTourRoomName(generateLiveTourRoom()); setLiveTourOpen(true); }}>
-          <span className="live-tour-header-dot" />
-          Live Video Tour
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        {/* ── Live Tour big pill — right side of title row ── */}
+        <button className="live-tour-header-pill" onClick={() => { setLiveTourRoomName(generateLiveTourRoom()); setLiveTourOpen(true); }}>
+          <span className="live-tour-pill-dot" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          Live Tour
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6"/>
           </svg>
         </button>
+
       </div>
 
       {/* Copy toast */}
@@ -753,12 +758,13 @@ export default function PropertyDetails() {
         <Amenities amenities={property.amenities || []} />
       </div>
 
-      {/* ── LOCATION MAP — real Google Map replacing the old iframe ── */}
+      {/* MAP SECTION HIDDEN — uncomment to restore
+{/* ── LOCATION MAP — real Google Map replacing the old iframe ── *\/}
       <div className="details-section">
         <h2>Location Map</h2>
         <div className="map-wrapper">
           {mapError ? (
-            /* Graceful fallback if SDK fails to load */
+            /* Graceful fallback if SDK fails to load *\/
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`}
               target="_blank"
@@ -784,7 +790,9 @@ export default function PropertyDetails() {
         </div>
       </div>
 
-      {/* ── VIDEO MODAL ── */}
+      */}
+
+{/* ── VIDEO MODAL ── */}
       <VideoModal
         open={isVideoOpen}
         onClose={() => setIsVideoOpen(false)}

@@ -106,14 +106,14 @@ function buildWeekSchedule(weekOffset = 0) {
 }
 
 function fmtDuration(seconds) {
-  if (!seconds) return '–';
-  // Guard: backend may store milliseconds — if > 1 day in seconds, divide by 1000
+  if (!seconds || seconds === 0) return '–';
+  // Guard: backend stores milliseconds — divide if > 1 day in seconds
   const secs = seconds > 86400 ? Math.floor(seconds / 1000) : seconds;
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
   const s = secs % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
+  if (m > 0) return `${m}m ${String(s).padStart(2,'0')}s`;
   return `${s}s`;
 }
 
@@ -313,7 +313,7 @@ function useCallHistory(agentId) {
         status:       (c.status || '').toLowerCase() === 'completed' ? 'completed'
                     : (c.status || '').toLowerCase() === 'active'    ? 'ongoing'
                     : 'missed',
-        duration:     c.durationFormatted || fmtDuration(c.durationSeconds),
+        duration:     fmtDuration(c.durationSeconds),  // always reformat — backend string may be wrong
         durationRaw:  c.durationSeconds || 0,
         notes:        (c.notes && c.notes !== '–') ? c.notes : (c.customerNote && c.customerNote !== '–') ? c.customerNote : '',
         time:         fmtTime(c.startedAt),
@@ -722,11 +722,25 @@ function IncomingCallModal({ caller, onAccept, onDecline }) {
 /* ─────────────────────────────────────────────────────────────
    COMPONENT: CallRow
    ───────────────────────────────────────────────────────────── */
+function NotesModal({ notes, onClose }) {
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:'white', borderRadius:14, padding:24, width:'min(480px,92vw)', maxHeight:'80vh', overflowY:'auto', border:'0.5px solid var(--gray-200)' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+          <span style={{ fontWeight:600, fontSize:15 }}>Session notes</span>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:20, cursor:'pointer', color:'var(--gray-400)', lineHeight:1 }}>×</button>
+        </div>
+        <div style={{ background:'var(--gray-50)', borderRadius:8, padding:'12px 14px', fontSize:13, color:'var(--gray-700)', lineHeight:1.65 }}>{notes}</div>
+      </div>
+    </div>
+  );
+}
+
 function CallRow({ call, onStatusChange }) {
-  const statusLabel = { completed: 'Completed', missed: 'Missed', ongoing: 'In Progress', cancelled: 'Cancelled' };
   const [statusMenu, setStatusMenu] = useState(null);
-  // Live timer for active/ongoing calls
+  const [notesOpen,  setNotesOpen]  = useState(false);
   const [liveElapsed, setLiveElapsed] = useState(0);
+
   useEffect(() => {
     if (call.status !== 'ongoing') return;
     const t = setInterval(() => setLiveElapsed(s => s + 1), 1000);
@@ -734,42 +748,88 @@ function CallRow({ call, onStatusChange }) {
   }, [call.status]);
 
   const displayDuration = call.status === 'ongoing'
-    ? (() => { const m = Math.floor(liveElapsed/60); const s = liveElapsed%60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; })()
+    ? (() => { const m = Math.floor(liveElapsed/60); const s = liveElapsed%60; return `${m}m ${String(s).padStart(2,'0')}s`; })()
     : call.duration;
 
+  const statusConfig = {
+    completed: { label: 'Completed', bg: '#dcfce7', color: '#166534', dot: '#22c55e' },
+    ongoing:   { label: 'Ongoing',   bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
+    missed:    { label: 'Missed',    bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
+    cancelled: { label: 'Cancelled', bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
+  };
+  const sc = statusConfig[call.status] || { label: call.status, bg: '#f3f4f6', color: '#374151', dot: '#9ca3af' };
+
+  const truncNote = call.notes && call.notes !== '–' && call.notes.length > 0;
+  const shortNote = truncNote ? call.notes.slice(0, 40) : '';
+  const hasMore   = truncNote && call.notes.length > 40;
+
   return (
-    <div className="call-row" role="row">
-      <AvatarCircle initials={call.initials} online={call.online} />
-      <div className="call-info">
-        <div className="call-name">{call.name}</div>
-        <div className="call-property">{call.property}</div>
-      </div>
-      <div style={{ position: 'relative', minWidth: 105 }}>
-        <div className={`status-badge ${call.status}`} role="status"
-          style={{ cursor: call.status === 'ongoing' ? 'pointer' : 'default' }}
-          onClick={() => call.status === 'ongoing' && setStatusMenu(v => v === call.id ? null : call.id)}
-          title={call.status === 'ongoing' ? 'Click to update status' : ''}
-        >
-          <span className="status-dot" />
-          {statusLabel[call.status] || call.status}
-          {call.status === 'ongoing' && <span style={{ marginLeft: 4, fontSize: 9, opacity: 0.6 }}>▾</span>}
-        </div>
-        {statusMenu === call.id && (
-          <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', border: '1px solid var(--gray-200)', padding: 4, minWidth: 140 }}>
-            {[['completed','✅ Mark Completed'],['missed','❌ Mark Missed']].map(([s, label]) => (
-              <button key={s} onClick={() => { onStatusChange(call.id, s); setStatusMenu(null); }}
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-ui)', borderRadius: 6, color: 'var(--gray-700)' }}
-                onMouseEnter={e => e.target.style.background = 'var(--gray-50)'}
-                onMouseLeave={e => e.target.style.background = 'none'}
-              >{label}</button>
-            ))}
+    <>
+      {notesOpen && <NotesModal notes={call.notes} onClose={() => setNotesOpen(false)} />}
+      <tr className="ent-row" role="row" onMouseEnter={e=>e.currentTarget.style.background='#f8f7ff'} onMouseLeave={e=>e.currentTarget.style.background=''}>
+        {/* Customer */}
+        <td style={{ padding:'11px 16px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <AvatarCircle initials={call.initials} online={call.online} />
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:'var(--gray-900)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{call.name}</div>
+              <div style={{ fontSize:11, color:'var(--gray-400)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:220 }}>{call.property}</div>
+            </div>
           </div>
-        )}
-      </div>
-      <div className="call-duration">{displayDuration}</div>
-      <div className="call-notes">{call.notes && call.notes !== '–' ? call.notes : ''}</div>
-      <div className="call-time">{call.time}</div>
-    </div>
+        </td>
+
+        {/* Status pill */}
+        <td data-label="Status" style={{ padding:'11px 16px' }}>
+          <div style={{ position:'relative', display:'inline-block' }}>
+            <span onClick={() => call.status === 'ongoing' && setStatusMenu(v => v ? null : call.id)}
+              style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, background:sc.bg, color:sc.color, fontSize:11, fontWeight:700, cursor: call.status === 'ongoing' ? 'pointer' : 'default', whiteSpace:'nowrap' }}
+            >
+              <span style={{ width:6, height:6, borderRadius:'50%', background:sc.dot, flexShrink:0 }} />
+              {sc.label}
+              {call.status === 'ongoing' && <span style={{ fontSize:9, opacity:0.6, marginLeft:2 }}>▾</span>}
+            </span>
+            {statusMenu === call.id && (
+              <div style={{ position:'absolute', top:'110%', left:0, zIndex:200, background:'white', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,0.14)', border:'1px solid var(--gray-200)', padding:4, minWidth:152 }}>
+                {[['completed','✓ Mark completed'],['missed','✗ Mark missed']].map(([s, lbl]) => (
+                  <button key={s} onClick={() => { onStatusChange(call.id, s); setStatusMenu(null); }}
+                    style={{ display:'block', width:'100%', textAlign:'left', padding:'7px 12px', border:'none', background:'none', cursor:'pointer', fontSize:12, borderRadius:6, color:'var(--gray-700)' }}
+                    onMouseEnter={e => e.currentTarget.style.background='var(--gray-50)'}
+                    onMouseLeave={e => e.currentTarget.style.background='none'}
+                  >{lbl}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        </td>
+
+        {/* Duration */}
+        <td data-label="Duration" style={{ padding:'11px 16px' }}>
+          <span style={{ fontSize:12, fontWeight:500, fontVariantNumeric:'tabular-nums', color:'var(--gray-700)', whiteSpace:'nowrap' }}>{displayDuration || '–'}</span>
+        </td>
+
+        {/* Notes */}
+        <td data-label="Notes" className="call-notes-cell" style={{ padding:'11px 16px', whiteSpace:'normal' }}>
+          {truncNote ? (
+            <span style={{ fontSize:12, color:'var(--gray-500)' }}>
+              {shortNote}{hasMore ? '…' : ''}
+              {hasMore && (
+                <button onClick={e => { e.stopPropagation(); setNotesOpen(true); }}
+                  style={{ marginLeft:5, fontSize:11, fontWeight:700, color:'#6366f1', background:'none', border:'none', cursor:'pointer', padding:0 }}>
+                  View
+                </button>
+              )}
+            </span>
+          ) : (
+            <span style={{ color:'var(--gray-300)', fontSize:12 }}>—</span>
+          )}
+        </td>
+
+        {/* Time */}
+        <td data-label="Time" style={{ padding:'11px 16px', textAlign:'left' }}>
+          <span style={{ fontSize:12, fontWeight:600, fontVariantNumeric:'tabular-nums', color:'var(--gray-700)', whiteSpace:'nowrap' }}>{call.time}</span>
+        </td>
+      </tr>
+    </>
   );
 }
 
@@ -869,37 +929,54 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving, onAge
             </div>
           </div>
 
-          <div className="content-card">
-            <div className="table-header" role="rowgroup">
-              {/* Sortable header helper */}
-              {[
-                { key:'name',     label:'Name',     style:{ flex:1 } },
-                { key:'status',   label:'Status',   style:{ minWidth:120 } },
-                { key:'duration', label:'Duration',  style:{ minWidth:110, maxWidth:110 } },
-                { key:'notes',    label:'Notes',     style:{ flex:1, maxWidth:175 } },
-                { key:'time',     label:'Time',      style:{ minWidth:65, textAlign:'right' } },
-              ].map(col => (
-                <div key={col.key} style={{ ...col.style, cursor:'pointer', userSelect:'none', display:'flex', alignItems:'center', gap:3 }}
-                  onClick={() => { if(sortBy===col.key) setSortDir(d=>d==='asc'?'desc':'asc'); else { setSortBy(col.key); setSortDir('desc'); } }}
-                >
-                  {col.label}
-                  {sortBy===col.key && <span style={{ fontSize:9, opacity:0.7 }}>{sortDir==='asc'?'▲':'▼'}</span>}
-                </div>
-              ))}
+          <div className="content-card ent-card">
+            {/* Enterprise table */}
+            <div style={{ overflowX:'auto' }}>
+              <table className="ent-table">
+                <thead>
+                  <tr>
+                    {[
+                      { key:'name',     label:'Customer',  w:'38%' },
+                      { key:'status',   label:'Status',    w:'18%' },
+                      { key:'duration', label:'Duration',  w:'16%' },
+                      { key:'notes',    label:'Notes',     w:'16%' },
+                      { key:'time',     label:'Time',      w:'12%' },
+                    ].map(col => (
+                      <th key={col.key} style={{ width:col.w }}
+                        className={sortBy===col.key?'ent-th ent-th-active':'ent-th'}
+                        onClick={() => { if(sortBy===col.key) setSortDir(d=>d==='asc'?'desc':'asc'); else { setSortBy(col.key); setSortDir('desc'); } }}
+                      >
+                        {col.label}
+                        <span className="ent-sort-icon">
+                          {sortBy===col.key ? (sortDir==='asc'?'↑':'↓') : '↕'}
+                        </span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={5} style={{ padding:'40px', textAlign:'center', color:'var(--gray-400)', fontSize:13 }}>
+                      <span className="login-spinner" style={{ borderTopColor:'var(--blue-500)', verticalAlign:'middle', marginRight:8 }} />Loading sessions…
+                    </td></tr>
+                  ) : error ? (
+                    <tr><td colSpan={5}><ErrorBanner message={`Failed to load calls: ${error}`} onRetry={refresh} /></td></tr>
+                  ) : calls.length === 0 ? (
+                    <tr><td colSpan={5}>
+                      <div style={{ padding:'52px 20px', textAlign:'center' }}>
+                        <div style={{ width:52, height:52, background:'var(--gray-50)', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', fontSize:22 }}>📋</div>
+                        <div style={{ fontSize:15, fontWeight:600, color:'var(--gray-700)', marginBottom:6 }}>No sessions found</div>
+                        <div style={{ fontSize:12, color:'var(--gray-400)' }}>
+                          {search ? 'Try a different search term.' : filter === 'Today' ? 'No calls today yet.' : 'Call history will appear here.'}
+                        </div>
+                      </div>
+                    </td></tr>
+                  ) : (
+                    calls.map(call => <CallRow key={call.id} call={call} onStatusChange={setCallStatus} />)
+                  )}
+                </tbody>
+              </table>
             </div>
-
-            {loading ? (
-              <div className="table-loading">
-                <span className="login-spinner" style={{ borderTopColor: 'var(--blue-500)' }} /> Loading calls…
-              </div>
-            ) : error ? (
-              <ErrorBanner message={`Failed to load calls: ${error}`} onRetry={refresh} />
-            ) : calls.length === 0 ? (
-              <EmptyState icon="📋" title="No calls found"
-                subtitle={search ? 'Try a different search term.' : filter === 'Today' ? 'No calls today yet.' : filter === 'Yesterday' ? 'No calls yesterday.' : 'Call history will appear here.'} />
-            ) : (
-              calls.map(call => <CallRow key={call.id} call={call} onStatusChange={setCallStatus} />)
-            )}
           </div>
         </div>
 
@@ -1753,6 +1830,7 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
   const [messages,    setMessages]   = useState([]);
   const [isRecording, setIsRecording]= useState(false);
   const [recDuration, setRecDuration]= useState(0);
+  const [sharedFiles, setSharedFiles]= useState([]);
 
   const jitsiRef      = useRef(null);
   const jitsiApi      = useRef(null);
@@ -1813,7 +1891,8 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
           enableNoisyMicDetection:     false,
           enableNoAudioDetection:      false,
           p2p:                         { enabled: false },
-          toolbarButtons: ['microphone','camera','desktop','chat','raisehand','tileview','participants-pane','hangup'],
+          fileRecordingsEnabled:        true,
+          toolbarButtons: ['microphone','camera','desktop','chat','file-sharing','raisehand','tileview','participants-pane','hangup'],
         },
         interfaceConfigOverwrite: {
           SHOW_JITSI_WATERMARK:             false,
@@ -1958,12 +2037,7 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
           {/* Jitsi fills the entire container — it renders its own controls, pip, and room label */}
           <div className="vc-jitsi-container" ref={jitsiRef} />
 
-          {/* Center cover — solid dark bar that fully hides Jitsi room-name label */}
-          <div style={{
-            position:'absolute', top:0, left:'20%', right:'20%',
-            height:52, background:'#0d1117',
-            zIndex:10000, pointerEvents:'none',
-          }} />
+          {/* Center Jitsi label hidden — no overlay needed */}
 
           {/* Premium OGM badge — covers Jitsi logo, frosted glass style */}
           <div style={{
@@ -2062,6 +2136,20 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
                 </div>
               ))}
             </div>
+            {/* Shared files list */}
+            {sharedFiles.length > 0 && (
+              <div style={{ padding:'6px 12px', borderTop:'0.5px solid var(--gray-100)' }}>
+                <div style={{ fontSize:10, fontWeight:700, color:'var(--gray-400)', textTransform:'uppercase', letterSpacing:.4, marginBottom:4 }}>Shared Files</div>
+                {sharedFiles.map((f,i) => (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 0', fontSize:12 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                    <a href={f.url} target="_blank" rel="noreferrer" style={{ color:'var(--blue-500)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:140 }}>{f.name}</a>
+                    <span style={{ fontSize:10, color:'var(--gray-400)', marginLeft:'auto', flexShrink:0 }}>{f.size}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="vc-chat-input-row">
               <input
                 className="vc-chat-input"
@@ -2071,6 +2159,26 @@ function VideoCallScreen({ caller, agent, property, onEnd }) {
                 onKeyDown={e => e.key === 'Enter' && sendMsg()}
                 aria-label="Chat message"
               />
+              {/* Attachment button */}
+              <label style={{ cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, borderRadius:6, background:'var(--gray-50)', border:'0.5px solid var(--gray-200)', flexShrink:0 }} title="Attach file">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gray-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                <input type="file" style={{ display:'none' }} multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                  onChange={e => {
+                    const files = Array.from(e.target.files || []);
+                    files.forEach(file => {
+                      const url = URL.createObjectURL(file);
+                      const size = file.size > 1024*1024 ? `${(file.size/1024/1024).toFixed(1)}MB` : `${(file.size/1024).toFixed(0)}KB`;
+                      setSharedFiles(prev => [...prev, { name: file.name, url, size }]);
+                      // Add to chat messages
+                      const time = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+                      setMessages(m => [...m, { id: Date.now(), author: toInitials(agent?.name || 'A'), name: agent?.name || 'Agent', time, text: `📎 ${file.name} (${size})`, isFile: true, fileUrl: url }]);
+                    });
+                    e.target.value = '';
+                  }}
+                />
+              </label>
               <button className="vc-send-btn" onClick={sendMsg} aria-label="Send message"><Icon.Send /></button>
             </div>
           </div>
@@ -2100,7 +2208,8 @@ export default function AgentAdminApp() {
       name:          data.callerName  || 'Unknown Caller',
       initials:      toInitials(data.callerName),
       property:      data.propertyId?.toString() || 'Unknown Property',
-      propertyId:    data.propertyId  || null,   // ← store numeric ID for exact lookup
+      propertyId:    data.propertyId  || null,
+      roomName:      data.roomName    || null,   // ← UUID room from customer — MUST match
       mobile:        data.callerMobile || null,
       email:         null,
       photoUrl:      data.callerPhotoUrl || null,
@@ -2178,30 +2287,65 @@ export default function AgentAdminApp() {
   }, [available, agentId]);
 
   /* ── Call actions ── */
-  const handleAcceptCall = useCallback(() => {
-    setActiveCaller(incomingCaller);
+  const handleAcceptCall = useCallback(async () => {
+    const caller = incomingCaller;
+    setActiveCaller(caller);
     setIncomingCaller(null);
-    setAvailable(false); // agent is now busy
-    // Persist busy status
+    setAvailable(false);
+
+    // Mark agent busy
     fetch(`${API_BASE}/api/agent/availability`, {
       method: 'PUT', headers: authHeaders(),
       body: JSON.stringify({ agentId, online: true, busy: true }),
     }).catch(() => {});
+
+    // ✅ Create session record in DB — this makes it appear in call history
+    try {
+      const res = await fetch(`${API_BASE}/api/live-tour/start-session`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId,
+          propertyId:  caller.propertyId || null,
+          callerName:  caller.name,
+          callerMobile: caller.mobile || '',
+          roomName:    caller.roomName || '',
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Store sessionId on activeCaller so end-session can use it
+        setActiveCaller(prev => prev ? { ...prev, sessionId: data.sessionId || data.id } : prev);
+      }
+    } catch { /* non-critical — UI still works */ }
   }, [incomingCaller, agentId]);
 
   const handleDeclineCall = useCallback(() => {
     setIncomingCaller(null);
   }, []);
 
-  const handleEndCall = useCallback(() => {
+  const handleEndCall = useCallback(async () => {
+    const sessionId = activeCaller?.sessionId;
+
+    // ✅ End session in DB — marks status as completed
+    if (sessionId) {
+      try {
+        await fetch(`${API_BASE}/api/live-tour/end-session/${sessionId}`, {
+          method: 'POST',
+          headers: authHeaders(),
+        });
+      } catch { /* non-critical */ }
+    }
+
     setActiveCaller(null);
     setAvailable(true);
+
     // Mark agent available again
     fetch(`${API_BASE}/api/agent/availability`, {
       method: 'PUT', headers: authHeaders(),
       body: JSON.stringify({ agentId, online: true, busy: false }),
     }).catch(() => {});
-  }, [agentId]);
+  }, [activeCaller, agentId]);
 
   const handleJoinFromUpcoming = useCallback((item) => {
     setActiveCaller(item);
