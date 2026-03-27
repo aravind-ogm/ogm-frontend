@@ -4,7 +4,8 @@ import GalleryCarousel  from "../components/GalleryCarousel";
 import VideoModal       from "../components/VideoModal";
 import Amenities        from "../components/Amenities";
 import ImageZoomModal   from "../components/ImageZoomModal";
-import NearbyLocations  from "../components/NearbyLocations";
+import NearbyLocations  from "../components/propertydetails/NearbyLocations";
+import useNearbyPlaces  from "../components/propertydetails/UseNearbyPlaces";   // ← ADD THIS
 import { BadgeCheck, Share2, Heart, Download } from "lucide-react";
 import "../styles/PropertyDetails.css";
 import AskDiscoverWidget from "./AskDiscoverWidget";
@@ -132,7 +133,7 @@ function loadGoogleMaps() {
 
     const script   = document.createElement("script");
     script.id      = "gmaps-sdk";
-    script.src     = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places,geometry,marker`;
     script.async   = true;
     script.defer   = true;
     script.onload  = () => { clearTimeout(timeoutId); resolve(); };
@@ -313,8 +314,7 @@ function LiveJitsi({ containerRef, apiRef, name, roomName }) {
     load();
     return () => { apiRef.current?.dispose(); };
     // FIX: Include name and roomName in deps to prevent stale room on re-join
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, roomName]);
+  }, [name, roomName]); // eslint-disable-line
 
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }
@@ -362,6 +362,11 @@ export default function PropertyDetails() {
   /* ── Map state ── */
   const [mapsReady, setMapsReady] = useState(typeof window.google?.maps?.Map === "function");
   const [mapError,  setMapError]  = useState(false);
+
+  const { places: nearbyPlaces, loading: nearbyLoading } = useNearbyPlaces(
+      property?.latitude,
+      property?.longitude
+  );
 
   /* ── Favorites — FIX: use safeStorage utility ── */
   const [favorite, setFavorite] = useState(
@@ -1048,9 +1053,15 @@ export default function PropertyDetails() {
 
         {/* ── NEARBY LOCATIONS ── */}
         <NearbyLocations
-            locations={property.nearby || []}
+            locations={nearbyPlaces}
             propertyLocation={property.location || ""}
+            propertyName={property.title || "This Property"}
+            propertyImage={property.mainImages?.[0] || property.images?.[0] || ""}
+            loading={nearbyLoading}
+            propertyLat={property.latitude}
+            propertyLng={property.longitude}
         />
+
 
         {/* ── AMENITIES ── */}
         <div className="details-section">
