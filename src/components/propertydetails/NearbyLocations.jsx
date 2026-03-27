@@ -73,7 +73,8 @@ export default function NearbyLocations({
     const [isPropertyPanel, setIsPropertyPanel] = useState(false);
     const [travelMode,      setTravelMode]      = useState('DRIVING');
 
-    /* ── Directions ── */
+    /* ── Cards visibility toggle ── */
+    const [showCards, setShowCards] = useState(true);
     // Seed immediately from property lat/lng so route works on first click.
     // useState initial value only runs once, so we also sync via useEffect
     // in case property data loads after the first render.
@@ -200,13 +201,28 @@ export default function NearbyLocations({
                 onFilterChange={handleFilterChange}
             />
 
-            {/* Result count + sort */}
+            {/* Result count + sort + cards toggle */}
             <div className="nearby-controls-row">
                 <span className="nearby-results-count">
                     {filteredLocations.length} place
                     {filteredLocations.length !== 1 ? 's' : ''} found
                 </span>
-                <NearbySort sortMode={sortMode} onSortChange={setSortMode} />
+                <div className="nearby-controls-right">
+                    <button
+                        className={`nearby-cards-toggle${showCards ? '' : ' is-hidden'}`}
+                        onClick={() => setShowCards(v => !v)}
+                        type="button"
+                        aria-expanded={showCards}
+                        aria-controls="nearby-cards-grid"
+                        title={showCards ? 'Hide place cards' : 'Show place cards'}
+                    >
+                        <span className="nearby-cards-toggle-icon" aria-hidden="true">
+                            {showCards ? '⊟' : '⊞'}
+                        </span>
+                        <span>{showCards ? 'Hide Cards' : 'Show Cards'}</span>
+                    </button>
+                    <NearbySort sortMode={sortMode} onSortChange={setSortMode} />
+                </div>
             </div>
 
             {/* ── Places strip above map ── */}
@@ -257,24 +273,29 @@ export default function NearbyLocations({
                 />
             </div>
 
-            {/* Cards grid */}
-            <div className="nearby-grid">
-                {filteredLocations.length === 0 ? (
-                    <div className="nearby-empty">
-                        <span className="nearby-empty-icon">🔍</span>
-                        <p className="nearby-empty-text">No nearby places found for this filter.</p>
-                    </div>
-                ) : (
-                    filteredLocations.map((item) => (
-                        <NearbyCard
-                            key={item._stableId}
-                            item={item}
-                            isActive={activeId === item._stableId}
-                            onHover={setHoveredId}
-                            onCardClick={handlePlaceSelect}
-                        />
-                    ))
-                )}
+            {/* Cards grid — collapsible */}
+            <div
+                id="nearby-cards-grid"
+                className={`nearby-grid-wrapper${showCards ? ' is-visible' : ' is-collapsed'}`}
+            >
+                <div className="nearby-grid">
+                    {filteredLocations.length === 0 ? (
+                        <div className="nearby-empty">
+                            <span className="nearby-empty-icon">🔍</span>
+                            <p className="nearby-empty-text">No nearby places found for this filter.</p>
+                        </div>
+                    ) : (
+                        filteredLocations.map((item) => (
+                            <NearbyCard
+                                key={item._stableId}
+                                item={item}
+                                isActive={activeId === item._stableId}
+                                onHover={setHoveredId}
+                                onCardClick={handlePlaceSelect}
+                            />
+                        ))
+                    )}
+                </div>
             </div>
         </section>
     );

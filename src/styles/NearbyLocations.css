@@ -1,12 +1,13 @@
-/* =============================================================
+/*
+!* =============================================================
    NearbyLocations.css — Enterprise-grade Nearby Highlights
    Extends the original styles without removing anything.
    New sections are clearly marked with ★ ENTERPRISE ADD-ON ★
-   ============================================================= */
+   ============================================================= *!
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    GLOBAL SECTION WRAPPER  (original, unchanged)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-section {
   margin: 55px 0;
 }
@@ -18,10 +19,10 @@
   margin-bottom: 16px;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    ★ ENTERPRISE ADD-ON — NEARBY SUMMARY
    Gradient essentials panel above the filter bar.
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-summary {
   background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 60%, #fdf4ff 100%);
   border: 1px solid #d1fae5;
@@ -79,17 +80,17 @@
   font-size: 11.5px;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    ★ ENTERPRISE ADD-ON — CATEGORY FILTER BAR
    Horizontally scrollable pills (like Airbnb / Booking.com).
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-filter-bar {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   padding: 4px 2px 14px;
   margin-bottom: 4px;
-  /* Hide scrollbar across all browsers */
+  !* Hide scrollbar across all browsers *!
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -158,9 +159,9 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    ★ ENTERPRISE ADD-ON — CONTROLS ROW (count + sort)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-controls-row {
   display: flex;
   justify-content: space-between;
@@ -175,7 +176,7 @@
   font-weight: 500;
 }
 
-/* Sort dropdown wrapper */
+!* Sort dropdown wrapper *!
 .nearby-sort-wrapper {
   position: relative;
   display: inline-flex;
@@ -208,7 +209,7 @@
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }
 
-/* Chevron icon overlaid on the select */
+!* Chevron icon overlaid on the select *!
 .nearby-sort-chevron {
   position: absolute;
   right: 10px;
@@ -216,9 +217,9 @@
   pointer-events: none;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    GOOGLE MAP WRAPPER  (original, kept intact + legend override)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-map-wrapper {
   position: relative;
   border-radius: 18px;
@@ -236,7 +237,7 @@
   transition: opacity 0.3s ease;
 }
 
-/* Loading state */
+!* Loading state *!
 .nearby-map-loading {
   position: absolute;
   inset: 0;
@@ -265,7 +266,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* "Click map" hint tooltip (original, kept) */
+!* "Click map" hint tooltip (original, kept) *!
 .nearby-map-wrapper:hover::after {
   content: "Click anywhere on the map to open in Google Maps";
   position: absolute;
@@ -289,15 +290,15 @@
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    ★ ENTERPRISE ADD-ON — PREMIUM MAP LEGEND
    Replaces the original single-row legend with a floating
    panel (bottom-left) showing all present category colours.
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-map-legend {
   position: absolute;
   bottom: 14px;
-  left: 14px;  /* ← overrides original left:50% / transform */
+  left: 14px;  !* ← overrides original left:50% / transform *!
   transform: none;
   display: flex;
   flex-direction: column;
@@ -317,7 +318,7 @@
   overflow-y: auto;
   scrollbar-width: none;
   min-width: 148px;
-  pointer-events: none; /* let map clicks pass through */
+  pointer-events: none; !* let map clicks pass through *!
 }
 
 .nearby-map-legend::-webkit-scrollbar {
@@ -362,20 +363,20 @@
   line-height: 1;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    GRID LAYOUT  (original, unchanged)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
   gap: 32px;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    PREMIUM CARD  (original base + enterprise extensions)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-card-premium {
-  position: relative; /* needed for absolute-positioned children */
+  position: relative; !* needed for absolute-positioned children *!
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -401,7 +402,7 @@
     0 28px 65px rgba(0, 0, 0, 0.18);
 }
 
-/* ── ★ ACTIVE STATE — card clicked / marker clicked ── */
+!* ── ★ ACTIVE STATE — card clicked / marker clicked ── *!
 .nearby-card-premium.is-active {
   border-color: #10b981;
   box-shadow:
@@ -411,7 +412,7 @@
   transform: translateY(-8px);
 }
 
-/* ── ★ IMPORTANT CARD treatment ── */
+!* ── ★ IMPORTANT CARD treatment ── *!
 .nearby-card-premium.is-important {
   border-color: rgba(251, 191, 36, 0.45);
 }
@@ -430,9 +431,9 @@
   z-index: 0;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    IMAGE WRAPPER  (original, unchanged)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-img-wrapper {
   height: 210px;
   position: relative;
@@ -459,10 +460,10 @@
   justify-content: center;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    CATEGORY BADGE  (original colours overridden dynamically
    via inline style; keep the structural rule as fallback)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-category {
   position: absolute;
   top: 14px;
@@ -471,7 +472,7 @@
   font-size: 11.5px;
   font-weight: 700;
   border-radius: 20px;
-  background: linear-gradient(135deg, #0ea5e9, #0284c7); /* fallback */
+  background: linear-gradient(135deg, #0ea5e9, #0284c7); !* fallback *!
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
@@ -480,7 +481,7 @@
   z-index: 1;
 }
 
-/* ── ★ IMPORTANT BADGE (bottom-left of image) ── */
+!* ── ★ IMPORTANT BADGE (bottom-left of image) ── *!
 .nearby-important-badge {
   position: absolute;
   bottom: 12px;
@@ -496,7 +497,7 @@
   z-index: 1;
 }
 
-/* ── ★ MARKER NUMBER CHIP (top-right of image) ── */
+!* ── ★ MARKER NUMBER CHIP (top-right of image) ── *!
 .nearby-card-num {
   position: absolute;
   top: 12px;
@@ -517,9 +518,9 @@
   z-index: 1;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    FOOTER CONTENT  (original, unchanged)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-footer {
   padding: 16px 20px 18px;
   display: flex;
@@ -540,7 +541,7 @@
 .nearby-pin {
   margin-top: 3px;
   flex-shrink: 0;
-  /* colour set via inline style */
+  !* colour set via inline style *!
 }
 
 .nearby-text {
@@ -571,7 +572,7 @@
   width: fit-content;
 }
 
-/* ── ★ TRAVEL TIME ROW ── */
+!* ── ★ TRAVEL TIME ROW ── *!
 .nearby-travel-row {
   display: flex;
   gap: 5px;
@@ -590,9 +591,9 @@
   white-space: nowrap;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    ACTION ICONS  (original, unchanged)
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 .nearby-icons {
   display: flex;
   align-items: center;
@@ -614,9 +615,9 @@
   opacity: 1;
 }
 
-/* ─────────────────────────────────────────────────────────────
+!* ─────────────────────────────────────────────────────────────
    MOBILE RESPONSIVE
-───────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────── *!
 @media (max-width: 768px) {
   .nearby-grid {
     grid-template-columns: 1fr;
@@ -642,7 +643,7 @@
     padding: 5px 10px 5px 8px;
   }
 
-  /* On narrow screens, hide pill labels — show icon + count only */
+  !* On narrow screens, hide pill labels — show icon + count only *!
   .nearby-filter-pill .filter-pill-label {
     display: none;
   }
@@ -661,7 +662,7 @@
     padding: 7px 30px 7px 11px;
   }
 
-  /* Compact legend on small screens */
+  !* Compact legend on small screens *!
   .nearby-map-legend {
     font-size: 10.5px;
     padding: 8px 11px;
@@ -675,7 +676,7 @@
     font-size: 8.5px;
   }
 
-  /* Travel times take extra vertical space on mobile — hide them */
+  !* Travel times take extra vertical space on mobile — hide them *!
   .nearby-travel-row {
     display: none;
   }
@@ -693,4 +694,4 @@
   .nearby-img-wrapper {
     height: 180px;
   }
-}
+}*/
