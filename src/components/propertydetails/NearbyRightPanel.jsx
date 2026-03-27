@@ -42,13 +42,33 @@ const NearbyRightPanel = memo(function NearbyRightPanel({
         setImgError(false);
     }, [selectedPlace?.name]);
 
+    const [shareToast, setShareToast] = useState('');
+
     const handleShare = useCallback(() => {
-        const text = selectedPlace?.name || propertyName || '';
-        if (navigator.share) {
-            navigator.share({ title: text }).catch(() => {});
-        } else {
-            navigator.clipboard?.writeText(text).catch(() => {});
+        const name = selectedPlace?.name || propertyName || '';
+        const lat  = selectedPlace ? parseFloat(selectedPlace.latitude ?? selectedPlace.lat) : null;
+        const lng  = selectedPlace ? parseFloat(selectedPlace.longitude ?? selectedPlace.lng) : null;
+        const mapsUrl = lat && lng
+            ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`;
+        const shareText = `${name}\n${mapsUrl}`;
+
+        // Mobile: use native share sheet
+        if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+            navigator.share({ title: name, text: name, url: mapsUrl }).catch(() => {});
+            return;
         }
+
+        // Desktop: copy to clipboard + show toast
+        navigator.clipboard?.writeText(shareText)
+            .then(() => {
+                setShareToast('📋 Copied to clipboard!');
+                setTimeout(() => setShareToast(''), 2500);
+            })
+            .catch(() => {
+                setShareToast('❌ Could not copy');
+                setTimeout(() => setShareToast(''), 2000);
+            });
     }, [selectedPlace, propertyName]);
 
     const handleOpenGoogleMaps = useCallback(() => {
@@ -108,6 +128,13 @@ const NearbyRightPanel = memo(function NearbyRightPanel({
                         <X size={18} />
                     </button>
                 </div>
+
+                {/* Share toast */}
+                {shareToast && (
+                    <div className="panel-share-toast" role="status" aria-live="polite">
+                        {shareToast}
+                    </div>
+                )}
 
                 {/* Scrollable body */}
                 <div className="panel-body">

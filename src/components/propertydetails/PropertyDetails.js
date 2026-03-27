@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import GalleryCarousel  from "../components/GalleryCarousel";
-import VideoModal       from "../components/VideoModal";
-import Amenities        from "../components/Amenities";
-import ImageZoomModal   from "../components/ImageZoomModal";
-import NearbyLocations  from "../components/propertydetails/NearbyLocations";
-import useNearbyPlaces  from "../components/propertydetails/UseNearbyPlaces";   // ← ADD THIS
+import GalleryCarousel  from "../GalleryCarousel";
+import VideoModal       from "../VideoModal";
+import Amenities        from "../Amenities";
+import ImageZoomModal   from "../ImageZoomModal";
+import NearbyLocations  from "./NearbyLocations";
+import useNearbyPlaces  from "./UseNearbyPlaces";   // ← ADD THIS
 import { BadgeCheck, Share2, Heart, Download } from "lucide-react";
-import "../styles/PropertyDetails.css";
-import AskDiscoverWidget from "./AskDiscoverWidget";
+import "./PropertyDetails.css";
+import AskDiscoverWidget from "../../pages/AskDiscoverWidget";
 
 /* ─── API base ───────────────────────────────────────────────────────────────
    Set  REACT_APP_API_BASE=http://localhost:8080  in your .env.development

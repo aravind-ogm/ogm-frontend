@@ -520,6 +520,7 @@
     flex-direction: column;
     transition: width var(--nb-transition);
     flex-shrink: 0;
+    position: relative;  /* needed for toast positioning */
 }
 
 .nearby-right-panel.is-open {
@@ -877,6 +878,25 @@
     border-color: var(--nb-green);
     color: var(--nb-green-dark);
     background: var(--nb-green-light);
+}
+
+/* Share toast */
+.panel-share-toast {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 20px;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    animation: nb-slideUp 0.2s ease;
+    pointer-events: none;
 }
 
 /* View on Google Maps button */

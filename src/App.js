@@ -10,7 +10,7 @@ import FloatingWhatsapp   from "./components/FloatingWhatsapp";
 import Footer             from "./components/Footer";
 import AuthContainer      from "./components/ogm-auth/AuthContainer";
 import Contact            from "./pages/Contact";
-import PropertyDetails    from "./pages/PropertyDetails";
+import PropertyDetails    from "./components/propertydetails/PropertyDetails";
 import About              from "./pages/About";
 import PrivacyPolicy      from "./pages/PrivacyPolicy";
 import AiSearchPage       from "./components/ai/AiSearchPage";
