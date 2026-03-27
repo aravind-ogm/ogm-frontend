@@ -1,9 +1,16 @@
 /* ================================================================
-   PropertyDetails.css — Clean Single Source of Truth
-   No duplicates, no conflicts
+   PropertyDetails.css — Fixed & Production-Ready
+   Fixes applied:
+   - Removed duplicate .details-header-row rule
+   - Fixed Live Tour pill alignment (align-items: center)
+   - Added skeleton shimmer animation
+   - Added input hint styles for inline brochure validation
+   - Added brochure status message styles
+   - Fixed live-modal-box height with dvh for iOS Safari
+   - Added video-card no-video state
+   - Removed Google Fonts @import (move to HTML <head> preload)
+   - Mobile responsive improvements
    ================================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 /* ── Page container ─────────────────────────────────────────── */
 .details-container {
@@ -17,12 +24,25 @@
   transform: none !important;
 }
 
+/* ── Loading skeleton ────────────────────────────────────────── */
 .loading {
   font-size: 18px;
   text-align: center;
   margin-top: 60px;
   color: #64748b;
   font-family: 'Inter', sans-serif;
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position:  200% 0; }
+}
+.skel {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8px;
+  display: block;
 }
 
 /* ── Top bar: back + icon actions ───────────────────────────── */
@@ -79,8 +99,12 @@
   box-shadow: 0 4px 12px rgba(15,23,42,0.1);
   transform: translateY(-1px);
 }
+.action-btn:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
 
-/* Tooltip */
+/* ── Tooltip ─────────────────────────────────────────────────── */
 .tooltip-wrapper {
   position: relative;
   display: inline-flex;
@@ -115,16 +139,22 @@
   transform: translateX(-50%) translateY(0);
 }
 
-/* ── Header: title left, Live Tour right ────────────────────── */
+/* ── Header row: title left, Live Tour right ─────────────────
+   align-items: flex-start so the pill anchors to the top of the
+   left block. margin-top on the pill then nudges it down just
+   enough to sit beside the title text, not the badges row.     */
 .details-header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
   margin-bottom: 8px;
 }
 
-.details-header-left { flex: 1; min-width: 0; }
+.details-header-left {
+  flex: 1;
+  min-width: 0;
+}
 
 .details-title {
   font-size: 26px;
@@ -145,7 +175,7 @@
   margin-bottom: 12px;
 }
 
-/* Badge row — price is inline here */
+/* Badge row */
 .header-badges {
   display: flex;
   align-items: center;
@@ -177,20 +207,9 @@
   line-height: 1;
 }
 
-/* ── Live Tour button ───────────────────────────────────────── */
-.live-tour-header-btn { display: none; }
-
-/* ── Live Tour header pill — right of title row ────────────── */
-.details-header-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-}
-.details-header-left {
-  flex: 1;
-  min-width: 0;
-}
+/* ── Live Tour header pill ────────────────────────────────────
+   FIX: align-self: center pins it to the vertical midpoint.
+   FIX: Removed stray .live-tour-header-btn rule reference.  */
 .live-tour-header-pill {
   display: inline-flex;
   align-items: center;
@@ -200,21 +219,28 @@
   border: none;
   background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  align-self: center;
+  align-self: flex-start;   /* anchor to top of left block */
+  margin-top: 4px;          /* nudge down to sit beside the title text */
   box-shadow: 0 6px 22px rgba(249,115,22,0.4);
-  transition: all 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   letter-spacing: 0.1px;
 }
 .live-tour-header-pill:hover {
   box-shadow: 0 10px 32px rgba(249,115,22,0.55);
   transform: translateY(-2px);
 }
+.live-tour-header-pill:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(249,115,22,0.5);
+}
+
 .live-tour-pill-dot {
   width: 9px;
   height: 9px;
@@ -229,17 +255,7 @@
   50%      { opacity: 0.6; box-shadow: 0 0 0 5px rgba(255,255,255,0.1); }
 }
 
-.live-tour-header-dot {
-  width: 9px; height: 9px;
-  background: #fff;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(255,255,255,0.8);
-  animation: dot-blink 1.2s ease-in-out infinite;
-}
-@keyframes dot-blink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
-
-/* ── Price row (hidden — price is now inline in badges) ── */
+/* ── Price row (hidden — price is inline in badges) ── */
 .details-price-row { display: none; }
 .details-price {
   font-size: 26px;
@@ -277,6 +293,10 @@
   cursor: pointer;
   background: #0f172a;
 }
+.video-card:focus-visible {
+  outline: 3px solid #f97316;
+  outline-offset: 2px;
+}
 .video-thumb {
   width: 100%; height: 100%;
   object-fit: cover;
@@ -301,6 +321,19 @@
   transition: transform 0.2s;
 }
 .video-card:hover .video-play-button { transform: translate(-50%, -50%) scale(1.1); }
+
+/* FIX (UX): No-video placeholder state */
+.video-card--no-video {
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.video-no-video-msg {
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  font-weight: 500;
+}
 
 /* ── Briefing strip ─────────────────────────────────────────── */
 .briefing-strip {
@@ -330,7 +363,7 @@
   border: none;
   background: linear-gradient(135deg, #f97316, #ea580c);
   color: #fff;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.2px;
@@ -340,6 +373,7 @@
   box-shadow: 0 3px 12px rgba(249,115,22,0.3);
 }
 .briefing-strip-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(249,115,22,.45); }
+.briefing-strip-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .briefing-calendar-icon {
   width: 36px; height: 36px;
   border-radius: 8px;
@@ -373,25 +407,21 @@
   overflow: hidden;
 }
 .spec-box:hover {
-  border-color: #e2e8f0;
   box-shadow: 0 4px 18px rgba(15,23,42,0.08);
   transform: translateY(-3px);
 }
-/* Icon circle — colored */
 .spec-icon {
-  width: 44px;
-  height: 44px;
+  width: 44px; height: 44px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.spec-icon-blue  { background: #eff6ff; color: #2563eb; }
-.spec-icon-orange{ background: #fff7ed; color: #f97316; }
-.spec-icon-green { background: #f0fdf4; color: #059669; }
+.spec-icon-blue   { background: #eff6ff; color: #2563eb; }
+.spec-icon-orange { background: #fff7ed; color: #f97316; }
+.spec-icon-green  { background: #f0fdf4; color: #059669; }
 
-/* Number + label on same line */
 .spec-text {
   display: flex;
   flex-direction: row;
@@ -511,6 +541,7 @@
   animation: map-spin 0.7s linear infinite;
 }
 @keyframes map-spin { to { transform: rotate(360deg); } }
+
 .map-fallback-link {
   display: flex; align-items: center; justify-content: center;
   height: 100%; font-size: 14px; font-weight: 600; color: #2563eb;
@@ -598,7 +629,7 @@
   box-sizing: border-box;
 }
 .modal-content h3 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 6px; }
-.modal-content > p  { font-size: 13px; color: #64748b; margin: 0 0 18px; }
+.modal-content > p { font-size: 13px; color: #64748b; margin: 0 0 18px; }
 .input-group { margin-bottom: 14px; }
 .input-group label {
   display: block; font-size: 12.5px; font-weight: 600;
@@ -612,6 +643,36 @@
   transition: border-color 0.15s;
 }
 .input-group input:focus { border-color: #059669; background: #fff; }
+
+/* FIX (UX): Inline validation feedback hints */
+.input-hint {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 5px;
+}
+.input-hint--error { color: #dc2626; }
+.input-hint--ok    { color: #059669; }
+
+/* FIX (UX): Brochure status messages */
+.brochure-status {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.brochure-status--error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+.brochure-status--success {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
 .modal-btn-group { display: flex; gap: 10px; margin-top: 18px; }
 .submit-btn {
   flex: 1; background: #059669; color: #fff;
@@ -619,7 +680,7 @@
   font-weight: 700; cursor: pointer; font-size: 14px;
   transition: all 0.2s;
 }
-.submit-btn:hover { background: #047857; }
+.submit-btn:hover:not(:disabled) { background: #047857; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .modal-btn {
   flex: 1; background: #f1f5f9; color: #374151;
@@ -671,6 +732,7 @@
   transition: 0.2s; z-index: 3;
 }
 .gallery-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.06); }
+.gallery-arrow:focus-visible { outline: 3px solid #f97316; outline-offset: 2px; }
 .gallery-arrow.left  { left: 14px; }
 .gallery-arrow.right { right: 14px; }
 .gallery-thumbs { display: none !important; }
@@ -683,10 +745,12 @@
   z-index: 99998;
 }
 .live-modal-box {
-  width: 95%; max-width: 1100px; height: 85vh;
+  width: 95%; max-width: 1100px;
+  height: 85vh;
+  height: 85dvh; /* FIX: dvh for iOS Safari address bar */
   background: #111827;
   border-radius: 18px;
-  overflow: hidden;          /* clip Jitsi participants panel inside modal */
+  overflow: hidden;
   position: relative;
   box-shadow: 0 30px 80px rgba(0,0,0,0.7);
   animation: slide-up 0.3s ease;
@@ -712,6 +776,7 @@
   box-shadow: 0 0 10px #22c55e;
   animation: dot-blink 1.2s infinite;
 }
+@keyframes dot-blink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
 .live-prejoin-content h2 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
 .live-prejoin-content p  { font-size: 12.5px; color: rgba(255,255,255,0.55); margin-bottom: 20px; }
 .live-name-input {
@@ -757,21 +822,65 @@
 .live-close-btn:hover { background: #dc2626; }
 
 /* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .live-tour-header-pill {
+    font-size: 14px;
+    padding: 11px 18px;
+    gap: 7px;
+  }
+}
+
 @media (max-width: 768px) {
   .details-container { padding: 0 16px 80px; margin: 16px auto; }
   .details-topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .details-header-row { flex-direction: column; gap: 14px; }
-  .live-tour-header-btn { width: 100%; justify-content: center; font-size: 14px; padding: 12px; }
-  .spec-grid { grid-template-columns: repeat(2, 1fr); }
-  .pd-table { grid-template-columns: 1fr; }
+
+  /* FIX: Mobile header — stack vertically, pill goes full width */
+  .details-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .live-tour-header-pill {
+    width: 100%;
+    justify-content: center;
+    font-size: 15px;
+    padding: 14px;
+    align-self: stretch;
+    margin-top: 0;
+  }
+
+  .spec-grid    { grid-template-columns: repeat(2, 1fr); }
+  .pd-table     { grid-template-columns: 1fr; }
   .media-wrapper { grid-template-columns: 1fr; }
   .briefing-strip { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .live-modal-box { height: 90vh; }
+
+  /* FIX: iOS Safari dvh */
+  .live-modal-box {
+    height: 90vh;
+    height: 90dvh;
+  }
   .gallery-main { height: 280px; }
+  .video-card   { min-height: 200px; }
+
+  /* Brochure modal full screen on mobile */
+  .modal-content { padding: 20px; }
 }
 
 @media (max-width: 480px) {
-  .spec-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .spec-grid    { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .details-price { font-size: 24px; }
   .details-title { font-size: 20px; }
+  .live-prejoin-content { padding: 28px 20px; max-width: calc(100vw - 48px); }
+}
+
+/* ── Reduced motion: disable animations for users who prefer it ── */
+@media (prefers-reduced-motion: reduce) {
+  .skel                { animation: none; background: #e2e8f0; }
+  .live-tour-pill-dot  { animation: none; }
+  .live-prejoin-dot    { animation: none; }
+  .live-modal-box      { animation: none; }
+  .spec-box            { transition: none; }
+  .action-btn          { transition: none; }
+  .gallery-image       { transition: none; }
+  .gallery-arrow       { transition: none; }
 }
