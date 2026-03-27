@@ -41,31 +41,18 @@ const getTypeIcon = (type = "") => {
 function ReraBadgeIcon() {
   return (
     <svg
-      width="20" height="20"
-      viewBox="0 0 20 20"
+      width="18" height="18"
+      viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/*
-        Outer partial circle arc — goes from ~200° to ~340°
-        (bottom-left, sweeping counterclockwise to top-left)
-        This forms the crescent/half-circle left arc.
-      */}
-      <path
-        d="M 10 18
-           A 8 8 0 1 1 10 2"
-        stroke="#0f172a"
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/*
-        Checkmark — positioned right of centre, inside the arc
-      */}
+      {/* Solid green circle */}
+      <circle cx="9" cy="9" r="9" fill="#0f172a" />
+      {/* White bold tick/checkmark */}
       <polyline
-        points="6,10 9,13 15,7"
-        stroke="#0f172a"
-        strokeWidth="2"
+        points="4.5,9.5 7.5,12.5 13.5,6"
+        stroke="#ffffff"
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
