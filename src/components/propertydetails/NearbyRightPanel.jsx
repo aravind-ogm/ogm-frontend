@@ -11,6 +11,7 @@ import {
     openInGoogleMaps,
     renderStars,
     directionsUrl,
+    parseDistanceKm,
 } from './utils';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -32,6 +33,7 @@ const NearbyRightPanel = memo(function NearbyRightPanel({
                                                             travelMode,
                                                             onTravelModeChange,
                                                             allLocations,
+                                                            propertySlug,
                                                         }) {
     const [saved,    setSaved]    = useState(false);
     const [imgError, setImgError] = useState(false);
@@ -43,6 +45,7 @@ const NearbyRightPanel = memo(function NearbyRightPanel({
     }, [selectedPlace?.name]);
 
     const [shareToast, setShareToast] = useState('');
+    const shareToastTimerRef = React.useRef(null);
 
     const handleShare = useCallback(() => {
         const name = selectedPlace?.name || propertyName || '';
@@ -63,13 +66,18 @@ const NearbyRightPanel = memo(function NearbyRightPanel({
         navigator.clipboard?.writeText(shareText)
             .then(() => {
                 setShareToast('📋 Copied to clipboard!');
-                setTimeout(() => setShareToast(''), 2500);
+                clearTimeout(shareToastTimerRef.current);
+                shareToastTimerRef.current = setTimeout(() => setShareToast(''), 2500);
             })
             .catch(() => {
                 setShareToast('❌ Could not copy');
-                setTimeout(() => setShareToast(''), 2000);
+                clearTimeout(shareToastTimerRef.current);
+                shareToastTimerRef.current = setTimeout(() => setShareToast(''), 2000);
             });
     }, [selectedPlace, propertyName]);
+
+    // Cleanup toast timer on unmount
+    useEffect(() => () => clearTimeout(shareToastTimerRef.current), []);
 
     const handleOpenGoogleMaps = useCallback(() => {
         if (selectedPlace) {
@@ -151,6 +159,7 @@ const NearbyRightPanel = memo(function NearbyRightPanel({
                             onSave={() => setSaved((s) => !s)}
                             imgError={imgError}
                             onImgError={() => setImgError(true)}
+                            propertySlug={propertySlug}
                         />
                     ) : selectedPlace ? (
                         <PlacePanelContent
@@ -176,13 +185,13 @@ const NearbyRightPanel = memo(function NearbyRightPanel({
 function PropertyPanelContent({
                                   propertyName, propertyLocation, propertyImage,
                                   allLocations, onDirections, onShare, onOpenGoogleMaps,
-                                  saved, onSave, imgError, onImgError,
+                                  saved, onSave, imgError, onImgError, propertySlug,
                               }) {
     const nearbyHighlights = ['hospital', 'school', 'metro', 'restaurant', 'supermarket'];
     const keySummary = nearbyHighlights.map((key) => {
         const match = allLocations
             .filter((l) => (l.category || '').toLowerCase().includes(key))
-            .sort((a, b) => (parseFloat(a.distance) || 99) - (parseFloat(b.distance) || 99))[0];
+            .sort((a, b) => parseDistanceKm(a.distance) - parseDistanceKm(b.distance))[0];
         return match ? { key, name: match.name, distance: match.distance } : null;
     }).filter(Boolean);
 
@@ -253,7 +262,7 @@ function PropertyPanelContent({
                 <ExternalLink size={12} />
             </button>
 
-            <a href="/property" className="panel-view-property-link" rel="noopener noreferrer">
+            <a href={propertySlug ? `/property/${propertySlug}` : "#"} className="panel-view-property-link" rel="noopener noreferrer">
                 View Full Property Details <ExternalLink size={12} />
             </a>
         </div>

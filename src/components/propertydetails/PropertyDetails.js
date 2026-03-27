@@ -1057,6 +1057,7 @@ export default function PropertyDetails() {
             propertyLocation={property.location || ""}
             propertyName={property.title || "This Property"}
             propertyImage={property.mainImages?.[0] || property.images?.[0] || ""}
+            propertySlug={property.slug || slug}
             loading={nearbyLoading}
             propertyLat={property.latitude}
             propertyLng={property.longitude}

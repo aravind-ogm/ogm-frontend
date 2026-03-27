@@ -1,5 +1,5 @@
 import React, {
-    useState, useEffect, useCallback, useMemo,
+    useState, useEffect, useCallback, useMemo, useRef,
 } from 'react';
 import NearbyMap from './NearbyMap';
 import NearbyRightPanel from './NearbyRightPanel';
@@ -43,6 +43,7 @@ export default function NearbyLocations({
                                             propertyLocation = '',
                                             propertyName     = 'This Property',
                                             propertyImage    = '',
+                                            propertySlug     = '',     // ← slug for "View Full Property Details" link
                                             loading          = false,
                                             propertyLat      = null,   // ← pass property.latitude directly
                                             propertyLng      = null,   // ← pass property.longitude directly
@@ -63,6 +64,8 @@ export default function NearbyLocations({
     /* ── Filter + sort ── */
     const [activeFilter, setActiveFilter] = useState('All');
     const [sortMode,     setSortMode]     = useState('nearest');
+
+    const panelCloseTimerRef = useRef(null);
 
     /* ── Map ↔ Card sync ── */
     const [activeId,  setActiveId]  = useState(null);
@@ -150,8 +153,12 @@ export default function NearbyLocations({
         setIsPanelOpen(false);
         setActiveId(null);
         setDirectionsRequest(null);
-        setTimeout(() => setIsPropertyPanel(false), 350);
+        clearTimeout(panelCloseTimerRef.current);
+        panelCloseTimerRef.current = setTimeout(() => setIsPropertyPanel(false), 350);
     }, []);
+
+    // Cleanup timer on unmount
+    useEffect(() => () => clearTimeout(panelCloseTimerRef.current), []);
 
     /** Map background click → same as panel close */
     const handleMapBackgroundClick = useCallback(() => {
@@ -270,6 +277,7 @@ export default function NearbyLocations({
                     onTravelModeChange={handleTravelModeChange}
                     isMobile={isMobile}
                     allLocations={allLocations}
+                    propertySlug={propertySlug}
                 />
             </div>
 

@@ -9,17 +9,30 @@ import {
     renderStars,
 } from './utils';
 
+/* ─── HTML escape helper (prevent XSS in InfoWindow HTML) ───────────────── */
+function escHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 /* ─── Google Maps SDK loader (singleton) ────────────────────────────────── */
-const GMAPS_KEY =
-    process.env.REACT_APP_GOOGLE_MAPS_API_KEY ||
-    'AIzaSyAMOnmpGRW9d36CNRQTjAavV4EjHGlXzO4';
+const GMAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '';
+if (!GMAPS_KEY) {
+    console.error('[NearbyMap] REACT_APP_GOOGLE_MAPS_API_KEY is not set.');
+}
 
 function loadGoogleMaps() {
     if (typeof window.google?.maps?.Map === 'function') return Promise.resolve();
     if (document.getElementById('gmaps-sdk')) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
             const t = setInterval(() => {
-                if (typeof window.google?.maps?.Map === 'function') { clearInterval(t); resolve(); }
+                if (typeof window.google?.maps?.Map === 'function') { clearInterval(t); resolve(); return; }
+                if (++attempts > 100) { clearInterval(t); reject(new Error('Maps SDK load timeout')); }
             }, 100);
         });
     }
@@ -126,11 +139,11 @@ function buildInfoContent(loc, colour, num) {
         <span style="background:${colour};color:#fff;border-radius:50%;width:26px;height:26px;
           display:inline-flex;align-items:center;justify-content:center;
           font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px;">${num}</span>
-        <strong style="font-size:14px;color:#0f172a;line-height:1.3;">${loc.name}</strong>
+        <strong style="font-size:14px;color:#0f172a;line-height:1.3;">${escHtml(loc.name)}</strong>
       </div>
       ${loc.category
         ? `<span style="background:${colour}1a;color:${colour};padding:3px 10px;
-             border-radius:12px;font-size:11px;font-weight:700;">${loc.category}</span><br/>`
+             border-radius:12px;font-size:11px;font-weight:700;">${escHtml(loc.category)}</span><br/>`
         : ''}
       ${starsHtml}
       ${loc.distance
@@ -221,7 +234,11 @@ export default function NearbyMap({
             fullscreenControl: true,
             zoomControl:       true,
             clickableIcons:    false, // prevent POI popups from interfering
-            mapId:             'DEMO_MAP_ID', // required for AdvancedMarkerElement
+            // mapId is required for AdvancedMarkerElement.
+            // Set REACT_APP_GOOGLE_MAPS_MAP_ID in .env with a Map ID from
+            // Google Cloud Console → Maps → Map Management.
+            // Without a valid Map ID, the code falls back to legacy Marker automatically.
+            mapId: process.env.REACT_APP_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID',
             styles: [
                 { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
                 { featureType: 'transit',      stylers: [{ visibility: 'simplified' }] },
@@ -368,8 +385,8 @@ export default function NearbyMap({
 
             const propInfoHtml = `
               <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:10px 6px;min-width:190px;">
-                <strong style="color:#ef4444;font-size:14px;">📍 ${propertyName || 'This Property'}</strong>
-                <p style="font-size:12px;color:#374151;margin:5px 0 10px;">${propertyLocation}</p>
+                <strong style="color:#ef4444;font-size:14px;">📍 ${escHtml(propertyName || 'This Property')}</strong>
+                <p style="font-size:12px;color:#374151;margin:5px 0 10px;">${escHtml(propertyLocation)}</p>
                 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                 propertyLocation.toLowerCase().includes('india')
                     ? propertyLocation
@@ -510,18 +527,19 @@ export default function NearbyMap({
     useEffect(() => {
         if (!mapRef.current) return;
 
-        // Clear previous glow
+        // Clear all previous glow timers and styles
         Object.entries(glowTimerRef.current).forEach(([sid, timer]) => {
             clearTimeout(timer);
             const entry = markersRef.current[sid];
-            if (entry?.element && !activeId) {
-                entry.element.style.filter = '';
+            // Only reset styles if this marker isn't the actively selected one
+            if (entry?.element && sid !== String(activeId)) {
+                entry.element.style.filter    = '';
                 entry.element.style.transform = '';
             }
         });
         glowTimerRef.current = {};
 
-        if (hoveredId == null) return;
+        if (hoveredId == null) return; // null means mouse left — glow already cleared above
         const entry = markersRef.current[hoveredId] ?? markersRef.current[String(hoveredId)];
         if (!entry) return;
 
@@ -648,8 +666,6 @@ export default function NearbyMap({
 
         const { from, to } = directionsRequest;
         if (!from || !to) return;
-
-        console.log('[NearbyMap] Route:', `FROM ${from.lat},${from.lng}  →  TO ${to.lat},${to.lng}`);
 
         dirServiceRef.current.route(
             {

@@ -273,7 +273,7 @@
 }
 
 .nearby-grid-wrapper.is-visible {
-    max-height: 4000px; /* large enough for any grid */
+    max-height: 9999px; /* large enough for any grid */
     opacity: 1;
     transform: scaleY(1);
 }

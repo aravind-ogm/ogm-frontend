@@ -138,6 +138,7 @@ export default function useNearbyPlaces(lat, lng) {
     const cached = cacheGet(lat, lng);
     if (cached) {
       setPlaces(cached);
+      setLoading(false);
       return;
     }
 
@@ -163,8 +164,10 @@ export default function useNearbyPlaces(lat, lng) {
         const apiKey   = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
         const location = new window.google.maps.LatLng(lat, lng);
 
-        // PlacesService needs a map or a DOM element
+        // PlacesService needs a DOM element that is attached to the document
         const dummyDiv = document.createElement('div');
+        dummyDiv.style.display = 'none';
+        document.body.appendChild(dummyDiv);
         const service  = new window.google.maps.places.PlacesService(dummyDiv);
 
         /* ── 3. Search each category in parallel ── */
@@ -231,7 +234,10 @@ export default function useNearbyPlaces(lat, lng) {
 
         cacheSet(lat, lng, merged);
         setPlaces(merged);
+        // Clean up the dummy DOM node
+        if (dummyDiv.parentNode) dummyDiv.parentNode.removeChild(dummyDiv);
       } catch (err) {
+        if (dummyDiv.parentNode) dummyDiv.parentNode.removeChild(dummyDiv);
         if (!cancelledRef.current) {
           console.error('useNearbyPlaces error:', err);
           setError(err.message);
