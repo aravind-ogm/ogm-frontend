@@ -1,125 +1,259 @@
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    OGM AI — MOBILE RESPONSIVE
-   Import AFTER all other ai CSS files
-   ═══════════════════════════════════════════════ */
+   Import AFTER all other ai CSS files.
+   Breakpoints: tablet 1024px | mobile 768px | small 380px
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── TABLET (768px – 1024px) ── */
+/* ══════════════════════════════════════════════
+   TABLET  (≤ 1024px)
+══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .topbar-shortcuts { display: none; }
-  .pcard { height: auto; min-height: 260px; }
-  .pcard-img { min-height: 200px; }
-  .ai-map-panel { width: 340px; min-width: 340px; }
+  .ai-map-panel { width: 320px; min-width: 320px; }
+  .pcard-acts { flex-wrap: wrap; gap: 6px; }
 }
 
-/* ── MOBILE (max 768px) ── */
+/* ══════════════════════════════════════════════
+   MOBILE  (≤ 768px)
+══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  /* Dynamic viewport height for iOS Safari */
-  .ai-layout { height: calc(100vh - 60px); height: calc(100dvh - 60px); }
 
-  /* Sidebar — full overlay */
+  /* ── Root layout — full viewport, no clipping ── */
+  .ai-layout {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;     /* stack sidebar-toggle + main vertically */
+    overflow: hidden;
+  }
+
+  /* ── Topbar — always visible at top on mobile ── */
+  .ai-topbar {
+    display: flex !important;   /* was hidden, show on mobile for hamburger */
+    height: 52px;
+    padding: 0 12px;
+    background: #ffffff;
+    border-bottom: 1px solid #e8e8e8;
+    flex-shrink: 0;
+    z-index: 10;
+    align-items: center;
+    gap: 10px;
+  }
+  .topbar-btn  { display: flex !important; width: 40px; height: 40px; min-width: 40px; }
+  .topbar-title { display: block !important; font-size: 14px; }
+  .topbar-spacer, .topbar-divider { display: block !important; }
+
+  /* ── Main area fills remaining height ── */
+  .ai-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar — slides in as full-height overlay ── */
   .ai-sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0;
-    width: 272px; min-width: 272px; z-index: 200;
-    box-shadow: var(--shadow-lg);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 280px !important;
+    min-width: 280px !important;
+    height: 100dvh;
+    z-index: 500;
     transform: translateX(0);
-    transition: transform 0.3s var(--ease);
+    transition: transform 0.28s cubic-bezier(.4,0,.2,1), box-shadow 0.28s;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+    overflow: hidden;
   }
+
+  /* Collapsed: slide off-screen */
   .ai-sidebar.collapsed {
-    transform: translateX(-100%);
-    width: 272px; min-width: 272px;
-    opacity: 1; pointer-events: auto;
+    transform: translateX(-100%) !important;
+    width: 280px !important;
+    min-width: 280px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    box-shadow: none;
   }
+
+  /* Dim backdrop behind open sidebar */
+  .ai-sidebar:not(.collapsed)::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 280px; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: -1;
+  }
+
   .sidebar-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 
-  /* Topbar */
-  .ai-topbar { height: 48px; padding: 0 12px; gap: 10px; }
-  .topbar-btn { width: 40px; height: 40px; min-width: 40px; }
-  .topbar-title { font-size: 13.5px; }
+  /* ── Chat messages area ── */
+  .chat-messages-area { padding-bottom: 80px; } /* space above input bar */
 
-  /* Messages */
-  .chat-messages-container { padding: 10px; }
+  .chat-messages-container {
+    padding: 10px 10px 4px;
+    max-width: 100%;
+  }
 
-  /* Property cards — stack vertical */
-  .pcard { flex-direction: column; height: auto; }
-  .pcard-img { width: 100%; height: 200px; min-height: 200px; border-radius: 0; }
-  .pcard-body { width: 100%; height: auto; padding: 12px 14px; }
-  .pcard-title { font-size: 14.5px; padding-right: 28px; }
-  .pcard-bullets li { font-size: 12px; }
-  .pact { font-size: 11px; padding: 6px 9px; }
-  .pact-view { margin-left: 0; width: 100%; justify-content: center; margin-top: 4px; }
-  .pcard-price { font-size: 19px; }
+  /* User bubble narrower on mobile */
+  .message-row.user .msg-bubble { max-width: 88%; }
+  .message-row.ai  .msg-bubble  { max-width: 98%; }
+
+  /* ── Property cards — full width, stacked ── */
+  .pcard {
+    flex-direction: column;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  .pcard-img {
+    width: 100% !important;
+    min-width: unset !important;
+    height: 200px;
+    min-height: 200px;
+    border-radius: 12px 12px 0 0 !important;
+    flex-shrink: 0;
+  }
+  .pcard-body {
+    width: 100%;
+    padding: 12px 13px 11px;
+    overflow: visible;
+  }
+  .pcard-title { font-size: 14.5px; }
+  .pcard-price { font-size: 18px; }
   .pcard-arrow { opacity: 1; }
 
-  /* Map panel — full screen overlay */
-  .ai-map-panel {
-    position: fixed; inset: 0; width: 100vw; min-width: unset;
-    z-index: 100; border-left: none; border-top: none;
+  /* Buttons wrap on mobile */
+  .pcard-acts {
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow: visible;
+  }
+  .pact {
+    font-size: 11px;
+    padding: 6px 10px;
   }
 
-  /* Input bar — safe area for iPhone notch */
-  .chat-input-bar {
-    padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
+  /* AI match badge slightly smaller */
+  .pcard-ai-circle { width: 32px; height: 32px; font-size: 10.5px; }
+  .pcard-ai-label  { font-size: 12px; }
+
+  /* Explore Further chips — scroll horizontally */
+  .ai-result-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    gap: 6px;
   }
-  .chat-input-wrapper { border-radius: 20px; padding: 4px 6px 4px 14px; }
-  .chat-input-wrapper textarea { font-size: 16px; } /* Prevents iOS zoom */
+  .ai-result-chips::-webkit-scrollbar { display: none; }
+  .ai-result-chip { flex-shrink: 0; font-size: 12px; padding: 6px 11px; }
+
+  /* ── Map panel — full screen on mobile ── */
+  .ai-map-panel {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    min-width: unset;
+    z-index: 300;
+    border-left: none;
+  }
+  .ai-map-close-btn { display: flex !important; }
+
+  /* ── Input bar ── */
+  .chat-input-bar {
+    padding: 8px 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    flex-shrink: 0;
+  }
+  .chat-input-wrapper { border-radius: 22px; padding: 4px 6px 4px 14px; }
+  .chat-input-wrapper textarea { font-size: 16px; } /* prevents iOS auto-zoom */
   .chat-send-btn { width: 42px; height: 42px; min-width: 42px; }
 
-  /* Follow-ups */
-  .msg-followups { gap: 6px; }
-  .msg-followup-btn { font-size: 12px; padding: 7px 13px; min-height: 36px; }
+  /* ── Inline route/nearby map ── */
+  .inline-route-canvas { height: 240px; }
+  .inline-route-map    { border-radius: 10px; }
 
-  /* Suggestion chips */
-  .suggestion-chips { padding: 0 12px; gap: 8px; }
-  .chip-btn { font-size: 12.5px; padding: 9px 14px; min-height: 40px; }
+  /* ── Follow-up chips ── */
+  .msg-followups { gap: 5px; flex-wrap: wrap; }
+  .msg-followup-btn { font-size: 12px; padding: 7px 12px; }
+
+  /* ── Suggestion chips (empty state) ── */
+  .suggestion-chips { padding: 0 10px; gap: 7px; }
+  .chip-btn         { font-size: 12px; padding: 8px 12px; min-height: 38px; }
   .suggestion-cards-grid { grid-template-columns: 1fr; }
 
-  /* Confirm dialog */
-  .confirm-dialog { padding: 24px 20px; max-width: 320px; }
-  .confirm-btns button { padding: 10px 20px; min-height: 42px; }
+  /* ── Empty state ── */
+  .chat-empty-state { padding: 24px 14px; }
+  .chat-empty-icon  { font-size: 36px; }
+  .chat-empty-title { font-size: 19px; }
+  .chat-empty-sub   { font-size: 13px; }
 
-  /* Compare bar */
-  .compare-bar { padding: 10px 16px; }
-  .compare-btn { padding: 9px 18px; font-size: 13px; }
+  /* ── Confirm dialog ── */
+  .confirm-dialog { padding: 22px 18px; max-width: 300px; margin: 0 16px; }
 
-  /* Empty state */
-  .chat-empty-state { padding: 28px 16px; }
-  .chat-empty-title { font-size: 20px; }
+  /* ── Compare bar ── */
+  .compare-bar { padding: 10px 12px; }
+  .compare-btn { padding: 8px 14px; font-size: 12.5px; }
 }
 
-/* ── SMALL MOBILE (max 380px — iPhone SE) ── */
+/* ══════════════════════════════════════════════
+   SMALL MOBILE  (≤ 380px — iPhone SE, Galaxy A)
+══════════════════════════════════════════════ */
 @media (max-width: 380px) {
-  .pcard-img { height: 170px; min-height: 170px; }
-  .pcard-title { font-size: 13.5px; }
-  .pact { font-size: 10.5px; padding: 5px 8px; }
-  .ai-sidebar { width: 260px; min-width: 260px; }
-  .chip-btn { font-size: 12px; padding: 8px 12px; }
+  .ai-sidebar   { width: 265px !important; min-width: 265px !important; }
+  .pcard-img    { height: 170px; min-height: 170px; }
+  .pcard-title  { font-size: 13.5px; }
+  .pact         { font-size: 10.5px; padding: 5px 8px; }
+  .pcard-acts   { gap: 4px; }
+  .chip-btn     { font-size: 11.5px; padding: 7px 10px; }
+  .inline-route-canvas { height: 200px; }
 }
 
-/* ── IOS OVERSCROLL + SAFE AREA ── */
+/* ══════════════════════════════════════════════
+   iOS SAFE AREA + OVERSCROLL
+══════════════════════════════════════════════ */
 .ai-layout { -webkit-overflow-scrolling: touch; overscroll-behavior: none; }
-.chat-messages-container { -webkit-overflow-scrolling: touch; }
+.chat-messages-area, .chat-messages-container { -webkit-overflow-scrolling: touch; }
 
 @supports (padding: env(safe-area-inset-bottom)) {
-  .chat-input-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-  .sidebar-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .chat-input-bar   { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  .sidebar-footer   { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 }
 
-/* ── LANDSCAPE MOBILE ── */
+/* ══════════════════════════════════════════════
+   LANDSCAPE MOBILE
+══════════════════════════════════════════════ */
 @media (max-width: 900px) and (orientation: landscape) {
   .ai-layout { height: 100dvh; }
-  .pcard { flex-direction: row; height: 200px; }
-  .pcard-img { width: 42%; height: 100%; border-radius: var(--radius-md) 0 0 var(--radius-md); }
-  .pcard-body { width: 58%; }
+  .pcard { flex-direction: row; height: 180px; }
+  .pcard-img {
+    width: 38% !important;
+    height: 100% !important;
+    border-radius: 12px 0 0 12px !important;
+  }
+  .pcard-body { width: 62%; }
+  .pcard-acts { flex-wrap: nowrap; }
 }
 
-/* ── TOUCH OPTIMIZATIONS ── */
+/* ══════════════════════════════════════════════
+   TOUCH DEVICE OPTIMIZATIONS
+══════════════════════════════════════════════ */
 @media (hover: none) and (pointer: coarse) {
+  /* Larger tap targets */
+  .topbar-btn, .sidebar-action-btn { min-width: 42px; min-height: 42px; }
   .pcard-arrow { opacity: 1; }
-  .topbar-btn { width: 42px; height: 42px; }
-  .pcard:hover { transform: none; box-shadow: var(--shadow-sm); }
-  .pcard:active { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
-  .pact:hover { background: transparent; }
-  .pact:active { background: var(--bg-hover); }
+
+  /* Remove hover effects that don't work on touch */
+  .pcard:hover { transform: none; box-shadow: 0 2px 10px rgba(15,23,42,0.06); }
+  .pcard:active { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(15,23,42,0.1); }
+  .pact:hover { background: initial; color: initial; }
+  .pact:active { opacity: 0.85; }
+  .ai-result-chip:hover { transform: none; box-shadow: none; }
+  .ai-result-chip:active { opacity: 0.85; }
   .msg-followup-btn:hover { transform: none; }
-  .msg-followup-btn:active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .msg-followup-btn:active { background: #f97316; border-color: #f97316; color: #fff; }
+  .sidebar-chat-item:hover { background: transparent; }
+  .sidebar-chat-item:active { background: #ebebeb; }
 }

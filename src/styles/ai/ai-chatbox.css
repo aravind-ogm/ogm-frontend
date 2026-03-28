@@ -32,7 +32,7 @@
   height: 100%;
   overflow: hidden;
   min-width: 0;
-  background: var(--bg-deep);
+  background: #f4f4f4;
   transition: flex 0.28s cubic-bezier(.4,0,.2,1);
 }
 /* When map is open — give 55% to chat */
@@ -56,7 +56,8 @@
   display: flex;
   flex-direction: column;
   padding: 0 16px 4px;
-  max-width: 800px;
+  /* FIX: was 800px — widened to 960px so property cards show all 4 action buttons */
+  max-width: 960px;
   margin: 0 auto;
   width: 100%;
 }
@@ -111,15 +112,16 @@
 .message-row.user { justify-content: flex-end; }
 .message-row.ai   { justify-content: flex-start; gap: 9px; }
 
-/* AI badge */
+/* AI badge — OGM brand orange (was thick blue gradient) */
 .message-row.ai::before {
-  content: 'AI';
-  width: 28px; height: 28px; border-radius: 8px;
-  background: linear-gradient(135deg, #1B3A6B, #2563EB);
-  color: #fff; font-size: 9.5px; font-weight: 800;
+  content: 'OGM';
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff; font-size: 8.5px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; margin-top: 3px;
-  box-shadow: 0 3px 10px rgba(27,58,107,.25);
+  box-shadow: 0 3px 10px rgba(249,115,22,.35);
+  letter-spacing: 0.3px;
 }
 
 /* ══════════════════════════════
@@ -143,14 +145,37 @@
   box-shadow: 0 4px 16px rgba(27,58,107,.28);
 }
 
+/* When user message contains inline map — expand to full width */
+.message-row.user .msg-bubble:has(.inline-route-map) {
+  max-width: 92%;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 12px;
+  padding: 0;
+  border: none;
+}
+
+/* The question text above the map */
+.message-row.user .msg-bubble:has(.inline-route-map) > div:first-child {
+  background: linear-gradient(135deg, #1B3A6B 0%, #2563EB 100%);
+  color: #fff;
+  padding: 11px 15px;
+  border-radius: 16px 16px 4px 16px;
+  font-size: 14px;
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+
 /* AI — white card */
 .message-row.ai .msg-bubble {
-  max-width: 88%;
+  max-width: 92%;
   background: var(--bg-surface);
   color: var(--text-primary);
   border: 1.5px solid var(--border-primary);
   border-radius: 4px 16px 16px 16px;
   box-shadow: var(--shadow-sm);
+  /* FIX: reduce side padding so cards have more horizontal space */
+  padding: 11px 11px;
 }
 
 .msg-bubble.error {
@@ -280,8 +305,8 @@
 ══════════════════════════════ */
 .chat-input-bar {
   padding: 10px 16px 16px;
-  background: var(--bg-deep);
-  border-top: 1px solid var(--border-subtle);
+  background: #f4f4f4;
+  border-top: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -484,4 +509,77 @@
   .chat-messages-container { padding: 0 10px 4px; }
   .message-row.user .msg-bubble { max-width: 84%; }
   .message-row.ai  .msg-bubble { max-width: 96%; }
+}
+/* ═══════════════════════════════════════════════
+   INLINE ROUTE MAP — inside chat bubble (Image 3)
+   ═══════════════════════════════════════════════ */
+
+.inline-route-map {
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+/* Map canvas — matches Image 3 height */
+.inline-route-canvas {
+  width: 100%;
+  height: 320px;
+  background: #f1f5f9;
+}
+
+/* Travel mode tabs */
+.inline-route-modes {
+  display: flex; gap: 0;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.inline-route-mode {
+  flex: 1;
+  padding: 8px 4px;
+  border: none; border-right: 1px solid #e2e8f0;
+  background: transparent;
+  font-family: var(--font-primary, 'DM Sans', sans-serif);
+  font-size: 11.5px; font-weight: 600;
+  color: #64748b; cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.inline-route-mode:last-child { border-right: none; }
+.inline-route-mode.active { background: #fff; color: #1B3A6B; font-weight: 700; }
+.inline-route-mode:hover:not(.active) { background: #eef3ff; color: #1B3A6B; }
+
+/* Result row */
+.inline-route-result {
+  display: flex; align-items: center;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  gap: 0;
+}
+.inline-route-stat {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.inline-route-stat strong {
+  font-size: 18px; font-weight: 800; color: #0d1f3c;
+}
+.inline-route-stat span {
+  font-size: 11px; color: #94a3b8; font-weight: 500; text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.inline-route-divider {
+  width: 1px; height: 32px; background: #e2e8f0; margin: 0 16px;
+}
+
+.inline-route-error {
+  padding: 10px 14px;
+  font-size: 12px; color: #ef4444;
+  background: #fef2f2;
+  border-top: 1px solid #fecaca;
+}
+
+/* Spinner for AiNearbyWrapper loading state */
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
 }

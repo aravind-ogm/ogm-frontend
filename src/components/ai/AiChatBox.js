@@ -8,31 +8,36 @@ import { detectRouteIntent } from "./RouteHelper";
 import "../../styles/ai/ai-chatbox.css";
 import "../../styles/ai/ai-search.css";
 
-/* ─── Google Maps API key ──────────────────────────────────────────────────── */
-const GMAPS_KEY =
-  process.env.REACT_APP_GOOGLE_MAPS_API_KEY ||
-  "AIzaSyAMOnmpGRW9d36CNRQTjAavV4EjHGlXzO4";
+/* ─────────────────────────────────────────────────────────────────────────────
+   FIX 1: Removed hardcoded API key fallback.
+   The key "AIzaSyAMOnmpGRW9d36CNRQTjAavV4EjHGlXzO4" was visible to every user
+   in browser DevTools. Rotate that key immediately in Google Cloud Console.
+   Add to your .env:  REACT_APP_GOOGLE_MAPS_API_KEY=your_new_key
+   ───────────────────────────────────────────────────────────────────────────── */
+const GMAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
-/* Load SDK once — Places library needed for the search box.
-   IMPORTANT: Do NOT add &loading=async — that switches to the modular API
-   which breaks the legacy  new google.maps.Map()  constructor.             */
 function loadGoogleMaps() {
-  // Check Map constructor is actually callable, not just that the namespace exists
   if (typeof window.google?.maps?.Map === "function") return Promise.resolve();
 
   if (document.getElementById("gmaps-sdk")) {
-    // Script already injected — poll until Map constructor is ready
     return new Promise((resolve) => {
       const t = setInterval(() => {
-        if (typeof window.google?.maps?.Map === "function") { clearInterval(t); resolve(); }
+        if (typeof window.google?.maps?.Map === "function") {
+          clearInterval(t);
+          resolve();
+        }
       }, 100);
     });
   }
 
   return new Promise((resolve, reject) => {
+    if (!GMAPS_KEY) {
+      reject(new Error("REACT_APP_GOOGLE_MAPS_API_KEY is not set in .env"));
+      return;
+    }
     const script   = document.createElement("script");
     script.id      = "gmaps-sdk";
-    script.src     = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places`;
+    script.src     = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places,geometry,marker`;
     script.async   = true;
     script.defer   = true;
     script.onload  = resolve;
@@ -41,7 +46,6 @@ function loadGoogleMaps() {
   });
 }
 
-/* Travel mode config */
 const TRAVEL_MODES = [
   { key: "DRIVING",   label: "Drive",   icon: "🚗" },
   { key: "TRANSIT",   label: "Transit", icon: "🚌" },
@@ -49,46 +53,48 @@ const TRAVEL_MODES = [
   { key: "BICYCLING", label: "Cycle",   icon: "🚲" },
 ];
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-
 export default function AiChatBox({
-  chat,
-  loading = false,
-  onSend,
-  onEditMessage,
-  onRetry,
-  onCopy,
-  userPosition,
-}) {
+                                    chat,
+                                    loading = false,
+                                    onSend,
+                                    onEditMessage,
+                                    onRetry,
+                                    onCopy,
+                                    userPosition,
+                                  }) {
   const [input,          setInput]          = useState("");
   const [mapProperties,  setMapProperties]  = useState(null);
-  const [mapsReady,      setMapsReady]      = useState(typeof window.google?.maps?.Map === "function");
+  const [mapsReady,      setMapsReady]      = useState(
+      typeof window.google?.maps?.Map === "function"
+  );
   const [activeListItem, setActiveListItem] = useState(null);
-
-  /* Route state */
-  const [routeRequest,   setRouteRequest]   = useState(null);  // { origin, destination }
+  const [routeRequest,   setRouteRequest]   = useState(null);
   const [routeMode,      setRouteMode]      = useState("DRIVING");
-  const [routeResult,    setRouteResult]    = useState(null);  // { distance, duration, steps }
+  const [routeResult,    setRouteResult]    = useState(null);
   const [routeError,     setRouteError]     = useState(null);
   const [routeLoading,   setRouteLoading]   = useState(false);
 
-  const messagesEndRef   = useRef(null);
-  const textareaRef      = useRef(null);
-  const mapContainerRef  = useRef(null);
-  const searchInputRef   = useRef(null);
-  const mapInstanceRef   = useRef(null);
-  const markersRef       = useRef([]);
-  const infoWindowRef    = useRef(null);
-  const autocompleteRef  = useRef(null);
-  const dirRendererRef   = useRef(null);   // google.maps.DirectionsRenderer
+  const messagesEndRef  = useRef(null);
+  const textareaRef     = useRef(null);
+  const mapContainerRef = useRef(null);
+  const searchInputRef  = useRef(null);
+  const mapInstanceRef  = useRef(null);
+  const markersRef      = useRef([]);
+  const infoWindowRef   = useRef(null);
+  const autocompleteRef = useRef(null);
+  const dirRendererRef  = useRef(null);
 
-  /* ── Scroll / focus / reset ── */
+  /* ── Scroll to latest message ── */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages?.length, loading]);
 
-  useEffect(() => { setTimeout(() => textareaRef.current?.focus(), 60); }, [chat?.id]);
+  /* ── Focus input on chat switch ── */
+  useEffect(() => {
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }, [chat?.id]);
 
+  /* ── Reset map state on chat switch ── */
   useEffect(() => {
     setMapProperties(null);
     setRouteRequest(null);
@@ -100,43 +106,37 @@ export default function AiChatBox({
   useEffect(() => {
     if (mapsReady) return;
     loadGoogleMaps()
-      .then(() => setMapsReady(true))
-      .catch((err) => console.error("[AiChatBox]", err.message));
+        .then(() => setMapsReady(true))
+        .catch((err) => console.error("[AiChatBox] Maps SDK:", err.message));
   }, [mapsReady]);
 
-  /* ─────────────────────────────────────────────────────────────────────────
-     AUTO-DETECT route intent from the LAST user message in the chat.
-     When the user sends something like "distance between X and Y", we
-     automatically open the map and trigger a directions request.
-     ───────────────────────────────────────────────────────────────────────── */
+  /* ── Auto-detect route intent from last user message ──
+     FIX 2: Added chat?.messages as correct dependency (was eslint-disable-line)
+  ── */
   useEffect(() => {
     if (!chat?.messages?.length) return;
-
     const msgs     = chat.messages;
     const lastUser = [...msgs].reverse().find((m) => m.role === "user");
     if (!lastUser) return;
 
     const route = detectRouteIntent(lastUser.text);
     if (route) {
-      // Auto-open map and set route request
       setRouteRequest(route);
       setRouteResult(null);
       setRouteError(null);
-      // If there are also properties in the last AI reply, show them too
       const lastAi = [...msgs].reverse().find((m) => m.role === "ai");
       if (lastAi?.properties?.length) {
         setMapProperties(lastAi.properties);
       } else if (!mapProperties) {
-        // open map even with no properties so route is visible
         setMapProperties([]);
       }
     }
-  }, [chat?.messages?.length]); // eslint-disable-line
+  }, [chat?.messages]);
 
   /* ── Destroy map cleanly ── */
   const destroyMap = useCallback(() => {
     dirRendererRef.current?.setMap(null);
-    dirRendererRef.current = null;
+    dirRendererRef.current  = null;
     autocompleteRef.current = null;
     markersRef.current.forEach((m) => m?.setMap(null));
     markersRef.current = [];
@@ -146,96 +146,107 @@ export default function AiChatBox({
     setActiveListItem(null);
   }, []);
 
-  /* ── Compute & render route ── */
-  const renderRoute = useCallback((map, origin, destination, mode = "DRIVING") => {
-    if (!map || !origin || !destination) return;
+  /* ── Render route on map — uses DirectionsService (still functional despite deprecation warning) ── */
+  const renderRoute = useCallback((map, originArg, destinationArg, mode = "DRIVING") => {
+    if (!map || !originArg || !destinationArg) return;
     const G = window.google.maps;
 
     setRouteLoading(true);
     setRouteError(null);
 
-    // Clear previous route
     if (dirRendererRef.current) {
       dirRendererRef.current.setMap(null);
       dirRendererRef.current = null;
     }
 
-    const directionsService  = new G.DirectionsService();
-    const directionsRenderer = new G.DirectionsRenderer({
+    const renderer = new G.DirectionsRenderer({
       suppressMarkers: false,
-      polylineOptions: {
-        strokeColor:   "#2563eb",
-        strokeWeight:  5,
-        strokeOpacity: 0.85,
-      },
+      polylineOptions: { strokeColor: "#2563eb", strokeWeight: 5, strokeOpacity: 0.85 },
     });
-    directionsRenderer.setMap(map);
-    dirRendererRef.current = directionsRenderer;
+    renderer.setMap(map);
+    dirRendererRef.current = renderer;
 
-    directionsService.route(
-      {
-        origin,
-        destination,
-        travelMode: G.TravelMode[mode],
-        provideRouteAlternatives: false,
-      },
-      (result, status) => {
-        setRouteLoading(false);
-        if (status === "OK") {
-          directionsRenderer.setDirections(result);
-          const leg = result.routes[0].legs[0];
-          setRouteResult({
-            distance:    leg.distance.text,
-            duration:    leg.duration.text,
-            origin:      leg.start_address,
-            destination: leg.end_address,
-            steps:       leg.steps.map((s) => ({
-              instruction: s.instructions.replace(/<[^>]+>/g, ""), // strip HTML tags
-              distance:    s.distance.text,
-            })),
-          });
-          setRouteError(null);
-        } else {
-          setRouteError(
-            status === "NOT_FOUND"
-              ? "Could not find one of the locations. Try being more specific."
-              : status === "ZERO_RESULTS"
-              ? "No route found between these locations."
-              : `Directions failed: ${status}`
-          );
-          setRouteResult(null);
-        }
+    // Build origin — handle {lat, lng} object or string address
+    const buildLatLng = (val) => {
+      if (!val) return null;
+      if (typeof val === "object" && val.lat != null && val.lng != null) {
+        return new G.LatLng(parseFloat(val.lat), parseFloat(val.lng));
       }
+      return String(val); // address string — DirectionsService geocodes it
+    };
+
+    const origin      = buildLatLng(originArg);
+    const destination = buildLatLng(destinationArg);
+
+    if (!origin || !destination) {
+      setRouteLoading(false);
+      setRouteError("Could not resolve location. Please specify a full address or area name.");
+      return;
+    }
+
+    new G.DirectionsService().route(
+        { origin, destination, travelMode: G.TravelMode[mode] },
+        (result, status) => {
+          setRouteLoading(false);
+          if (status === "OK") {
+            renderer.setDirections(result);
+            const leg = result.routes[0].legs[0];
+            setRouteResult({
+              distance:    leg.distance.text,
+              duration:    leg.duration.text,
+              origin:      leg.start_address,
+              destination: leg.end_address,
+              steps: leg.steps.map((s) => ({
+                instruction: s.instructions.replace(/<[^>]+>/g, ""),
+                distance:    s.distance.text,
+              })),
+            });
+            setRouteError(null);
+          } else {
+            setRouteError(
+                status === "NOT_FOUND"    ? "Could not find one of the locations. Please be more specific (e.g. \"Whitefield, Bengaluru\" instead of \"Whitefield\")" :
+                    status === "ZERO_RESULTS" ? "No route found between these locations." :
+                        `Directions unavailable (${status}). Try different locations.`
+            );
+            setRouteResult(null);
+          }
+        }
     );
   }, []);
 
-  /* ── Re-run route when mode changes ── */
+  /* ── Re-render route when travel mode changes ──
+     FIX 3: Proper deps — routeRequest and renderRoute now included
+  ── */
   useEffect(() => {
     if (!routeRequest || !mapInstanceRef.current || !mapsReady) return;
-    renderRoute(mapInstanceRef.current, routeRequest.origin, routeRequest.destination, routeMode);
+    renderRoute(
+        mapInstanceRef.current,
+        routeRequest.origin,
+        routeRequest.destination,
+        routeMode
+    );
   }, [routeMode, routeRequest, mapsReady, renderRoute]);
 
-  /* ── Focus a marker by index ── */
+  /* ── Focus marker in map list ── */
   const focusMarker = useCallback((index) => {
     const map    = mapInstanceRef.current;
     const marker = markersRef.current[index];
-    const iw     = infoWindowRef.current;
     const prop   = mapProperties?.[index];
     if (!map || !marker || !prop) return;
 
     map.panTo(marker.getPosition());
     map.setZoom(15);
-    const pos1  = marker.getPosition();
-    const mUrl1 = pos1
-      ? `https://www.google.com/maps/search/?api=1&query=${pos1.lat()},${pos1.lng()}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((prop.location ?? "") + ", India")}`;
+    const pos  = marker.getPosition();
+    const mUrl = pos
+        ? `https://www.google.com/maps/search/?api=1&query=${pos.lat()},${pos.lng()}`
+        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((prop.location ?? "") + ", India")}`;
 
-    iw.setContent(
-      `<div style="font-family:sans-serif;min-width:210px;padding:4px 2px;">
+    infoWindowRef.current?.setContent(
+        `<div style="font-family:sans-serif;min-width:210px;padding:4px 2px;">
          <strong style="font-size:14px;display:block;margin-bottom:4px;">${prop.title ?? ""}</strong>
          <span style="color:#6b7280;font-size:12px;">${prop.location ?? ""}</span><br/>
          <span style="color:#2563eb;font-weight:700;font-size:14px;">${formatPrice(prop.price)}</span>
-         <a href="${mUrl1}" target="_blank" rel="noopener noreferrer"
+         <a href="${mUrl}" target="_blank" rel="noopener noreferrer"
             style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;
                    color:#2563eb;font-size:12px;font-weight:600;text-decoration:none;
                    background:#eff6ff;padding:4px 12px;border-radius:20px;border:1px solid #bfdbfe;">
@@ -243,23 +254,23 @@ export default function AiChatBox({
          </a>
        </div>`
     );
-    iw.open(map, marker);
+    infoWindowRef.current?.open(map, marker);
     setActiveListItem(index);
   }, [mapProperties]);
 
-  /* ── Build / rebuild map ── */
+  /* ── Build / rebuild map ──
+     FIX 4: Split into two effects — one for building the map, one for the route.
+     Original had both in one effect with eslint-disable hiding stale closure bugs.
+  ── */
   useEffect(() => {
-    // mapProperties === null  → panel is completely closed
-    // mapProperties === []    → panel open for route only (no property pins)
     if (mapProperties === null) { destroyMap(); return; }
-    if (!mapsReady)              return;
+    if (!mapsReady) return;
 
     destroyMap();
     if (!mapContainerRef.current) return;
 
     const G = window.google.maps;
 
-    /* Parse property coords */
     const parsedCoords = (mapProperties || []).map((p) => {
       const lat = parseFloat(p.latitude ?? p.lat);
       const lng = parseFloat(p.longitude ?? p.lng ?? p.lon);
@@ -285,23 +296,16 @@ export default function AiChatBox({
     });
     mapInstanceRef.current = map;
 
-    /* Clicking the map background opens Google Maps centred on current view */
     map.addListener("click", (e) => {
-      // Only fire if user clicked the background, not a marker
-      // (marker clicks call stopPropagation automatically via the Marker API)
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
       window.open(
-        `https://www.google.com/maps/@${lat},${lng},15z`,
-        "_blank",
-        "noopener,noreferrer"
+          `https://www.google.com/maps/@${e.latLng.lat()},${e.latLng.lng()},15z`,
+          "_blank", "noopener,noreferrer"
       );
     });
 
     const infoWindow = new G.InfoWindow();
     infoWindowRef.current = infoWindow;
 
-    /* Property markers */
     const makeIcon = (colour) => ({
       path:         G.SymbolPath.CIRCLE,
       fillColor:    colour,
@@ -311,33 +315,31 @@ export default function AiChatBox({
       scale:        15,
     });
 
-    const bounds     = new G.LatLngBounds();
-    const newMarkers = (mapProperties || []).map((prop, i) => {
-      const coords      = parsedCoords[i];
-      const approximate = !coords;
-      const lat = coords ? coords.lat : 12.9716 + (Math.floor(i / 3) - 1) * 0.04;
-      const lng = coords ? coords.lng : 77.5946 + ((i % 3) - 1) * 0.05;
+    const bounds = new G.LatLngBounds();
+    markersRef.current = (mapProperties || []).map((prop, i) => {
+      const coords = parsedCoords[i];
+      const lat    = coords ? coords.lat : 12.9716 + (Math.floor(i / 3) - 1) * 0.04;
+      const lng    = coords ? coords.lng : 77.5946 + ((i % 3) - 1) * 0.05;
 
       const marker = new G.Marker({
         position: { lat, lng },
         map,
-        label:    { text: String(i + 1), color: "#fff", fontWeight: "700", fontSize: "12px" },
-        title:    prop.title,
-        icon:     makeIcon(approximate ? "#9ca3af" : "#2563eb"),
+        label: { text: String(i + 1), color: "#fff", fontWeight: "700", fontSize: "12px" },
+        title: prop.title,
+        icon:  makeIcon(coords ? "#2563eb" : "#9ca3af"),
       });
 
       marker.addListener("click", () => {
         const mPos = marker.getPosition();
         const mUrl = mPos
-          ? `https://www.google.com/maps/search/?api=1&query=${mPos.lat()},${mPos.lng()}`
-          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((prop.location ?? "") + ", India")}`;
-
+            ? `https://www.google.com/maps/search/?api=1&query=${mPos.lat()},${mPos.lng()}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((prop.location ?? "") + ", India")}`;
         infoWindow.setContent(
-          `<div style="font-family:sans-serif;min-width:210px;padding:4px 2px;">
+            `<div style="font-family:sans-serif;min-width:210px;padding:4px 2px;">
              <strong style="font-size:14px;display:block;margin-bottom:4px;">${prop.title ?? ""}</strong>
              <span style="color:#6b7280;font-size:12px;">${prop.location ?? ""}</span><br/>
              <span style="color:#2563eb;font-weight:700;font-size:14px;">${formatPrice(prop.price)}</span>
-             ${approximate ? '<br/><em style="font-size:11px;color:#9ca3af;">Approximate location</em>' : ""}
+             ${!coords ? '<br/><em style="font-size:11px;color:#9ca3af;">Approximate location</em>' : ""}
              <a href="${mUrl}" target="_blank" rel="noopener noreferrer"
                 style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;
                        color:#2563eb;font-size:12px;font-weight:600;text-decoration:none;
@@ -354,16 +356,14 @@ export default function AiChatBox({
       return marker;
     });
 
-    markersRef.current = newMarkers;
     if ((mapProperties || []).length > 1) map.fitBounds(bounds, 60);
 
-    /* Places Autocomplete */
     if (searchInputRef.current) {
-      const autocomplete = new G.places.Autocomplete(searchInputRef.current, {
+      const ac = new G.places.Autocomplete(searchInputRef.current, {
         fields: ["geometry", "name", "formatted_address"],
       });
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
+      ac.addListener("place_changed", () => {
+        const place = ac.getPlace();
         if (!place.geometry?.location) return;
         map.panTo(place.geometry.location);
         map.setZoom(15);
@@ -371,14 +371,10 @@ export default function AiChatBox({
           position: place.geometry.location,
           map,
           title: place.name,
-          icon: {
-            path: G.SymbolPath.BACKWARD_CLOSED_ARROW,
-            fillColor: "#ef4444", fillOpacity: 1,
-            strokeColor: "#fff", strokeWeight: 1.5, scale: 7,
-          },
+          icon: { path: G.SymbolPath.BACKWARD_CLOSED_ARROW, fillColor: "#ef4444", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 1.5, scale: 7 },
         });
         infoWindow.setContent(
-          `<div style="font-family:sans-serif;padding:4px 2px;">
+            `<div style="font-family:sans-serif;padding:4px 2px;">
              <strong>${place.name ?? ""}</strong><br/>
              <span style="color:#6b7280;font-size:12px;">${place.formatted_address ?? ""}</span>
            </div>`
@@ -386,17 +382,23 @@ export default function AiChatBox({
         infoWindow.setPosition(place.geometry.location);
         infoWindow.open(map);
       });
-      autocompleteRef.current = autocomplete;
-    }
-
-    /* If a route was already requested (e.g. auto-detected), render it now */
-    if (routeRequest) {
-      renderRoute(map, routeRequest.origin, routeRequest.destination, routeMode);
+      autocompleteRef.current = ac;
     }
 
     setTimeout(() => G.event.trigger(map, "resize"), 420);
     return destroyMap;
-  }, [mapProperties, mapsReady]); // eslint-disable-line
+  }, [mapProperties, mapsReady, destroyMap]);
+
+  /* ── Route effect (separate from map build) ── */
+  useEffect(() => {
+    if (!routeRequest || !mapInstanceRef.current || !mapsReady) return;
+    renderRoute(
+        mapInstanceRef.current,
+        routeRequest.origin,
+        routeRequest.destination,
+        routeMode
+    );
+  }, [routeRequest, mapsReady, renderRoute]); // routeMode handled separately above
 
   /* ── Input handlers ── */
   const handleInputChange = useCallback((e) => {
@@ -420,20 +422,18 @@ export default function AiChatBox({
   const handleMapView = useCallback((properties) => {
     setMapProperties((prev) => {
       if (prev === properties) return null;
-      // Clear route when switching property sets
       setRouteRequest(null);
       setRouteResult(null);
       return properties;
     });
   }, []);
 
-  /* Called from AiMessage when user clicks "Show Route" button */
   const handleRouteView = useCallback((origin, destination) => {
+    // origin may be a string address or {lat, lng} object from property coords
     setRouteRequest({ origin, destination });
     setRouteResult(null);
     setRouteError(null);
     setRouteMode("DRIVING");
-    // Ensure map is open (with whatever properties are showing, or empty)
     setMapProperties((prev) => prev ?? []);
   }, []);
 
@@ -444,230 +444,213 @@ export default function AiChatBox({
     setRouteError(null);
   }, []);
 
-  const isMapOpen       = mapProperties !== null;
-  const hasProperties   = (mapProperties?.length ?? 0) > 0;
-  const isRouteActive   = !!routeRequest;
+  const isMapOpen     = mapProperties !== null;
+  const hasProperties = (mapProperties?.length ?? 0) > 0;
+  const isRouteActive = !!routeRequest;
 
-  /* ── Empty state ── */
   if (!chat) {
     return (
-      <div className="ai-content">
-        <div className="chat-empty-state">
-          <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
-          <h2>AI Property Agent</h2>
-          <p>Search, compare, and discover properties. Ask anything to get started.</p>
+        <div className="ai-content">
+          <div className="chat-empty-state">
+            <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
+            <h2>AI Property Agent</h2>
+            <p>Search, compare, and discover properties. Ask anything to get started.</p>
+          </div>
         </div>
-      </div>
     );
   }
 
   const messages = chat.messages || [];
 
   return (
-    <div className="ai-content">
-      <div className="ai-split-wrapper">
+      <div className="ai-content">
+        <div className="ai-split-wrapper">
 
-        {/* ══════════════════════════════
-            LEFT: CHAT PANEL
-            ══════════════════════════════ */}
-        <div className={`ai-chat-panel ${isMapOpen ? "with-map" : ""}`}>
-          <div className="chat-messages-area">
-            {messages.length === 0 && !loading ? (
-              <div className="chat-empty-state">
-                <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
-                <h2>What can I help you find?</h2>
-                <p>Search for properties, compare listings, or ask anything about real estate.</p>
-                <SuggestionChips onSelect={(v) => handleSend(v)} />
-                <div className="chat-empty-bar">
-                  <AiBottomSearchBar onSend={handleSend} />
-                </div>
-              </div>
-            ) : (
-              <div className="chat-messages-container">
-                {messages.map((msg, i) => (
-                  <AiMessage
-                    key={msg.id || `msg-${i}`}
-                    msg={msg}
-                    chatId={chat.id}
-                    index={i}
-                    onEdit={onEditMessage}
-                    onRetry={onRetry}
-                    onCopy={onCopy}
-                    onFollowUp={handleFollowUp}
-                    onMapView={handleMapView}
-                    onRouteView={handleRouteView}
-                    isMapOpen={isMapOpen}
-                    userPosition={userPosition}
-                  />
-                ))}
-                {loading && (
-                  <div className="message-row ai">
-                    <div className="typing-indicator">
-                      <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+          {/* ── CHAT PANEL ── */}
+          <div className={`ai-chat-panel ${isMapOpen ? "with-map" : ""}`}>
+            <div className="chat-messages-area" role="log" aria-live="polite">
+              {messages.length === 0 && !loading ? (
+                  <div className="chat-empty-state">
+                    <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
+                    <h2>What can I help you find?</h2>
+                    <p>Search for properties, compare listings, or ask anything about real estate.</p>
+                    <SuggestionChips onSelect={handleSend} />
+                    <div className="chat-empty-bar">
+                      <AiBottomSearchBar onSend={handleSend} />
                     </div>
                   </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+              ) : (
+                  <div className="chat-messages-container">
+                    {messages.map((msg, i) => (
+                        <AiMessage
+                            key={msg.id || `msg-${i}`}
+                            msg={msg}
+                            chatId={chat.id}
+                            index={i}
+                            onEdit={onEditMessage}
+                            onRetry={onRetry}
+                            onCopy={onCopy}
+                            onFollowUp={handleFollowUp}
+                            onMapView={handleMapView}
+                            onRouteView={handleRouteView}
+                            isMapOpen={isMapOpen}
+                            userPosition={userPosition}
+                            prevMessages={messages.slice(0, i)}
+                        />
+                    ))}
+                    {loading && (
+                        <div className="message-row ai" role="status" aria-label="AI is thinking">
+                          <div className="typing-indicator">
+                            <div className="typing-dot" />
+                            <div className="typing-dot" />
+                            <div className="typing-dot" />
+                          </div>
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+              )}
+            </div>
+
+            {(messages.length > 0 || loading) && (
+                <div className="chat-input-bar">
+                  <AiBottomSearchBar onSend={handleSend} />
+                </div>
             )}
           </div>
 
-          {/* ── Bottom bar — only when conversation is active ── */}
-          {(messages.length > 0 || loading) && (
-            <div className="chat-input-bar">
-              <AiBottomSearchBar onSend={handleSend} />
-            </div>
-          )}
-        </div>
-
-        {/* ══════════════════════════════
-            RIGHT: MAP PANEL
-            ══════════════════════════════ */}
-        {isMapOpen && (
-          <div className="ai-map-panel">
-
-            {/* ── Header ── */}
-            <div className="ai-map-header">
+          {/* ── MAP PANEL ── */}
+          {isMapOpen && (
+              <div className="ai-map-panel">
+                <div className="ai-map-header">
               <span className="ai-map-title">
                 {isRouteActive ? "🗺 Route & Directions" : "📍 Properties on Map"}
               </span>
-              {hasProperties && !isRouteActive && (
-                <span className="ai-map-count">{mapProperties.length} properties</span>
-              )}
-              <button className="ai-map-close" onClick={closeMap}>✕ Close</button>
-            </div>
-
-            {/* ── Route info card (shown when directions are computed) ── */}
-            {isRouteActive && (
-              <div className="ai-route-card">
-                {/* Origin / Destination */}
-                <div className="ai-route-od">
-                  <div className="ai-route-od-row">
-                    <span className="ai-route-dot origin" />
-                    <span className="ai-route-od-label">
-                      {routeResult?.origin || routeRequest.origin}
-                    </span>
-                  </div>
-                  <div className="ai-route-od-line" />
-                  <div className="ai-route-od-row">
-                    <span className="ai-route-dot dest" />
-                    <span className="ai-route-od-label">
-                      {routeResult?.destination || routeRequest.destination}
-                    </span>
-                  </div>
+                  {hasProperties && !isRouteActive && (
+                      <span className="ai-map-count">{mapProperties.length} properties</span>
+                  )}
+                  <button className="ai-map-close" onClick={closeMap} aria-label="Close map">
+                    ✕ Close
+                  </button>
                 </div>
 
-                {/* Travel mode tabs */}
-                <div className="ai-route-modes">
-                  {TRAVEL_MODES.map(({ key, label, icon }) => (
-                    <button
-                      key={key}
-                      className={`ai-route-mode-btn${routeMode === key ? " active" : ""}`}
-                      onClick={() => setRouteMode(key)}
-                      title={label}
-                    >
-                      <span>{icon}</span>
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Result: distance + duration */}
-                {routeLoading && (
-                  <div className="ai-route-loading">
-                    <span className="ai-route-spinner" /> Calculating route…
-                  </div>
-                )}
-
-                {routeError && !routeLoading && (
-                  <div className="ai-route-error">⚠️ {routeError}</div>
-                )}
-
-                {routeResult && !routeLoading && (
-                  <div className="ai-route-summary">
-                    <div className="ai-route-stat">
-                      <span className="ai-route-stat-icon">📏</span>
-                      <div>
-                        <div className="ai-route-stat-value">{routeResult.distance}</div>
-                        <div className="ai-route-stat-label">Distance</div>
-                      </div>
-                    </div>
-                    <div className="ai-route-divider" />
-                    <div className="ai-route-stat">
-                      <span className="ai-route-stat-icon">⏱</span>
-                      <div>
-                        <div className="ai-route-stat-value">{routeResult.duration}</div>
-                        <div className="ai-route-stat-label">
-                          {routeMode === "DRIVING"   ? "Drive time"   :
-                           routeMode === "TRANSIT"   ? "Transit time" :
-                           routeMode === "WALKING"   ? "Walk time"    :
-                           "Cycle time"}
+                {isRouteActive && (
+                    <div className="ai-route-card">
+                      <div className="ai-route-od">
+                        <div className="ai-route-od-row">
+                          <span className="ai-route-dot origin" />
+                          <span className="ai-route-od-label">{routeResult?.origin || routeRequest.origin}</span>
+                        </div>
+                        <div className="ai-route-od-line" />
+                        <div className="ai-route-od-row">
+                          <span className="ai-route-dot dest" />
+                          <span className="ai-route-od-label">{routeResult?.destination || routeRequest.destination}</span>
                         </div>
                       </div>
+
+                      <div className="ai-route-modes" role="group" aria-label="Travel mode">
+                        {TRAVEL_MODES.map(({ key, label, icon }) => (
+                            <button
+                                key={key}
+                                className={`ai-route-mode-btn${routeMode === key ? " active" : ""}`}
+                                onClick={() => setRouteMode(key)}
+                                aria-pressed={routeMode === key}
+                                title={label}
+                            >
+                              <span>{icon}</span>
+                              <span>{label}</span>
+                            </button>
+                        ))}
+                      </div>
+
+                      {routeLoading && (
+                          <div className="ai-route-loading">
+                            <span className="ai-route-spinner" /> Calculating route…
+                          </div>
+                      )}
+                      {routeError && !routeLoading && (
+                          <div className="ai-route-error">⚠️ {routeError}</div>
+                      )}
+                      {routeResult && !routeLoading && (
+                          <div className="ai-route-summary">
+                            <div className="ai-route-stat">
+                              <span className="ai-route-stat-icon">📏</span>
+                              <div>
+                                <div className="ai-route-stat-value">{routeResult.distance}</div>
+                                <div className="ai-route-stat-label">Distance</div>
+                              </div>
+                            </div>
+                            <div className="ai-route-divider" />
+                            <div className="ai-route-stat">
+                              <span className="ai-route-stat-icon">⏱</span>
+                              <div>
+                                <div className="ai-route-stat-value">{routeResult.duration}</div>
+                                <div className="ai-route-stat-label">
+                                  {routeMode === "DRIVING" ? "Drive time" :
+                                      routeMode === "TRANSIT" ? "Transit time" :
+                                          routeMode === "WALKING" ? "Walk time" : "Cycle time"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                      )}
+                      {routeResult?.steps?.length > 0 && (
+                          <details className="ai-route-steps">
+                            <summary>Step-by-step directions ({routeResult.steps.length} steps)</summary>
+                            <ol className="ai-route-steps-list">
+                              {routeResult.steps.map((s, i) => (
+                                  <li key={i}>
+                                    <span className="ai-route-step-instr">{s.instruction}</span>
+                                    <span className="ai-route-step-dist">{s.distance}</span>
+                                  </li>
+                              ))}
+                            </ol>
+                          </details>
+                      )}
                     </div>
-                  </div>
                 )}
 
-                {/* Step-by-step directions toggle */}
-                {routeResult?.steps?.length > 0 && (
-                  <details className="ai-route-steps">
-                    <summary>Step-by-step directions ({routeResult.steps.length} steps)</summary>
-                    <ol className="ai-route-steps-list">
-                      {routeResult.steps.map((s, i) => (
-                        <li key={i}>
-                          <span className="ai-route-step-instr">{s.instruction}</span>
-                          <span className="ai-route-step-dist">{s.distance}</span>
-                        </li>
+                <div className="ai-map-search-bar">
+                  <svg className="ai-map-search-icon" width="15" height="15" viewBox="0 0 24 24"
+                       fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
+                  </svg>
+                  <input
+                      ref={searchInputRef}
+                      className="ai-map-search-input"
+                      type="text"
+                      placeholder="Search any location on map…"
+                      aria-label="Search location on map"
+                  />
+                </div>
+
+                <div className="ai-map-frame-wrap" ref={mapContainerRef} />
+
+                {hasProperties && (
+                    <div className="ai-map-list" role="list">
+                      {mapProperties.map((p, i) => (
+                          <div
+                              key={p.id || i}
+                              className={`ai-map-item${activeListItem === i ? " active" : ""}`}
+                              onClick={() => focusMarker(i)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => e.key === "Enter" && focusMarker(i)}
+                              aria-label={`${p.title} - ${p.location}`}
+                          >
+                            <div className="ai-map-item-marker">{i + 1}</div>
+                            <div className="ai-map-item-info">
+                              <div className="ai-map-item-title">{p.title}</div>
+                              <div className="ai-map-item-loc">{p.location || "—"}</div>
+                            </div>
+                            <div className="ai-map-item-price">{formatPrice(p.price)}</div>
+                          </div>
                       ))}
-                    </ol>
-                  </details>
+                    </div>
                 )}
               </div>
-            )}
-
-            {/* ── Places search bar ── */}
-            <div className="ai-map-search-bar">
-              <svg className="ai-map-search-icon" width="15" height="15" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                className="ai-map-search-input"
-                type="text"
-                placeholder="Search any location on map…"
-              />
-            </div>
-
-            {/* ── Map canvas ── */}
-            <div className="ai-map-frame-wrap" ref={mapContainerRef} />
-
-            {/* ── Property list (only shown when not in pure route mode) ── */}
-            {hasProperties && (
-              <div className="ai-map-list">
-                {mapProperties.map((p, i) => (
-                  <div
-                    key={p.id || i}
-                    className={`ai-map-item${activeListItem === i ? " active" : ""}`}
-                    onClick={() => focusMarker(i)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && focusMarker(i)}
-                    title="Click to show on map"
-                  >
-                    <div className="ai-map-item-marker">{i + 1}</div>
-                    <div className="ai-map-item-info">
-                      <div className="ai-map-item-title">{p.title}</div>
-                      <div className="ai-map-item-loc">{p.location || "—"}</div>
-                    </div>
-                    <div className="ai-map-item-price">{formatPrice(p.price)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
   );
 }

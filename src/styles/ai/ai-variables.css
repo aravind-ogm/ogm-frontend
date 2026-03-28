@@ -12,8 +12,12 @@
   --font-display:   'Playfair Display', Georgia, serif;
   --font-mono:      'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Backgrounds */
-  --bg-deep:        #f4f6fb;
+  /* ── Backgrounds ──────────────────────────────
+     CHANGED: --bg-deep is now #f4f4f4 (was #f4f6fb)
+     This gives the entire chat area the f4f4f4 background
+     you requested from Image 1.
+  ─────────────────────────────────────────────── */
+  --bg-deep:        #f4f4f4;
   --bg-surface:     #ffffff;
   --bg-elevated:    #ffffff;
   --bg-card:        #ffffff;
@@ -37,7 +41,7 @@
   --accent-soft:    rgba(249, 115, 22, 0.10);
   --accent-glow:    rgba(249, 115, 22, 0.20);
 
-  /* Navy — user bubbles, sidebar, headers */
+  /* Navy — user bubbles, headers */
   --navy:           #1B3A6B;
   --navy-deep:      #0d1f3c;
   --navy-hover:     #2563EB;

@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 
-/* ── Components (same folder) ── */
+/* ── Components ── */
 import AiSidebar     from "./AiSidebar";
 import AiChatBox     from "./AiChatBox";
 import ConfirmDialog from "./Confirmdialog";
 import Icon          from "./Icon";
 
 /* ── Hooks ── */
-import useTheme              from "./Usetheme";
-import useKeyboardShortcuts  from "./Usekeyboardshortcuts";
+import useTheme             from "./Usetheme";
+import useKeyboardShortcuts from "./Usekeyboardshortcuts";
 import useGeolocation, { detectNearMeIntent } from "./Usegeolocation";
 
 /* ── Location modal ── */
@@ -24,387 +24,360 @@ import { ENDPOINTS, KEYBOARD_SHORTCUTS } from "./Constants";
 import "../../styles/ai/ai-variables.css";
 import "../../styles/ai/ai-layout.css";
 
-/* ═══════════════════════════════════════════════
-   AI SEARCH PAGE — MAIN ORCHESTRATOR
-   ═══════════════════════════════════════════════ */
-
 export default function AiSearchPage() {
-  const location        = useLocation();
-  const initialQuestion = location.state?.question;
+    const location        = useLocation();
+    const initialQuestion = location.state?.question;
 
-  /* ── STATE ── */
-  const [chats,        setChats]        = useState([]);
-  const [activeChatId, setActiveChatId] = useState(null);
-  const [loading,      setLoading]      = useState(false);
-  const [sidebarOpen,  setSidebarOpen]  = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [toast,        setToast]        = useState({ visible: false, text: "" });
+    const [chats,        setChats]        = useState([]);
+    const [activeChatId, setActiveChatId] = useState(null);
+    const [loading,      setLoading]      = useState(false);
+    const [sidebarOpen,  setSidebarOpen]  = useState(() => window.innerWidth > 768);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [toast,        setToast]        = useState({ visible: false, text: "" });
 
-  /* ── LOCATION STATE ── */                                          // ← NEW BLOCK
-  const [locationModalOpen, setLocationModalOpen] = useState(false);
-  const [pendingQuery,      setPendingQuery]       = useState("");
-  const {
-    position,
-    locationName,       // reverse-geocoded place name e.g. "Koramangala, Bengaluru"
-    permissionStatus,
-    requestLocation,
-    isGranted,
-    isDenied,
-  } = useGeolocation();
+    const [locationModalOpen, setLocationModalOpen] = useState(false);
+    const [pendingQuery,      setPendingQuery]       = useState("");
 
-  const hasSentInitial = useRef(false);
-  const { theme, toggleTheme } = useTheme();
+    const {
+        position,
+        locationName,
+        permissionStatus,
+        requestLocation,
+        isGranted,
+        isDenied,
+    } = useGeolocation();
 
-  /* ── DERIVED ── */
-  const activeChat = useMemo(
-    () => chats.find((c) => c.id === activeChatId) || null,
-    [chats, activeChatId]
-  );
+    const hasSentInitial        = useRef(false);
+    const { theme, toggleTheme } = useTheme();
 
-  /* ═══════════════════════════════════════
-     HELPERS
-     ═══════════════════════════════════════ */
-
-  const makeChat = useCallback((title = "New Chat") => ({
-    id: uid(), title, messages: [], createdAt: Date.now(),
-  }), []);
-
-  const showToast = useCallback((text) => {
-    setToast({ visible: true, text });
-    setTimeout(() => setToast({ visible: false, text: "" }), 2000);
-  }, []);
-
-  /* ═══════════════════════════════════════
-     CHAT CRUD
-     ═══════════════════════════════════════ */
-
-  const createNewChat = useCallback(() => {
-    const chat = makeChat();
-    setChats((prev) => [chat, ...prev]);
-    setActiveChatId(chat.id);
-  }, [makeChat]);
-
-  const requestDeleteChat = useCallback((chatId) => {
-    setDeleteTarget(chatId);
-  }, []);
-
-  const confirmDeleteChat = useCallback(() => {
-    if (!deleteTarget) return;
-    setChats((prev) => {
-      const next = prev.filter((c) => c.id !== deleteTarget);
-      if (activeChatId === deleteTarget) {
-        if (next.length > 0) {
-          setActiveChatId(next[0].id);
-        } else {
-          const fresh = makeChat();
-          next.push(fresh);
-          setActiveChatId(fresh.id);
-        }
-      }
-      return next;
-    });
-    setDeleteTarget(null);
-  }, [deleteTarget, activeChatId, makeChat]);
-
-  /* ═══════════════════════════════════════
-     MESSAGE OPERATIONS
-     ═══════════════════════════════════════ */
-
-  const appendMessage = useCallback((chatId, msg) => {
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === chatId
-          ? { ...chat, messages: [...chat.messages, { ...msg, timestamp: Date.now() }] }
-          : chat
-      )
+    const activeChat = useMemo(
+        () => chats.find((c) => c.id === activeChatId) || null,
+        [chats, activeChatId]
     );
-  }, []);
 
-  const editMessage = useCallback((chatId, msgId, newText) => {
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              messages: chat.messages.map((m) =>
-                m.id === msgId ? { ...m, text: newText, edited: true } : m
-              ),
+    const makeChat = useCallback((title = "New Chat") => ({
+        id: uid(), title, messages: [], createdAt: Date.now(),
+    }), []);
+
+    const showToast = useCallback((text) => {
+        setToast({ visible: true, text });
+        setTimeout(() => setToast({ visible: false, text: "" }), 2000);
+    }, []);
+
+    /* ── Chat CRUD ── */
+
+    const createNewChat = useCallback(() => {
+        const chat = makeChat();
+        setChats((prev) => [chat, ...prev]);
+        setActiveChatId(chat.id);
+    }, [makeChat]);
+
+    const requestDeleteChat = useCallback((chatId) => {
+        setDeleteTarget(chatId);
+    }, []);
+
+    const confirmDeleteChat = useCallback(() => {
+        if (!deleteTarget) return;
+        setChats((prev) => {
+            const next = prev.filter((c) => c.id !== deleteTarget);
+            if (activeChatId === deleteTarget) {
+                if (next.length > 0) {
+                    setActiveChatId(next[0].id);
+                } else {
+                    const fresh = makeChat();
+                    next.push(fresh);
+                    setActiveChatId(fresh.id);
+                }
             }
-          : chat
-      )
-    );
-  }, []);
-
-  const copyMessageText = useCallback((text) => {
-    navigator.clipboard?.writeText(text);
-    showToast("Copied to clipboard");
-  }, [showToast]);
-
-  /* ═══════════════════════════════════════
-     SEND MESSAGE  ← only function changed
-     ═══════════════════════════════════════ */
-
-  /**
-   * sendMessage now accepts either:
-   *   - a plain string:  sendMessage("find 2 BHKs in Whitefield")
-   *   - an object:       sendMessage({ question, userLatitude, userLongitude })
-   *
-   * When the query contains "near me" / "nearby" / "my current location":
-   *   1. If location already granted  → attach coords and fire immediately
-   *   2. If location not yet granted  → open the permission modal,
-   *                                     hold the query in pendingQuery,
-   *                                     fire once user allows (handleLocationGranted)
-   *   3. If location denied           → fire without coords, backend handles gracefully
-   */
-  const sendMessage = useCallback(
-    async (input) => {
-      // Accept string or { question, userLatitude, userLongitude }
-      const isObject    = input !== null && typeof input === "object";
-      const text        = isObject ? input.question?.trim() : input?.trim();
-      let   userLat     = isObject ? input.userLatitude    : null;
-      let   userLng     = isObject ? input.userLongitude   : null;
-      let   userLocName = isObject ? input.userLocationName : null;
-
-      if (!text || !activeChatId || loading) return;
-
-      // ── Location interception ─────────────────────────────────────────────
-      const needsLocation = detectNearMeIntent(text);
-
-      if (needsLocation && !isDenied) {
-        if (isGranted && position) {
-          // Already have it — use cached position
-          userLat = position.latitude;
-          userLng = position.longitude;
-        } else {
-          // Need to ask — hold query and show modal
-          setPendingQuery(text);
-          setLocationModalOpen(true);
-          return; // ← will resume in handleLocationGranted
-        }
-      }
-      // ─────────────────────────────────────────────────────────────────────
-
-      // Always attach the latest known position + location name to every message.
-      // This ensures follow-up messages ("show me cheaper ones", "any 3 BHK?")
-      // continue to return nearby results and Gemini keeps location context.
-      if (!userLat && position) {
-        userLat     = position.latitude;
-        userLng     = position.longitude;
-        userLocName = userLocName ?? position.locationName ?? locationName ?? null;
-      }
-
-      const chatId = activeChatId;
-
-      appendMessage(chatId, { id: uid(), role: "user", text });
-
-      // Auto-title the chat from first message
-      setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === chatId && chat.title === "New Chat"
-            ? { ...chat, title: truncateWords(text) }
-            : chat
-        )
-      );
-
-      // Detect route/distance intent — if true, suppress property cards
-      // so the map shows the route cleanly without a property list below.
-      const isRouteQuery = !!detectRouteIntent(text);
-      const routeInfo    = isRouteQuery ? detectRouteIntent(text) : null;
-
-      setLoading(true);
-
-      try {
-        const response = await fetch(ENDPOINTS.AI_ASK, {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            question:         text,
-            chatId:           chatId,
-            userLatitude:     userLat ?? null,
-            userLongitude:    userLng ?? null,
-            userLocationName: userLat != null ? userLocName : null,
-            // Tell the backend this is a directions query so it skips
-            // property search and returns a plain text distance answer.
-            isRouteQuery:     isRouteQuery,
-          }),
+            return next;
         });
+        setDeleteTarget(null);
+    }, [deleteTarget, activeChatId, makeChat]);
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    /* ── Message operations ── */
 
-        const data = await response.json();
-
-        // For route queries: replace whatever the backend returned with a
-        // clean, focused message — the map already shows the route visually.
-        const routeText = isRouteQuery
-          ? `🗺️ Showing route from **${routeInfo.origin}** to **${routeInfo.destination}** on the map.\n\nUse the travel mode tabs (Drive / Transit / Walk / Cycle) on the right to switch modes and see updated distance and duration.`
-          : (data.message || data.summary || data.reply || "No response received.");
-
-        appendMessage(chatId, {
-          id:           uid(),
-          role:         "ai",
-          text:         routeText,
-          isRouteQuery: isRouteQuery,
-          hasResults:   isRouteQuery ? false : (data.hasResults  || false),
-          properties:   isRouteQuery ? []    : (data.properties  || []),
-          followUps:    isRouteQuery ? []    : (data.followUps   || []),
-        });
-      } catch (err) {
-        appendMessage(chatId, {
-          id:         uid(),
-          role:       "ai",
-          text:       "Something went wrong. Please try again.",
-          hasResults: false,
-          properties: [],
-          isError:    true,
-        });
-      } finally {
-        setLoading(false);
-      }
-    },
-    [activeChatId, loading, appendMessage, isGranted, isDenied, position]
-  );
-
-  /* ── Location granted from modal ── */                            // ← NEW
-  const handleLocationGranted = useCallback((pos) => {
-    if (pendingQuery) {
-      sendMessage({
-        question:         pendingQuery,
-        userLatitude:     pos.latitude,
-        userLongitude:    pos.longitude,
-        userLocationName: pos.locationName ?? null,
-      });
-      setPendingQuery("");
-    }
-  }, [pendingQuery, sendMessage]);
-
-  /* ── RETRY ── */
-  const retryMessage = useCallback(
-    (chatId, msgIndex) => {
-      const chat = chats.find((c) => c.id === chatId);
-      if (!chat) return;
-
-      const userMsg = chat.messages
-        .slice(0, msgIndex)
-        .reverse()
-        .find((m) => m.role === "user");
-
-      if (userMsg) {
+    const appendMessage = useCallback((chatId, msg) => {
         setChats((prev) =>
-          prev.map((c) =>
-            c.id === chatId ? { ...c, messages: c.messages.slice(0, msgIndex) } : c
-          )
+            prev.map((chat) =>
+                chat.id === chatId
+                    ? { ...chat, messages: [...chat.messages, { ...msg, timestamp: Date.now() }] }
+                    : chat
+            )
         );
-        setTimeout(() => sendMessage(userMsg.text), 80);
-      }
-    },
-    [chats, sendMessage]
-  );
+    }, []);
 
-  /* ═══════════════════════════════════════
-     INITIALIZATION
-     ═══════════════════════════════════════ */
+    const editMessage = useCallback((chatId, msgId, newText) => {
+        setChats((prev) =>
+            prev.map((chat) =>
+                chat.id === chatId
+                    ? {
+                        ...chat,
+                        messages: chat.messages.map((m) =>
+                            m.id === msgId ? { ...m, text: newText, edited: true } : m
+                        ),
+                    }
+                    : chat
+            )
+        );
+    }, []);
 
-  useEffect(() => {
-    if (chats.length === 0) createNewChat();
-  }, []); // Run once on mount
+    const copyMessageText = useCallback((text) => {
+        navigator.clipboard?.writeText(text);
+        showToast("Copied to clipboard");
+    }, [showToast]);
 
-  useEffect(() => {
-    if (initialQuestion && activeChatId && !hasSentInitial.current) {
-      hasSentInitial.current = true;
-      sendMessage(initialQuestion);
-    }
-  }, [initialQuestion, activeChatId]); // Intentionally limited deps
+    /* ── Send message ── */
 
-  /* ═══════════════════════════════════════
-     KEYBOARD SHORTCUTS
-     ═══════════════════════════════════════ */
+    // Helper to get current active chat messages for context lookups
+    const activeChatMessages = useCallback(() => {
+        const chat = chats.find(c => c.id === activeChatId);
+        return chat?.messages || [];
+    }, [chats, activeChatId]);
 
-  useKeyboardShortcuts(
-    useMemo(
-      () => ({
-        [KEYBOARD_SHORTCUTS.NEW_CHAT]:        createNewChat,
-        [KEYBOARD_SHORTCUTS.TOGGLE_SIDEBAR]:  () => setSidebarOpen((v) => !v),
-        [KEYBOARD_SHORTCUTS.TOGGLE_THEME]:    toggleTheme,
-      }),
-      [createNewChat, toggleTheme]
-    )
-  );
+    const sendMessage = useCallback(
+        async (input) => {
+            const isObject    = input !== null && typeof input === "object";
+            const text        = isObject ? input.question?.trim() : input?.trim();
+            let   userLat     = isObject ? input.userLatitude    : null;
+            let   userLng     = isObject ? input.userLongitude   : null;
+            let   userLocName = isObject ? input.userLocationName : null;
 
-  /* ═══════════════════════════════════════
-     RENDER
-     ═══════════════════════════════════════ */
+            if (!text || !activeChatId || loading) return;
 
-  return (
-    <div className="ai-layout">
+            const needsLocation = detectNearMeIntent(text);
 
-      {/* ── LOCATION PERMISSION MODAL ── */}                        {/* ← NEW */}
-      <LocationPermissionModal
-        open={locationModalOpen}
-        onClose={() => { setLocationModalOpen(false); setPendingQuery(""); }}
-        onLocationGranted={handleLocationGranted}
-        queryText={pendingQuery}
-      />
+            if (needsLocation && !isDenied) {
+                if (isGranted && position) {
+                    userLat = position.latitude;
+                    userLng = position.longitude;
+                } else {
+                    setPendingQuery(text);
+                    setLocationModalOpen(true);
+                    return;
+                }
+            }
 
-      {/* SIDEBAR */}
-      <AiSidebar
-        chats={chats}
-        activeChatId={activeChatId}
-        setActiveChatId={setActiveChatId}
-        createNewChat={createNewChat}
-        deleteChat={requestDeleteChat}
-        collapsed={!sidebarOpen}
-      />
+            if (!userLat && position) {
+                userLat     = position.latitude;
+                userLng     = position.longitude;
+                userLocName = userLocName ?? position.locationName ?? locationName ?? null;
+            }
 
-      {/* MAIN */}
-      <main className="ai-main">
-        {/* TOP BAR */}
-        <div className="ai-topbar">
-          <button
-            className="topbar-btn"
-            onClick={() => setSidebarOpen((v) => !v)}
-            title={sidebarOpen ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"}
-          >
-            <Icon name="sidebar" size={16} />
-          </button>
+            const chatId = activeChatId;
 
-          <span className="topbar-title">{activeChat?.title || "New Chat"}</span>
+            appendMessage(chatId, { id: uid(), role: "user", text });
 
-          <div className="topbar-spacer" />
+            setChats((prev) =>
+                prev.map((chat) =>
+                    chat.id === chatId && chat.title === "New Chat"
+                        ? { ...chat, title: truncateWords(text) }
+                        : chat
+                )
+            );
 
-          <button
-            className="topbar-btn"
-            onClick={toggleTheme}
-            title="Toggle theme"
-          >
-            <Icon name={theme === "dark" ? "sun" : "moon"} size={16} />
-          </button>
+            const isRouteQuery = !!detectRouteIntent(text);
+            const routeInfo    = isRouteQuery ? detectRouteIntent(text) : null;
+
+            // Resolve "__PROPERTY__" to the last seen property's location
+            if (routeInfo?.usePropAsOrigin) {
+                const msgs = activeChatMessages();
+                for (let i = msgs.length - 1; i >= 0; i--) {
+                    const m = msgs[i];
+                    if (m.role === "ai" && m.properties?.length > 0) {
+                        const p = m.properties[0];
+                        const pLat = parseFloat(p.latitude ?? p.lat);
+                        const pLng = parseFloat(p.longitude ?? p.lng);
+                        if (!isNaN(pLat) && !isNaN(pLng)) {
+                            routeInfo.origin        = { lat: pLat, lng: pLng };
+                            routeInfo.originLabel   = p.title || p.location;
+                        } else if (p.location) {
+                            routeInfo.origin        = p.location;
+                            routeInfo.originLabel   = p.title || p.location;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            setLoading(true);
+
+            try {
+                const response = await fetch(ENDPOINTS.AI_ASK, {
+                    method:  "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        question:         text,
+                        chatId:           chatId,
+                        userLatitude:     userLat  ?? null,
+                        userLongitude:    userLng  ?? null,
+                        userLocationName: userLat  != null ? userLocName : null,
+                        isRouteQuery:     isRouteQuery,
+                    }),
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+
+                const routeOriginLabel = routeInfo?.originLabel || (
+                    typeof routeInfo?.origin === "object"
+                        ? "This Property"
+                        : routeInfo?.origin || "Unknown"
+                );
+                const routeText = isRouteQuery
+                    ? `🗺️ Showing route from **${routeOriginLabel}** to **${routeInfo.destination}** on the map.\n\nUse the travel mode tabs (Drive / Transit / Walk / Cycle) on the right to switch modes.`
+                    : (data.message || data.summary || data.reply || "No response received.");
+
+                appendMessage(chatId, {
+                    id:           uid(),
+                    role:         "ai",
+                    text:         routeText,
+                    isRouteQuery: isRouteQuery,
+                    hasResults:   isRouteQuery ? false : (data.hasResults  || false),
+                    properties:   isRouteQuery ? []    : (data.properties  || []),
+                    followUps:    isRouteQuery ? []    : (data.followUps   || []),
+                });
+            } catch (err) {
+                appendMessage(chatId, {
+                    id:         uid(),
+                    role:       "ai",
+                    text:       "Something went wrong. Please try again.",
+                    hasResults: false,
+                    properties: [],
+                    isError:    true,
+                });
+            } finally {
+                setLoading(false);
+            }
+        },
+        [activeChatId, loading, appendMessage, isGranted, isDenied, position, locationName]
+    );
+
+    const handleLocationGranted = useCallback((pos) => {
+        if (pendingQuery) {
+            sendMessage({
+                question:         pendingQuery,
+                userLatitude:     pos.latitude,
+                userLongitude:    pos.longitude,
+                userLocationName: pos.locationName ?? null,
+            });
+            setPendingQuery("");
+        }
+    }, [pendingQuery, sendMessage]);
+
+    const retryMessage = useCallback(
+        (chatId, msgIndex) => {
+            const chat = chats.find((c) => c.id === chatId);
+            if (!chat) return;
+            const userMsg = chat.messages
+                .slice(0, msgIndex)
+                .reverse()
+                .find((m) => m.role === "user");
+            if (userMsg) {
+                setChats((prev) =>
+                    prev.map((c) =>
+                        c.id === chatId ? { ...c, messages: c.messages.slice(0, msgIndex) } : c
+                    )
+                );
+                setTimeout(() => sendMessage(userMsg.text), 80);
+            }
+        },
+        [chats, sendMessage]
+    );
+
+    /* ── Initialization ── */
+
+    useEffect(() => {
+        if (chats.length === 0) createNewChat();
+    }, []);
+
+    useEffect(() => {
+        if (initialQuestion && activeChatId && !hasSentInitial.current) {
+            hasSentInitial.current = true;
+            sendMessage(initialQuestion);
+        }
+    }, [initialQuestion, activeChatId]);
+
+    /* ── Keyboard shortcuts ── */
+
+    useKeyboardShortcuts(
+        useMemo(
+            () => ({
+                [KEYBOARD_SHORTCUTS.NEW_CHAT]:       createNewChat,
+                [KEYBOARD_SHORTCUTS.TOGGLE_SIDEBAR]: () => setSidebarOpen((v) => !v),
+                [KEYBOARD_SHORTCUTS.TOGGLE_THEME]:   toggleTheme,
+            }),
+            [createNewChat, toggleTheme]
+        )
+    );
+
+    return (
+        <div className="ai-layout">
+
+            <LocationPermissionModal
+                open={locationModalOpen}
+                onClose={() => { setLocationModalOpen(false); setPendingQuery(""); }}
+                onLocationGranted={handleLocationGranted}
+                queryText={pendingQuery}
+            />
+
+            <AiSidebar
+                chats={chats}
+                activeChatId={activeChatId}
+                setActiveChatId={setActiveChatId}
+                createNewChat={createNewChat}
+                deleteChat={requestDeleteChat}
+                collapsed={!sidebarOpen}
+            />
+
+            <main className="ai-main">
+                <div className="ai-topbar">
+                    <button
+                        className="topbar-btn"
+                        onClick={() => setSidebarOpen((v) => !v)}
+                        title={sidebarOpen ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"}
+                        aria-label="Toggle sidebar"
+                    >
+                        <Icon name="sidebar" size={16} />
+                    </button>
+
+                    <span className="topbar-title">{activeChat?.title || "New Chat"}</span>
+                    <div className="topbar-spacer" />
+
+                    <button
+                        className="topbar-btn"
+                        onClick={toggleTheme}
+                        title="Toggle theme (Ctrl+J)"
+                        aria-label="Toggle theme"
+                    >
+                        <Icon name={theme === "dark" ? "sun" : "moon"} size={16} />
+                    </button>
+                </div>
+
+                <AiChatBox
+                    chat={activeChat}
+                    loading={loading}
+                    onSend={sendMessage}
+                    onEditMessage={editMessage}
+                    onRetry={retryMessage}
+                    onCopy={copyMessageText}
+                    userPosition={position}
+                />
+            </main>
+
+            <div className={`toast ${toast.visible ? "visible" : ""}`} role="status" aria-live="polite">
+                {toast.text}
+            </div>
+
+            {deleteTarget && (
+                <ConfirmDialog
+                    title="Delete Chat"
+                    message="This conversation and all its messages will be permanently removed."
+                    confirmLabel="Delete"
+                    onConfirm={confirmDeleteChat}
+                    onCancel={() => setDeleteTarget(null)}
+                />
+            )}
         </div>
-
-        {/* CHAT BOX — userPosition passed so cards can show distance badges */}
-        <AiChatBox
-          chat={activeChat}
-          loading={loading}
-          onSend={sendMessage}
-          onEditMessage={editMessage}
-          onRetry={retryMessage}
-          onCopy={copyMessageText}
-          userPosition={position}
-        />
-      </main>
-
-      {/* TOAST */}
-      <div className={`toast ${toast.visible ? "visible" : ""}`}>{toast.text}</div>
-
-      {/* DELETE CONFIRM */}
-      {deleteTarget && (
-        <ConfirmDialog
-          title="Delete Chat"
-          message="This conversation and all its messages will be permanently removed."
-          confirmLabel="Delete"
-          onConfirm={confirmDeleteChat}
-          onCancel={() => setDeleteTarget(null)}
-        />
-      )}
-    </div>
-  );
+    );
 }
