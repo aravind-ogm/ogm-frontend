@@ -13,7 +13,7 @@ import AskDiscoverWidget from "../../pages/AskDiscoverWidget";
 /* ─── API base ───────────────────────────────────────────────────────────────
    Set  REACT_APP_API_BASE=http://localhost:8080  in your .env.development
    Set  REACT_APP_API_BASE=https://your-prod-url  in your .env.production    */
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8080";
+const API_BASE = process.env.REACT_APP_API_BASE || "";  // Set REACT_APP_API_BASE in .env
 
 /* ─── JaaS App ID — set REACT_APP_JAAS_APP_ID in .env ───────────────────────
    Get yours free at https://jaas.8x8.vc
@@ -613,6 +613,19 @@ export default function PropertyDetails() {
   // FIX: wrapped in useCallback with proper deps
   const handleJoinLiveTour = useCallback(async () => {
     if (!liveTourName.trim()) return;
+
+    // Production: auto-end if agent doesn't join within 90 seconds
+    setTimeout(() => {
+      try {
+        const count = liveTourApiRef.current?.getNumberOfParticipants?.() || 1;
+        if (count <= 1) {
+          liveTourApiRef.current?.dispose();
+          setLiveTourJoined(false);
+          setLiveTourEnded(true);
+        }
+      } catch { /* ignore */ }
+    }, 90000);
+
     try {
       await fetch(`${API_BASE}/api/live-tour/join-queue`, {
         method: "POST",
@@ -885,11 +898,13 @@ export default function PropertyDetails() {
               onClick={() => { setLiveTourRoomName(generateLiveTourRoom()); setLiveTourOpen(true); }}
           >
             <span className="live-tour-pill-dot" aria-hidden="true" />
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            <svg width="18" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
             </svg>
-            Live Tour
+            Live Video
+            <br/>
+            Tour
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <polyline points="9 18 15 12 9 6"/>

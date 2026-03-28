@@ -3,3 +3,6 @@ build/
 .idea/
 .env
 .DS_Store
+.env.development
+.env.production
+.env.local
