@@ -42,7 +42,7 @@
   margin: 0 auto;
   padding: 0 40px;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   gap: 48px;
   align-items: start;
   margin-bottom: 48px;
@@ -213,7 +213,7 @@
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .footer-container {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 36px;
   }
   .footer-brand { grid-column: 1 / -1; }

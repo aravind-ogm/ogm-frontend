@@ -7,6 +7,7 @@
     "@fortawesome/fontawesome-free": "^7.1.0",
     "axios": "^1.13.2",
     "dompurify": "^3.3.3",
+    "firebase": "^12.11.0",
     "lucide-react": "^0.553.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

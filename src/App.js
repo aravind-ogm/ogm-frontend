@@ -16,6 +16,8 @@ import PrivacyPolicy      from "./pages/PrivacyPolicy";
 import AiSearchPage       from "./components/ai/AiSearchPage";
 import AgentAdminApp      from "./components/admindashboard/Agentadminapp";
 import BookTourPage       from "./components/admindashboard/BookTourPage";
+import BrokerRegistration from "./components/broker";
+
 import "./styles/App.css";
 
 const BASE_URL           = process.env.REACT_APP_API_BASE || "http://localhost:8080";
@@ -88,6 +90,8 @@ function AppContent() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/contact"        element={<Contact />} />
           <Route path="/ai-search"      element={<AiSearchPage />} />
+          <Route path="/broker/register" element={<BrokerRegistration />} />
+
           <Route path="/auth"
             element={<AuthContainer onAuthSuccess={() => setIsAuthenticated(true)} />}
           />
