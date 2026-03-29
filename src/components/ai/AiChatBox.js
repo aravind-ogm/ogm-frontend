@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Icon from "./Icon";
 import AiMessage from "./AiMessage";
-import SuggestionChips from "./SuggestionChips";
+import SuggestionChips, { SuggestionCards } from "./SuggestionChips";
 import AiBottomSearchBar from "./AiBottomSearchBar";
 import { formatPrice } from "./Helpers";
 import { detectRouteIntent } from "./RouteHelper";
@@ -111,7 +111,7 @@ export default function AiChatBox({
   }, [mapsReady]);
 
   /* ── Auto-detect route intent from last user message ──
-     FIX 2: Added chat?.messages as correct dependency (was eslint-disable-line)
+     Resolves __PROPERTY__ token to actual property coords/name before storing.
   ── */
   useEffect(() => {
     if (!chat?.messages?.length) return;
@@ -120,16 +120,44 @@ export default function AiChatBox({
     if (!lastUser) return;
 
     const route = detectRouteIntent(lastUser.text);
-    if (route) {
-      setRouteRequest(route);
-      setRouteResult(null);
-      setRouteError(null);
-      const lastAi = [...msgs].reverse().find((m) => m.role === "ai");
+    if (!route) return;
+
+    // Resolve __PROPERTY__ to actual coords or name from the last AI result
+    if (route.usePropAsOrigin) {
+      const lastAi = [...msgs].reverse().find((m) => m.role === "ai" && m.properties?.length);
       if (lastAi?.properties?.length) {
-        setMapProperties(lastAi.properties);
-      } else if (!mapProperties) {
-        setMapProperties([]);
+        const prop = lastAi.properties[0];
+        const pLat = parseFloat(prop.latitude ?? prop.lat);
+        const pLng = parseFloat(prop.longitude ?? prop.lng ?? prop.lon);
+        if (!isNaN(pLat) && !isNaN(pLng) && pLat !== 0 && pLng !== 0) {
+          // Use lat/lng object — DirectionsService handles it without geocoding
+          route.origin      = { lat: pLat, lng: pLng };
+          route.originLabel = prop.title || prop.location || "This Property";
+        } else if (prop.location) {
+          // Append city to avoid NOT_FOUND errors (e.g. "Bannerghatta Road, Bengaluru")
+          route.origin      = prop.location;
+          route.originLabel = prop.title || prop.location;
+        }
       }
+    }
+
+    // Append ", Bengaluru" to single-word destinations to help geocoding
+    if (route.destination && !route.destination.includes(",") && typeof route.destination === "string") {
+      const lower = route.destination.toLowerCase();
+      const isCityAlready = ["bengaluru","bangalore","mumbai","delhi","hyderabad","chennai","pune"].some(c => lower.includes(c));
+      if (!isCityAlready) {
+        route.destination = route.destination + ", Bengaluru";
+      }
+    }
+
+    setRouteRequest(route);
+    setRouteResult(null);
+    setRouteError(null);
+    const lastAi = [...msgs].reverse().find((m) => m.role === "ai");
+    if (lastAi?.properties?.length) {
+      setMapProperties(lastAi.properties);
+    } else if (!mapProperties) {
+      setMapProperties([]);
     }
   }, [chat?.messages]);
 
@@ -473,7 +501,8 @@ export default function AiChatBox({
                   <div className="chat-empty-state">
                     <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
                     <h2>What can I help you find?</h2>
-                    <p>Search for properties, compare listings, or ask anything about real estate.</p>
+                    <p>Search across 20 properties in Bengaluru &amp; Tamil Nadu — or ask anything.</p>
+                    <SuggestionCards onSelect={handleSend} />
                     <SuggestionChips onSelect={handleSend} />
                     <div className="chat-empty-bar">
                       <AiBottomSearchBar onSend={handleSend} />
@@ -539,12 +568,20 @@ export default function AiChatBox({
                       <div className="ai-route-od">
                         <div className="ai-route-od-row">
                           <span className="ai-route-dot origin" />
-                          <span className="ai-route-od-label">{routeResult?.origin || routeRequest.origin}</span>
+                          <span className="ai-route-od-label">
+                      {routeResult?.origin || routeRequest.originLabel ||
+                          (typeof routeRequest.origin === "object" ? "This Property" : routeRequest.origin)}
+                    </span>
                         </div>
                         <div className="ai-route-od-line" />
                         <div className="ai-route-od-row">
                           <span className="ai-route-dot dest" />
-                          <span className="ai-route-od-label">{routeResult?.destination || routeRequest.destination}</span>
+                          <span className="ai-route-od-label">
+                      {routeResult?.destination ||
+                          (typeof routeRequest.destination === "string"
+                              ? routeRequest.destination.replace(/, Bengaluru$/i, "").replace(/, Bangalore$/i, "")
+                              : routeRequest.destination)}
+                    </span>
                         </div>
                       </div>
 

@@ -159,10 +159,16 @@ function AiMessage({
               </>
           ) : (
               <>
-                {/* Message text */}
-                {isAi
-                    ? <div className="msg-text-content" dangerouslySetInnerHTML={{ __html: safeHtml }} />
-                    : <div>{msg.text}</div>
+                {/* Message text — brief intro only when cards follow */}
+                {isAi && msg.hasResults && msg.properties?.length > 0
+                    ? (
+                        /* Show only a short intro line above the cards */
+                        <div className="msg-text-content msg-text-intro"
+                             dangerouslySetInnerHTML={{ __html: safeHtml }} />
+                    )
+                    : isAi
+                        ? <div className="msg-text-content" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+                        : <div>{msg.text}</div>
                 }
 
                 {/* Inline route map — distance/route queries */}
