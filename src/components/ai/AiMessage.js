@@ -282,7 +282,7 @@ function AiMessage({
                     </div>
                 )}
 
-                {/* Meta row */}
+                {/* Meta row — time · copy · retry · 👍👎 all on one line */}
                 <div className="msg-meta">
                   {msg.timestamp && (
                       <time className="msg-time" dateTime={new Date(msg.timestamp).toISOString()}>
@@ -309,25 +309,26 @@ function AiMessage({
                         </button>
                       </>
                   )}
-                </div>
 
-                {/* Reactions */}
-                {isAi && !msg.isError && (
-                    <div className="msg-reactions" role="group" aria-label="Rate this response">
-                      <button
-                          className={`msg-reaction-btn ${reaction === "up"   ? "active" : ""}`}
-                          onClick={() => handleReaction("up")}
-                          aria-pressed={reaction === "up"}
-                          aria-label="Helpful"
-                      >👍</button>
-                      <button
-                          className={`msg-reaction-btn ${reaction === "down" ? "active" : ""}`}
-                          onClick={() => handleReaction("down")}
-                          aria-pressed={reaction === "down"}
-                          aria-label="Not helpful"
-                      >👎</button>
-                    </div>
-                )}
+                  {/* 👍👎 pushed to far right — same row as time */}
+                  {isAi && !msg.isError && (
+                      <div className="msg-reactions" role="group" aria-label="Rate this response"
+                           style={{ marginLeft: "auto", display: "flex", gap: 3 }}>
+                        <button
+                            className={`msg-reaction-btn ${reaction === "up" ? "active" : ""}`}
+                            onClick={() => handleReaction("up")}
+                            aria-pressed={reaction === "up"}
+                            aria-label="Helpful"
+                        >👍</button>
+                        <button
+                            className={`msg-reaction-btn ${reaction === "down" ? "active" : ""}`}
+                            onClick={() => handleReaction("down")}
+                            aria-pressed={reaction === "down"}
+                            aria-label="Not helpful"
+                        >👎</button>
+                      </div>
+                  )}
+                </div>
               </>
           )}
         </div>

@@ -55,9 +55,9 @@
 .chat-messages-container {
   display: flex;
   flex-direction: column;
-  padding: 0 16px 4px;
-  /* FIX: was 800px — widened to 960px so property cards show all 4 action buttons */
-  max-width: 960px;
+  /* FIX 5: Gemini-style — narrower max-width with generous side padding */
+  padding: 0 24px 4px;
+  max-width: 860px;
   margin: 0 auto;
   width: 100%;
 }
@@ -104,7 +104,7 @@
 ══════════════════════════════ */
 .message-row {
   display: flex; align-items: flex-start;
-  margin-bottom: 14px;
+  margin-bottom: 4px;
   animation: msgIn .24s ease;
 }
 @keyframes msgIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
@@ -136,18 +136,19 @@
   position: relative;
 }
 
-/* User — navy gradient */
+/* User — clean white/light same as AI, Gemini style */
 .message-row.user .msg-bubble {
   max-width: 68%;
-  background: linear-gradient(135deg, #1B3A6B 0%, #2563EB 100%);
-  color: #fff;
-  border-radius: 16px 16px 4px 16px;
-  box-shadow: 0 4px 16px rgba(27,58,107,.28);
+  background: #ffffff;
+  color: #111827;
+  border-radius: 18px 18px 4px 18px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
-/* When user message contains inline map — expand to full width */
+/* When user message contains inline map — expand */
 .message-row.user .msg-bubble:has(.inline-route-map) {
-  max-width: 92%;
+  max-width: 96%;
   background: transparent;
   box-shadow: none;
   border-radius: 12px;
@@ -157,25 +158,25 @@
 
 /* The question text above the map */
 .message-row.user .msg-bubble:has(.inline-route-map) > div:first-child {
-  background: linear-gradient(135deg, #1B3A6B 0%, #2563EB 100%);
-  color: #fff;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e8e8e8;
   padding: 11px 15px;
-  border-radius: 16px 16px 4px 16px;
+  border-radius: 18px 18px 4px 18px;
   font-size: 14px;
   line-height: 1.65;
   margin-bottom: 8px;
 }
 
-/* AI — white card */
+/* AI — clean white, Gemini style */
 .message-row.ai .msg-bubble {
   max-width: 92%;
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1.5px solid var(--border-primary);
-  border-radius: 4px 16px 16px 16px;
-  box-shadow: var(--shadow-sm);
-  /* FIX: reduce side padding so cards have more horizontal space */
-  padding: 11px 11px;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px 18px 18px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  padding: 12px 14px;
 }
 
 .msg-bubble.error {
@@ -221,26 +222,35 @@
 .msg-route-btn {
   display: inline-flex; align-items: center; gap: 5px;
   margin-top: 7px; padding: 4px 11px;
-  border: 1.5px solid rgba(255,255,255,.25);
+  border: 1.5px solid #e2e8f0;
   border-radius: 20px;
-  background: rgba(255,255,255,.1); color: rgba(255,255,255,.85);
+  background: #f8fafc; color: #1B3A6B;
   font-family: var(--font-primary); font-size: 12px; font-weight: 600;
   cursor: pointer; transition: all .15s;
 }
-.msg-route-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
+.msg-route-btn:hover { background: #eef3ff; border-color: #c7d9f5; }
 
-/* Property results */
-.ai-property-results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 0; }
+/* Property results — no separator line */
+.ai-property-results-list { margin-top: 10px; display: flex; flex-direction: column; gap: 0; border: none; }
 
-/* ── Meta (time, copy, retry) ── */
+/* ── Meta row: time · copy · retry · 👍👎 on ONE line, reactions far right ── */
 .msg-meta {
-  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
-  margin-top: 8px; padding-top: 8px;
-  border-top: 1px solid rgba(0,0,0,.06);
-  font-size: 11px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
+  margin-top: 6px;
+  border-top: none;
+  font-size: 11px; color: #9ca3af;
+  width: 100%;
 }
 .message-row.user .msg-meta {
-  border-top-color: rgba(255,255,255,.12); color: rgba(255,255,255,.45);
+  color: #9ca3af;
+  justify-content: flex-end;
+}
+/* Reactions inside meta — pushed to far right */
+.msg-meta .msg-reactions {
+  margin-left: auto;
+  display: flex;
+  gap: 3px;
+  margin-top: 0;
 }
 .msg-time   { font-size: 11px; font-weight: 500; }
 .msg-edited { font-size: 10px; font-style: italic; opacity: .6; }
@@ -254,21 +264,21 @@
 }
 .msg-action:hover { background: var(--bg-hover); color: var(--text-primary); border-color: #f97316; }
 .message-row.user .msg-action {
-  border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.55); background: rgba(255,255,255,.07);
+  border-color: #e8e8e8; color: #9ca3af; background: transparent;
 }
-.message-row.user .msg-action:hover { background: rgba(255,255,255,.17); color: #fff; }
+.message-row.user .msg-action:hover { background: #f3f4f6; color: #374151; border-color: #f97316; }
 
-/* Reactions */
-.msg-reactions { display: flex; gap: 5px; margin-top: 6px; }
+/* Reactions — only shown inside .msg-meta (see above) */
+.msg-reactions { display: flex; gap: 3px; margin-top: 0; }
 .msg-reaction-btn {
-  width: 28px; height: 28px; border-radius: 7px;
-  border: 1.5px solid var(--border-primary);
-  background: var(--bg-surface); font-size: 13px;
+  width: 24px; height: 24px; border-radius: 6px;
+  border: 1px solid #e8e8e8;
+  background: transparent; font-size: 12px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all .15s;
+  transition: all .15s; color: #9ca3af;
 }
-.msg-reaction-btn:hover { border-color: #f97316; background: rgba(249,115,22,.08); transform: scale(1.12); }
-.msg-reaction-btn.active { background: rgba(249,115,22,.12); border-color: #f97316; }
+.msg-reaction-btn:hover { border-color: #f97316; background: rgba(249,115,22,.06); transform: scale(1.1); }
+.msg-reaction-btn.active { background: rgba(249,115,22,.1); border-color: #f97316; color: #f97316; }
 
 /* Follow-up chips */
 .msg-followups { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
