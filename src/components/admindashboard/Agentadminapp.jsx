@@ -923,9 +923,9 @@ function DashboardPage({ agent, available, onToggleAvailable, availSaving, onAge
               <FilterTabs tabs={['Today', 'Yesterday', 'Last 7 days', 'All']} active={filter} onChange={setFilter} />
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <SearchBar value={search} onChange={setSearch} placeholder="Search name or property" />
-                <button className="icon-btn" onClick={refresh} title="Refresh" aria-label="Refresh calls">
-                  <Icon.Refresh />
-                </button>
+                {/*<button className="icon-btn" onClick={refresh} title="Refresh" aria-label="Refresh calls">*/}
+                {/*  <Icon.Refresh />*/}
+                {/*</button>*/}
               </div>
             </div>
 

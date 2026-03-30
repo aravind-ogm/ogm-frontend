@@ -501,7 +501,7 @@ export default function AiChatBox({
                   <div className="chat-empty-state">
                     <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
                     <h2>What can I help you find?</h2>
-                    <p>Search across 20 properties in Bengaluru &amp; Tamil Nadu — or ask anything.</p>
+                    <p>“Discover Properties. Ask Anything. Explore Smarter.”</p>
                     <SuggestionCards onSelect={handleSend} />
                     <SuggestionChips onSelect={handleSend} />
                     <div className="chat-empty-bar">
