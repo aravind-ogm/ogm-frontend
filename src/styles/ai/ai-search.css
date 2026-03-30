@@ -85,115 +85,115 @@
 ============================================ */
 
 .abs-bar {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-  max-width: 860px;
-  margin: 0 auto;
-  height: 58px;
-  border-radius: 999px;
-  overflow: hidden;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
-  background: #f97316;
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    height: 56px;
+    border-radius: 28px;       /* still rounded but less pill-like */
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06);
+    background: #f97316;
 }
 
 /* ── White input zone (85%) ── */
 .abs-bar .abs-input-zone {
-  flex: 85;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 16px 0 22px;
-  background: #ffffff !important;
-  border: 1.5px solid rgba(200, 215, 235, 0.7);
-  border-radius: 999px;
-  min-width: 0;
-  box-shadow: none !important;
-  position: relative;
-  z-index: 1;
+    flex: 85;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px 0 20px;
+    background: #ffffff !important;
+    border: none;
+    border-radius: 28px 0 0 28px;
+    min-width: 0;
+    box-shadow: none !important;
+    position: relative;
+    z-index: 1;
 }
 
 .abs-bar .abs-search-icon { flex-shrink: 0; }
 
 .abs-bar .abs-input {
-  flex: 1;
-  border: none !important;
-  outline: none !important;
-  background: transparent !important;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  color: #0f172a;
-  min-width: 0;
-  caret-color: #f97316;
-  box-shadow: none !important;
-  padding: 0 !important;
+    flex: 1;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #0f172a;
+    min-width: 0;
+    caret-color: #f97316;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
 .abs-bar .abs-input::placeholder { color: #aab4c4; font-weight: 400; }
 .abs-bar .abs-input:disabled     { color: #aab4c4; cursor: not-allowed; }
 
 .abs-bar .abs-clear {
-  background: rgba(15,23,42,0.07) !important;
-  border: none !important;
-  color: #94a3b8 !important;
-  width: 20px !important;
-  height: 20px !important;
-  border-radius: 50% !important;
-  font-size: 9px;
-  cursor: pointer;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 0 !important;
-  box-shadow: none !important;
+    background: rgba(15,23,42,0.07) !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 50% !important;
+    font-size: 9px;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0 !important;
+    box-shadow: none !important;
 }
 .abs-bar .abs-clear:hover {
-  background: rgba(15,23,42,0.13) !important;
-  color: #0f172a !important;
+    background: rgba(15,23,42,0.13) !important;
+    color: #0f172a !important;
 }
 
 /* ── Orange action zone (15%) ── */
 .abs-bar .abs-action-zone {
-  flex: 15;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 0 20px 0 14px;
-  background: #f97316 !important;
-  flex-shrink: 0;
-  min-width: 0;
+    flex: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 0 20px 0 14px;
+    background: #f97316 !important;
+    flex-shrink: 0;
+    min-width: 0;
 }
 
 /* Icons — no button background, just transparent */
 .abs-bar .abs-action-btn {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
-  max-width: 28px !important;
-  max-height: 28px !important;
-  border-radius: 50% !important;
-  border: none !important;
-  outline: none !important;
-  background: transparent !important;
-  color: #ffffff !important;
-  cursor: pointer;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-  padding: 0 !important;
-  box-shadow: none !important;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    color: #ffffff !important;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    padding: 0 !important;
+    box-shadow: none !important;
+    transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .abs-bar .abs-action-btn:hover {
-  opacity: 0.8 !important;
-  transform: scale(1.15) !important;
-  background: transparent !important;
-  box-shadow: none !important;
+    opacity: 0.8 !important;
+    transform: scale(1.15) !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 .abs-bar .abs-action-btn:active  { transform: scale(0.92) !important; }
 .abs-bar .abs-action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
@@ -201,17 +201,17 @@
 
 .abs-bar .abs-recording          { opacity: 0.7 !important; }
 .abs-bar .abs-rec-dot {
-  position: absolute;
-  top: 2px; right: 2px;
-  width: 7px; height: 7px;
-  background: #fff;
-  border-radius: 50%;
-  animation: abs-pulse 1.2s ease-in-out infinite;
-  pointer-events: none;
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 7px; height: 7px;
+    background: #fff;
+    border-radius: 50%;
+    animation: abs-pulse 1.2s ease-in-out infinite;
+    pointer-events: none;
 }
 @keyframes abs-pulse {
-  0%,100% { transform: scale(1);   opacity: 1; }
-  50%      { transform: scale(1.5); opacity: 0.4; }
+    0%,100% { transform: scale(1);   opacity: 1; }
+    50%      { transform: scale(1.5); opacity: 0.4; }
 }
 
 .abs-bar .abs-send-idle          { opacity: 0.55; }
@@ -219,8 +219,8 @@
 @keyframes abs-spin              { to { transform: rotate(360deg); } }
 
 @media (max-width: 600px) {
-  .abs-bar                    { height: 52px; }
-  .abs-bar .abs-input         { font-size: 14px; }
-  .abs-bar .abs-action-zone   { gap: 12px; padding: 0 18px 0 12px; }
-  .abs-bar .abs-action-btn    { width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important; max-width: 24px !important; max-height: 24px !important; }
+    .abs-bar                    { height: 52px; }
+    .abs-bar .abs-input         { font-size: 14px; }
+    .abs-bar .abs-action-zone   { gap: 12px; padding: 0 18px 0 12px; }
+    .abs-bar .abs-action-btn    { width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important; max-width: 24px !important; max-height: 24px !important; }
 }
