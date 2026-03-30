@@ -32,7 +32,7 @@
   height: 100%;
   overflow: hidden;
   min-width: 0;
-  background: #f4f4f4;
+  background: #ffffff;
   transition: flex 0.28s cubic-bezier(.4,0,.2,1);
 }
 /* When map is open — give 55% to chat */
@@ -55,11 +55,11 @@
 .chat-messages-container {
   display: flex;
   flex-direction: column;
-  /* FIX 5: Gemini-style — narrower max-width with generous side padding */
-  padding: 0 24px 4px;
-  max-width: 860px;
-  margin: 0 auto;
+  /* Full width — no unnecessary centering margin */
+  padding: 0 20px 4px;
+  max-width: 100%;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* ══════════════════════════════
@@ -69,8 +69,8 @@
   height: 100%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 0 24px 24px; text-align: center;
-  width: 100%; max-width: 720px; margin: 0 auto;
+  padding: 0 16px 24px; text-align: center;
+  width: 100%; max-width: 100%; margin: 0 auto;
   gap: 0;
 }
 
@@ -136,9 +136,9 @@
   position: relative;
 }
 
-/* User — clean white/light same as AI, Gemini style */
+/* User — clean white, right aligned */
 .message-row.user .msg-bubble {
-  max-width: 68%;
+  max-width: 75%;
   background: #ffffff;
   color: #111827;
   border-radius: 18px 18px 4px 18px;
@@ -168,9 +168,9 @@
   margin-bottom: 8px;
 }
 
-/* AI — clean white, Gemini style */
+/* AI — clean white, full width for property cards */
 .message-row.ai .msg-bubble {
-  max-width: 92%;
+  max-width: 100%;
   background: #ffffff;
   color: #111827;
   border: 1px solid #e8e8e8;
@@ -326,14 +326,14 @@
 ══════════════════════════════ */
 .chat-input-bar {
   padding: 10px 16px 16px;
-  background: #f4f4f4;
-  border-top: 1px solid #e8e8e8;
+  background: #ffffff;
+  border-top: none;
   flex-shrink: 0;
 }
 
 .chat-input-bar .abs-bar,
 .chat-center-input .abs-bar {
-  max-width: 720px;
+  max-width: 100%;
 }
 
 /* ══════════════════════════════

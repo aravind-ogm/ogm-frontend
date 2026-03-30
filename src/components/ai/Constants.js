@@ -49,20 +49,8 @@ export const DEFAULT_SUGGESTIONS = [
     category: "location",
   },
   {
-    label: "Properties in Sarjapur",
-    value: "show me properties on sarjapur road",
-    icon:  "📍",
-    category: "location",
-  },
-  {
     label: "Flats near Electronic City",
     value: "apartments near electronic city",
-    icon:  "📍",
-    category: "location",
-  },
-  {
-    label: "3 BHK in Koramangala",
-    value: "3 bhk in koramangala",
     icon:  "📍",
     category: "location",
   },
@@ -72,24 +60,6 @@ export const DEFAULT_SUGGESTIONS = [
     label: "Luxury villas",
     value: "show me luxury villas in bengaluru",
     icon:  "🏡",
-    category: "type",
-  },
-  {
-    label: "Villa plots",
-    value: "villa plots in gated community",
-    icon:  "🌱",
-    category: "type",
-  },
-  {
-    label: "Premium penthouses",
-    value: "luxury penthouse in bengaluru",
-    icon:  "🏙️",
-    category: "type",
-  },
-  {
-    label: "Studio apartments",
-    value: "studio apartments in electronic city",
-    icon:  "🎓",
     category: "type",
   },
 

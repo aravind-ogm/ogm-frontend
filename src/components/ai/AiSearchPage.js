@@ -31,7 +31,44 @@ export default function AiSearchPage() {
     const [chats,        setChats]        = useState([]);
     const [activeChatId, setActiveChatId] = useState(null);
     const [loading,      setLoading]      = useState(false);
-    const [sidebarOpen,  setSidebarOpen]  = useState(() => window.innerWidth > 768);
+    const [sidebarOpen,  setSidebarOpen]  = useState(() => window.innerWidth > 640);
+
+    /* ── Read logged-in user from localStorage (JWT stored by broker login flow) ── */
+    const currentUser = useMemo(() => {
+        try {
+            // Try common storage keys used in Spring Boot JWT + Google OAuth flows
+            const raw =
+                localStorage.getItem("user") ||
+                localStorage.getItem("ogm_user") ||
+                sessionStorage.getItem("user") ||
+                sessionStorage.getItem("ogm_user");
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                return {
+                    name:   parsed.name  || parsed.fullName  || parsed.displayName || parsed.email?.split("@")[0] || "User",
+                    email:  parsed.email || "",
+                    role:   parsed.role  || parsed.plan       || parsed.subscription || "Member",
+                    avatar: parsed.avatar || parsed.photoUrl  || parsed.picture || null,
+                    initials: (parsed.name || parsed.email || "U").charAt(0).toUpperCase(),
+                };
+            }
+
+            // Try JWT token decode (without library — just base64 the payload)
+            const token = localStorage.getItem("token") || localStorage.getItem("jwt") || localStorage.getItem("authToken");
+            if (token) {
+                const payload = JSON.parse(atob(token.split(".")[1]));
+                return {
+                    name:     payload.name || payload.sub?.split("@")[0] || "User",
+                    email:    payload.email || payload.sub || "",
+                    role:     payload.role  || payload.plan || "Member",
+                    avatar:   payload.picture || null,
+                    initials: (payload.name || payload.sub || "U").charAt(0).toUpperCase(),
+                };
+            }
+        } catch { /* silent fail */ }
+        // Fallback — anonymous
+        return { name: "Guest", email: "", role: "Free Plan", avatar: null, initials: "G" };
+    }, []);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [toast,        setToast]        = useState({ visible: false, text: "" });
 
@@ -328,6 +365,7 @@ export default function AiSearchPage() {
                 createNewChat={createNewChat}
                 deleteChat={requestDeleteChat}
                 collapsed={!sidebarOpen}
+                user={currentUser}
             />
 
             <main className="ai-main">

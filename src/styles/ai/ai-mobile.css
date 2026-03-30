@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    OGM AI — MOBILE RESPONSIVE
    Import AFTER all other ai CSS files.
-   Breakpoints: tablet 1024px | mobile 768px | small 380px
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════
@@ -10,7 +9,6 @@
 @media (max-width: 1024px) {
   .topbar-shortcuts { display: none; }
   .ai-map-panel { width: 320px; min-width: 320px; }
-  .pcard-acts { flex-wrap: wrap; gap: 6px; }
 }
 
 /* ══════════════════════════════════════════════
@@ -18,19 +16,18 @@
 ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* ── Root layout — full viewport, no clipping ── */
+  /* ── Root layout ── */
   .ai-layout {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     height: 100dvh;
-    display: flex;
-    flex-direction: column;     /* stack sidebar-toggle + main vertically */
+    flex-direction: column;
     overflow: hidden;
   }
 
-  /* ── Topbar — always visible at top on mobile ── */
+  /* ── Topbar — show on mobile for hamburger ── */
   .ai-topbar {
-    display: flex !important;   /* was hidden, show on mobile for hamburger */
+    display: flex !important;
     height: 52px;
     padding: 0 12px;
     background: #ffffff;
@@ -41,19 +38,22 @@
     gap: 10px;
   }
   .topbar-btn  { display: flex !important; width: 40px; height: 40px; min-width: 40px; }
-  .topbar-title { display: block !important; font-size: 14px; }
-  .topbar-spacer, .topbar-divider { display: block !important; }
+  .topbar-title  { display: block !important; font-size: 14px; }
+  .topbar-spacer { display: block !important; }
+  .topbar-divider { display: block !important; }
 
-  /* ── Main area fills remaining height ── */
+  /* ── Main fills remaining space ── */
   .ai-main {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* CRITICAL: push content past sidebar when open */
+    position: relative;
   }
 
-  /* ── Sidebar — slides in as full-height overlay ── */
+  /* ── Sidebar — slides over content ── */
   .ai-sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
@@ -66,149 +66,187 @@
     box-shadow: 4px 0 24px rgba(0,0,0,0.18);
     overflow: hidden;
   }
-
-  /* Collapsed: slide off-screen */
   .ai-sidebar.collapsed {
     transform: translateX(-100%) !important;
+    /* Mobile: override desktop icon-rail width — slide fully off screen */
     width: 280px !important;
     min-width: 280px !important;
     opacity: 1 !important;
     pointer-events: auto !important;
     box-shadow: none;
   }
+  /* Restore hidden text inside collapsed sidebar (mobile: text should show when open) */
+  .ai-sidebar .sidebar-brand-text,
+  .ai-sidebar .sidebar-new-chat span,
+  .ai-sidebar .sidebar-search,
+  .ai-sidebar .sidebar-chat-title,
+  .ai-sidebar .sidebar-chat-actions,
+  .ai-sidebar .sidebar-section-label,
+  .ai-sidebar .sidebar-user-info {
+    display: revert !important;
+  }
+  .ai-sidebar .sidebar-brand      { justify-content: flex-start !important; }
+  .ai-sidebar .sidebar-new-chat   { width: 100% !important; height: auto !important; padding: 9px 14px !important; margin: 0 0 10px !important; border-radius: 10px !important; }
+  .ai-sidebar .sidebar-chat-item  { justify-content: flex-start !important; padding: 9px 10px !important; }
+  .ai-sidebar .sidebar-footer     { justify-content: flex-start !important; padding: 12px 14px !important; }
 
-  /* Dim backdrop behind open sidebar */
+  /* Dim backdrop when sidebar open — also acts as tap-to-close */
   .ai-sidebar:not(.collapsed)::after {
     content: '';
     position: fixed;
     top: 0; left: 280px; right: 0; bottom: 0;
     background: rgba(0,0,0,0.45);
     z-index: -1;
+    cursor: pointer;
+  }
+
+  /* Close X button inside sidebar header on mobile */
+  .sidebar-mobile-close {
+    display: flex !important;
+    position: absolute;
+    top: 14px; right: 12px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.08);
+    border: none;
+    color: #475569;
+    font-size: 16px;
+    cursor: pointer;
+    align-items: center; justify-content: center;
+    transition: background 0.15s;
+    z-index: 10;
+  }
+  .sidebar-mobile-close:hover { background: rgba(0,0,0,0.15); }
+
+  /* WhatsApp button — push up so it doesn't cover input bar */
+  a[href*="wa.me"], a[href*="whatsapp"],
+  .whatsapp-float, .whatsapp-btn,
+  div[style*="position: fixed"][style*="bottom"][style*="right"] {
+    bottom: 80px !important;
   }
 
   .sidebar-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 
-  /* ── Chat messages area ── */
-  .chat-messages-area { padding-bottom: 80px; } /* space above input bar */
+  /* ── Messages — FULL WIDTH, no side margin ── */
+  .chat-messages-area { padding-bottom: 80px; }
 
   .chat-messages-container {
-    padding: 10px 10px 4px;
-    max-width: 100%;
+    padding: 8px 8px 4px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box;
   }
 
-  /* User bubble narrower on mobile */
-  .message-row.user .msg-bubble { max-width: 88%; }
-  .message-row.ai  .msg-bubble  { max-width: 98%; }
+  /* ── Message bubbles full width on mobile ── */
+  .message-row.user .msg-bubble {
+    max-width: 90% !important;
+  }
+  .message-row.ai .msg-bubble {
+    max-width: 100% !important;
+    padding: 10px 10px !important;
+  }
 
-  /* ── Property cards — full width, stacked ── */
+  /* ── Property cards — full width, vertical stack ── */
   .pcard {
-    flex-direction: column;
-    height: auto;
+    flex-direction: column !important;
+    height: auto !important;
     border-radius: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    width: 100%;
   }
   .pcard-img {
     width: 100% !important;
     min-width: unset !important;
-    height: 200px;
-    min-height: 200px;
+    height: 180px !important;
+    min-height: 180px !important;
     border-radius: 12px 12px 0 0 !important;
     flex-shrink: 0;
   }
   .pcard-body {
-    width: 100%;
-    padding: 12px 13px 11px;
-    overflow: visible;
+    width: 100% !important;
+    padding: 10px 12px 10px !important;
+    overflow: visible !important;
   }
-  .pcard-title { font-size: 14.5px; }
-  .pcard-price { font-size: 18px; }
-  .pcard-arrow { opacity: 1; }
+  .pcard-title { font-size: 14px !important; }
+  .pcard-price { font-size: 16px !important; }
+  .pcard-arrow { opacity: 1 !important; }
 
-  /* Buttons wrap on mobile */
+  /* Action buttons wrap on mobile */
   .pcard-acts {
-    flex-wrap: wrap;
-    gap: 6px;
-    overflow: visible;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    overflow: visible !important;
   }
-  .pact {
-    font-size: 11px;
-    padding: 6px 10px;
-  }
+  .pact { font-size: 11px !important; padding: 5px 9px !important; }
 
-  /* AI match badge slightly smaller */
-  .pcard-ai-circle { width: 32px; height: 32px; font-size: 10.5px; }
-  .pcard-ai-label  { font-size: 12px; }
-
-  /* Explore Further chips — scroll horizontally */
+  /* Explore Further chips — horizontal scroll */
   .ai-result-chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 4px;
-    gap: 6px;
+    gap: 6px !important;
   }
   .ai-result-chips::-webkit-scrollbar { display: none; }
-  .ai-result-chip { flex-shrink: 0; font-size: 12px; padding: 6px 11px; }
+  .ai-result-chip { flex-shrink: 0; font-size: 12px !important; padding: 6px 10px !important; }
 
-  /* ── Map panel — full screen on mobile ── */
+  /* ── Map panel — full screen ── */
   .ai-map-panel {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    min-width: unset;
-    z-index: 300;
-    border-left: none;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    min-width: unset !important;
+    z-index: 300 !important;
+    border-left: none !important;
   }
-  .ai-map-close-btn { display: flex !important; }
 
   /* ── Input bar ── */
   .chat-input-bar {
-    padding: 8px 10px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    padding: 8px 8px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
     flex-shrink: 0;
   }
   .chat-input-wrapper { border-radius: 22px; padding: 4px 6px 4px 14px; }
-  .chat-input-wrapper textarea { font-size: 16px; } /* prevents iOS auto-zoom */
-  .chat-send-btn { width: 42px; height: 42px; min-width: 42px; }
+  .chat-input-wrapper textarea { font-size: 16px !important; } /* prevent iOS zoom */
+  .chat-send-btn { width: 42px !important; height: 42px !important; min-width: 42px !important; }
 
-  /* ── Inline route/nearby map ── */
-  .inline-route-canvas { height: 240px; }
-  .inline-route-map    { border-radius: 10px; }
+  /* ── Inline route map ── */
+  .inline-route-canvas { height: 220px !important; }
 
   /* ── Follow-up chips ── */
   .msg-followups { gap: 5px; flex-wrap: wrap; }
-  .msg-followup-btn { font-size: 12px; padding: 7px 12px; }
+  .msg-followup-btn { font-size: 12px; padding: 7px 11px; }
 
   /* ── Suggestion chips (empty state) ── */
-  .suggestion-chips { padding: 0 10px; gap: 7px; }
-  .chip-btn         { font-size: 12px; padding: 8px 12px; min-height: 38px; }
-  .suggestion-cards-grid { grid-template-columns: 1fr; }
+  .suggestion-chips { padding: 0 8px !important; gap: 6px !important; }
+  .chip-btn { font-size: 12px !important; padding: 7px 11px !important; min-height: 36px; }
+  .suggestion-cards-grid { grid-template-columns: 1fr 1fr !important; gap: 7px !important; padding: 0 2px; }
 
   /* ── Empty state ── */
-  .chat-empty-state { padding: 24px 14px; }
-  .chat-empty-icon  { font-size: 36px; }
-  .chat-empty-title { font-size: 19px; }
-  .chat-empty-sub   { font-size: 13px; }
+  .chat-empty-state { padding: 20px 12px 12px !important; }
+  .chat-empty-state h2 { font-size: 18px !important; }
+  .chat-empty-state p  { font-size: 13px !important; }
 
   /* ── Confirm dialog ── */
-  .confirm-dialog { padding: 22px 18px; max-width: 300px; margin: 0 16px; }
+  .confirm-dialog { padding: 22px 16px; max-width: 300px; margin: 0 16px; }
 
-  /* ── Compare bar ── */
-  .compare-bar { padding: 10px 12px; }
-  .compare-btn { padding: 8px 14px; font-size: 12.5px; }
+  /* ── AI badge (OGM orange square) ── */
+  .message-row.ai { gap: 7px !important; }
+  .message-row.ai::before { width: 28px !important; height: 28px !important; font-size: 7.5px !important; }
 }
 
 /* ══════════════════════════════════════════════
-   SMALL MOBILE  (≤ 380px — iPhone SE, Galaxy A)
+   SMALL MOBILE  (≤ 380px)
 ══════════════════════════════════════════════ */
 @media (max-width: 380px) {
-  .ai-sidebar   { width: 265px !important; min-width: 265px !important; }
-  .pcard-img    { height: 170px; min-height: 170px; }
-  .pcard-title  { font-size: 13.5px; }
-  .pact         { font-size: 10.5px; padding: 5px 8px; }
-  .pcard-acts   { gap: 4px; }
-  .chip-btn     { font-size: 11.5px; padding: 7px 10px; }
-  .inline-route-canvas { height: 200px; }
+  .ai-sidebar    { width: 265px !important; min-width: 265px !important; }
+  .pcard-img     { height: 160px !important; min-height: 160px !important; }
+  .pcard-title   { font-size: 13px !important; }
+  .pact          { font-size: 10px !important; padding: 4px 7px !important; }
+  .pcard-acts    { gap: 4px !important; }
+  .chip-btn      { font-size: 11px !important; padding: 6px 9px !important; }
+  .suggestion-cards-grid { grid-template-columns: 1fr !important; }
+  .inline-route-canvas   { height: 180px !important; }
 }
 
 /* ══════════════════════════════════════════════
@@ -218,8 +256,8 @@
 .chat-messages-area, .chat-messages-container { -webkit-overflow-scrolling: touch; }
 
 @supports (padding: env(safe-area-inset-bottom)) {
-  .chat-input-bar   { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-  .sidebar-footer   { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .chat-input-bar { padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important; }
+  .sidebar-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 }
 
 /* ══════════════════════════════════════════════
@@ -227,33 +265,39 @@
 ══════════════════════════════════════════════ */
 @media (max-width: 900px) and (orientation: landscape) {
   .ai-layout { height: 100dvh; }
-  .pcard { flex-direction: row; height: 180px; }
+  .pcard { flex-direction: row !important; height: 160px !important; }
   .pcard-img {
-    width: 38% !important;
+    width: 36% !important;
     height: 100% !important;
     border-radius: 12px 0 0 12px !important;
   }
-  .pcard-body { width: 62%; }
-  .pcard-acts { flex-wrap: nowrap; }
+  .pcard-body { width: 64% !important; }
+  .pcard-acts { flex-wrap: nowrap !important; }
 }
 
 /* ══════════════════════════════════════════════
    TOUCH DEVICE OPTIMIZATIONS
 ══════════════════════════════════════════════ */
 @media (hover: none) and (pointer: coarse) {
-  /* Larger tap targets */
   .topbar-btn, .sidebar-action-btn { min-width: 42px; min-height: 42px; }
-  .pcard-arrow { opacity: 1; }
-
-  /* Remove hover effects that don't work on touch */
-  .pcard:hover { transform: none; box-shadow: 0 2px 10px rgba(15,23,42,0.06); }
-  .pcard:active { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(15,23,42,0.1); }
+  .pcard-arrow { opacity: 1 !important; }
+  .pcard:hover { transform: none; }
+  .pcard:active { transform: translateY(-1px); }
   .pact:hover { background: initial; color: initial; }
-  .pact:active { opacity: 0.85; }
+  .pact:active { opacity: 0.8; }
   .ai-result-chip:hover { transform: none; box-shadow: none; }
-  .ai-result-chip:active { opacity: 0.85; }
+  .ai-result-chip:active { opacity: 0.8; }
   .msg-followup-btn:hover { transform: none; }
   .msg-followup-btn:active { background: #f97316; border-color: #f97316; color: #fff; }
   .sidebar-chat-item:hover { background: transparent; }
   .sidebar-chat-item:active { background: #ebebeb; }
+}
+
+
+/* Mobile close button — hidden on desktop, shown on mobile via media query above */
+.sidebar-mobile-close { display: none; }
+
+/* Sidebar header — relative for close button positioning */
+@media (max-width: 768px) {
+  .sidebar-header { position: relative; }
 }

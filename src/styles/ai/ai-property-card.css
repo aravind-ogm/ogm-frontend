@@ -24,8 +24,8 @@
 /* ── IMAGE ───────────────────────────────────── */
 .pcard-img {
   position: relative;
-  width: 33%;
-  min-width: 150px;
+  width: 40%;
+  min-width: 160px;
   cursor: pointer;
   overflow: hidden;
   flex-shrink: 0;
@@ -100,7 +100,7 @@
 /* ── CONTENT ─────────────────────────────────── */
 .pcard-body {
   flex: 1;
-  padding: 14px 16px 12px;
+  padding: 12px 14px 11px;
   display: flex; flex-direction: column;
   gap: 6px; min-width: 0;
   position: relative; overflow: visible;
@@ -140,27 +140,25 @@
   background: #ddeeff;
   border: none;
   border-radius: 30px;
-  padding: 5px 14px 5px 5px;
+  padding: 4px 10px 4px 4px;
   white-space: nowrap;
 }
 
 /* Circle: light blue fill + slightly darker blue ring — Image 3 */
 .pcard-ai-circle {
-  width: 38px; height: 38px; border-radius: 50%;
-  /* Light blue fill matching the circle in Image 3 */
+  width: 34px; height: 34px; border-radius: 50%;
   background: #c8e4ff;
-  /* Slightly darker blue ring */
-  border: 2.5px solid #7ab8f5;
+  border: 2px solid #7ab8f5;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12.5px; font-weight: 800; color: #1a5fa8;
+  font-size: 11px; font-weight: 800; color: #1a5fa8;
   flex-shrink: 0; line-height: 1;
 }
 
 /* "AI Match" — bold, near-black, matches Image 3 */
 .pcard-ai-label {
-  font-size: 14px; font-weight: 800;
+  font-size: 12px; font-weight: 700;
   color: #111827;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
 }
 
 /* Location — CLICKABLE opens map */

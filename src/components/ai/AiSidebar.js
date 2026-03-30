@@ -31,6 +31,7 @@ export default function AiSidebar({
                                       createNewChat = () => {},
                                       deleteChat = () => {},
                                       collapsed = false,
+                                      user = null,
                                   }) {
     const [search, setSearch] = useState("");
 
@@ -124,12 +125,21 @@ export default function AiSidebar({
                 ))}
             </div>
 
-            {/* FOOTER */}
+            {/* FOOTER — dynamic from logged-in user */}
             <div className="sidebar-footer">
-                <div className="sidebar-avatar">A</div>
+                {user?.avatar ? (
+                    <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="sidebar-avatar sidebar-avatar-img"
+                        referrerPolicy="no-referrer"
+                    />
+                ) : (
+                    <div className="sidebar-avatar">{user?.initials || "U"}</div>
+                )}
                 <div className="sidebar-user-info">
-                    <div className="sidebar-user-name">Aravind Reddy</div>
-                    <div className="sidebar-user-role">Premium Plan</div>
+                    <div className="sidebar-user-name">{user?.name || "User"}</div>
+                    <div className="sidebar-user-role">{user?.role || "Member"}</div>
                 </div>
             </div>
         </aside>
