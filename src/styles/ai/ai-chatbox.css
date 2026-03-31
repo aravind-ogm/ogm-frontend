@@ -139,7 +139,7 @@
 /* User — Gemini style: light grey pill, compact, right side */
 .message-row.user .msg-bubble {
   max-width: 60%;
-  background: #f4f4f4;
+  background: #e8f0fe;
   color: #1f1f1f;
   border-radius: 18px 18px 4px 18px;
   border: none;
