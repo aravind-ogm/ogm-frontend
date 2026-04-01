@@ -1,6 +1,5 @@
 /* ============================================
    APP LAYOUT
-   (Global styles live in global.css)
 ============================================ */
 
 .app-container {
@@ -39,7 +38,7 @@
   gap: 6px;
 }
 
-/* Logo */
+/* Logo — UNCHANGED */
 .logo-img {
   height: 55px;
   transition: 0.25s ease;
@@ -59,13 +58,6 @@
   text-align: center;
 }
 
-/* Remove underline */
-.header-content:link,
-.header-content:visited {
-  text-decoration: none;
-  color: inherit;
-}
-
 /* Contact button wrapper */
 .header-actions {
   position: absolute;
@@ -73,7 +65,7 @@
   top: 26px;
 }
 
-/* Contact button */
+/* Button */
 .contact {
   background: linear-gradient(135deg, #0b63e5, #004bbd);
   color: #ffffff;
@@ -84,6 +76,8 @@
   font-size: 14px;
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.15);
   transition: 0.2s ease;
+  border: none;
+  cursor: pointer;
 }
 
 .contact:hover {
@@ -92,7 +86,7 @@
 }
 
 /* ============================================
-   PROPERTY LISTING
+   SECTION TITLE
 ============================================ */
 
 .section-title {
@@ -103,42 +97,55 @@
   font-weight: 700;
 }
 
+/* ============================================
+   PROPERTY GRID — DESKTOP (4 CARDS)
+============================================ */
+
 .property-grid {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
   padding: 0 12px;
 }
 
 .property-card {
-  max-width: 360px;
   width: 100%;
+  max-width: 360px;
   margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transition: 0.25s ease;
+}
+
+.property-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
 }
 
 /* ============================================
-   RESPONSIVE — TABLET
+   TABLET — 2 CARDS
 ============================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .property-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 /* ============================================
-   RESPONSIVE — MOBILE
+   MOBILE — 1 CARD
 ============================================ */
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
 
   .topbar {
     padding: 12px 16px;
     align-items: center;
   }
 
-  /* KEY FIX: remove absolute positioning on mobile */
   .header-actions {
     position: static;
     margin-top: 10px;
@@ -162,10 +169,19 @@
     font-size: 20px;
   }
 
+  .property-grid {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 18px;
+  }
+
   .property-card {
     max-width: 100%;
   }
 }
+
+/* ============================================
+   AI SUGGESTIONS
+============================================ */
 
 .ai-suggestions.premium {
   display: flex;
@@ -187,9 +203,10 @@
   margin-top: 6px;
   color: #444;
 }
-/* ===============================
-   AI BOTTOM SEARCH – PREMIUM OVERRIDE
-================================ */
+
+/* ============================================
+   AI BOTTOM SEARCH
+============================================ */
 
 .ai-bottom-search {
   position: sticky;
@@ -201,46 +218,6 @@
   z-index: 50;
 }
 
-/* Center & widen */
-.ai-bottom-search .search-wrap {
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-/* Remove dual look – single AI bar feel */
-.ai-bottom-search .dual-search-bar {
-  justify-content: center;
-}
-
-/* Make AI pill dominant */
-.ai-bottom-search .search-pill.ai {
-  width: 100%;
-  max-width: 960px;
-  border-radius: 18px;
-  padding: 6px;
-  background: #ffffff;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-}
-
-/* Bigger input for refinement */
-.ai-bottom-search .search-pill.ai .pill-input {
-  font-size: 15px;
-  padding: 14px 16px;
-}
-
-/* Softer AI button */
-.ai-bottom-search .pill-btn.ai {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  font-size: 18px;
-}
-
-/* Hide any accidental normal pill (safety) */
-.ai-bottom-search .search-pill:not(.ai) {
-  display: none;
-}
-
 .ai-refine-hint {
   text-align: center;
   font-size: 13px;
@@ -248,66 +225,13 @@
   margin-bottom: 10px;
 }
 
-@media (max-width: 768px) {
-  .ai-suggestions.premium {
-    flex-direction: column;
-    max-width: 100%;
-  }
-}
+/* ============================================
+   WHATSAPP FLOAT
+============================================ */
 
-@media (max-width: 480px) {
-  .ai-bottom-search {
-    padding: 12px 8px 10px;
-  }
-
-  .ai-bottom-search .search-wrap {
-    max-width: 100%;
-    padding: 0 8px;
-  }
-
-  .ai-bottom-search .search-pill.ai {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .topbar {
-    align-items: center;
-    text-align: center;
-  }
-
-  .header-content {
-    align-items: center;
-  }
-
-  .header-actions {
-    position: static;
-    margin-top: 12px;
-  }
-}
-@media (max-width: 768px) {
-  .search-pill {
-    width: 100%;
-    max-width: 100%;
-    padding-right: 52px; /* space for icon */
-  }
-
-  .pill-btn {
-    right: 10px;
-  }
-}
-@media (max-width: 768px) {
-  .section-title {
-    padding: 0 12px;
-  }
-}
 @media (max-width: 768px) {
   .whatsapp-float {
     bottom: 16px;
     right: 12px;
   }
 }
-
-
-
-

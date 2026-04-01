@@ -13,6 +13,7 @@ import FloatingWhatsapp from "./components/FloatingWhatsapp";
 import Contact from "./pages/Contact";
 import PropertyDetails from "./pages/PropertyDetails";
 import Footer from "./components/Footer";
+import BrokerRegistration from "./components/broker/BrokerRegistration";
 import About from "./pages/About";
 import SearchBar from "./search/SearchBar";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -38,15 +39,11 @@ function App() {
     const [watchlist, setWatchlist] = useState([]);
 
     const baseUrl = "https://ogm-backend-clean-us-879813720468.us-central1.run.app";
-    // const baseUrl = "http://localhost:8080";
 
-    /* ================= LOAD PROPERTIES ================= */
     const loadProperties = async (query = "") => {
         try {
             const url = query
-                ? `${baseUrl}/api/properties?q=${encodeURIComponent(
-                    query
-                )}&page=0&size=50`
+                ? `${baseUrl}/api/properties?q=${encodeURIComponent(query)}&page=0&size=50`
                 : `${baseUrl}/api/properties?page=0&size=50`;
 
             const res = await fetch(url);
@@ -58,23 +55,19 @@ function App() {
         }
     };
 
-    /* ================= UNIFIED SEARCH HANDLER ================= */
     const handleSearch = (data) => {
-        // 🏠 LOGO CLICK / RESET
         if (data === null) {
             setSearchMode("default");
             loadProperties();
             return;
         }
 
-        // 🤖 AI SEARCH
         if (Array.isArray(data)) {
             setProperties(data);
             setSearchMode("ai");
             return;
         }
 
-        // 🔍 NORMAL SEARCH
         setSearchMode("normal");
         loadProperties(data);
     };
@@ -91,7 +84,6 @@ function App() {
         );
     };
 
-    /* ================= INITIAL LOAD ================= */
     useEffect(() => {
         loadProperties();
         setSearchMode("default");
@@ -102,7 +94,6 @@ function App() {
             <MetaPixelTracker/>
 
             <div className="app-container">
-                {/* 🔑 HEADER MUST RECEIVE onSearch */}
                 <Header onSearch={handleSearch}/>
 
                 <Routes>
@@ -110,33 +101,24 @@ function App() {
                         path="/"
                         element={
                             <main className="main-section">
-                                {/* AI SUGGESTIONS */}
                                 {searchMode === "ai" && (
                                     <div className="ai-suggestions premium">
                                         <div className="ai-suggestion-card">
                                             ✨ <strong>Refine your search</strong>
-                                            <p>
-                                                Find <b>2 BHKs under ₹2 Cr</b> in{" "}
-                                                <b>Sarjapur Road</b>
-                                            </p>
+                                            <p>Find <b>2 BHKs under ₹2 Cr</b> in <b>Sarjapur Road</b></p>
                                         </div>
 
                                         <div className="ai-suggestion-card">
                                             📊 <strong>Compare smarter</strong>
-                                            <p>
-                                                Add properties to your <b>watchlist</b> and compare
-                                                easily.
-                                            </p>
+                                            <p>Add properties to your <b>watchlist</b> and compare easily.</p>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* SEARCH BAR */}
                                 {searchMode !== "ai" && (
                                     <SearchBar onSearch={handleSearch}/>
                                 )}
 
-                                {/* TITLE */}
                                 <h2 className="section-title">
                                     {searchMode === "default"
                                         ? "Popular Homes in Bengaluru"
@@ -145,7 +127,6 @@ function App() {
                                             : "Search Results"}
                                 </h2>
 
-                                {/* PROPERTY LIST */}
                                 <PropertyList
                                     properties={properties}
                                     searchMode={searchMode}
@@ -153,7 +134,6 @@ function App() {
                                     onWatchlist={handleWatchlist}
                                 />
 
-                                {/* AI BOTTOM SEARCH */}
                                 {searchMode === "ai" && (
                                     <div className="ai-bottom-search">
                                         <div className="ai-refine-hint">
@@ -170,6 +150,7 @@ function App() {
                     <Route path="/about" element={<About/>}/>
                     <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                     <Route path="/contact" element={<Contact/>}/>
+                    <Route path="/broker/register" element={<BrokerRegistration/>}/>
                 </Routes>
 
                 <FloatingWhatsapp/>
@@ -187,12 +168,9 @@ function Header({onSearch}) {
     const navigate = useNavigate();
 
     const handleLogoClick = () => {
-        // RESET STATE
         if (onSearch) {
             onSearch(null);
         }
-
-        // FORCE HOME NAVIGATION
         navigate("/", {replace: true});
     };
 
@@ -217,10 +195,10 @@ function Header({onSearch}) {
                     className="contact"
                     onClick={() => {
                         window.fbq && window.fbq("track", "Lead");
-                        navigate("/contact");
+                        navigate("/broker/register");
                     }}
                 >
-                    Contact Us
+                    List Your Property
                 </button>
             </div>
         </header>
