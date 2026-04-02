@@ -97,7 +97,8 @@ const BrokerRegistration = () => {
     };
 
     const handleGoogleRegister = () => {
-        window.location.href = "http://localhost:8080/api/auth/google?role=broker";
+        // window.location.href = "http://localhost:8080/api/auth/google?role=broker";
+        window.location.href = "https://ogm-backend-clean-us-879813720468.us-central1.run.app/api/auth/google?role=broker";
     };
 
     // ── WhatsApp Registration ─────────────────────────────────────────
@@ -186,6 +187,9 @@ const BrokerRegistration = () => {
             <div className="broker-header">
                 <h1 className="broker-header__title">Agent/Developer Registration</h1>
                 <p className="broker-header__subtitle">Join our platform and start getting qualified leads today!</p>
+                <div className="broker-header__promo">
+                    <span className="broker-header__promo-badge">🎁 Free Leads for the First 3 Months</span>
+                </div>
             </div>
 
             <div className="broker-card">

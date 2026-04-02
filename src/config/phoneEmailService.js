@@ -4,7 +4,8 @@
 // The widget calls your JS listener with a user_json_url.
 // You send that URL to your backend which fetches the verified number/email.
 
-const BACKEND_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api";
+const BACKEND_URL = process.env.REACT_APP_API_BASE_URL || "https://ogm-backend-clean-us-879813720468.us-central1.run.app/api";
+// const BACKEND_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api";
 
 /**
  * Sends user_json_url to backend for phone verification.

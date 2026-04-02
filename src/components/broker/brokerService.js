@@ -1,4 +1,5 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api";
+// const BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api";
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://ogm-backend-clean-us-879813720468.us-central1.run.app/api";
 
 export const registerBroker = async (payload) => {
     const res = await fetch(`${BASE_URL}/broker/register`, {
