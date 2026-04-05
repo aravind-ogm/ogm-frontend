@@ -101,14 +101,53 @@ function AiMessage({
     return detectNearbyIntent(msg.text);
   }, [isUser, msg.text]);
 
-  /* Follow-ups for non-property AI replies */
+  /* ── Dynamic follow-up chips ────────────────────────────────
+     Priority 1: backend-generated questions (msg.followUps array)
+     Priority 2: auto-generated from search context
+     Priority 3: generic fallbacks
+  ─────────────────────────────────────────────────────────── */
   const followUps = useMemo(() => {
-    if (!isAi || msg.isError || !msg.hasResults || !msg.properties?.length) return [];
-    return msg.followUps?.length ? msg.followUps : [
-      "Want to compare these properties?",
-      "Show similar options under budget",
-      "Add to watchlist and get a report",
-    ];
+    if (!isAi || msg.isError) return [];
+    if (!msg.hasResults || !msg.properties?.length) return [];
+
+    /* Use backend-provided followUps if available */
+    if (msg.followUps?.length) return msg.followUps;
+
+    /* Auto-generate from search context */
+    const props  = msg.properties || [];
+    const first  = props[0];
+    const loc    = first?.location?.split(",")[0] || "this area";
+    const type   = first?.type || "properties";
+    const beds   = first?.bedrooms;
+    const price  = first?.price;
+
+    const dynamic = [];
+
+    /* Location-based suggestions */
+    if (loc) {
+      dynamic.push(`Show more ${type} in ${loc}`);
+      dynamic.push(`What are schools and hospitals near ${loc}?`);
+    }
+
+    /* Budget suggestions */
+    if (price) {
+      const lower = Math.round(price * 0.8 / 100000) * 100000;
+      const higher = Math.round(price * 1.2 / 100000) * 100000;
+      const fmt = (n) => n >= 10000000
+          ? `₹${(n/10000000).toFixed(1)} Cr`
+          : `₹${(n/100000).toFixed(0)}L`;
+      dynamic.push(`Show options under ${fmt(lower)}`);
+      dynamic.push(`Any ${beds ? beds + " BHK" : "properties"} under ${fmt(higher)}?`);
+    }
+
+    /* Property type suggestions */
+    if (beds) dynamic.push(`Show ${beds + 1} BHK options nearby`);
+    dynamic.push("Compare these properties side by side");
+    dynamic.push("Which has the best ROI for investment?");
+    dynamic.push("Show RERA approved options only");
+
+    /* Return 4 unique suggestions */
+    return [...new Set(dynamic)].slice(0, 4);
   }, [isAi, msg.isError, msg.hasResults, msg.properties, msg.followUps]);
 
   /* Resolve "__PROPERTY__" origin to actual coords or address */
@@ -277,11 +316,16 @@ function AiMessage({
                     </>
                 )}
 
-                {/* Follow-up chips (for non-property replies) */}
-                {followUps.length > 0 && !(msg.hasResults && msg.properties?.length > 0) && (
-                    <div className="msg-followups" role="group">
+                {/* Dynamic follow-up chips — shown below property results */}
+                {followUps.length > 0 && (
+                    <div className="msg-followups" role="group" aria-label="Suggested questions">
                       {followUps.map((s, i) => (
-                          <button key={i} className="msg-followup-btn" onClick={() => onFollowUp?.(s)}>
+                          <button
+                              key={i}
+                              className="msg-followup-btn"
+                              onClick={() => onFollowUp?.(s)}
+                              title={s}
+                          >
                             {s}
                           </button>
                       ))}
