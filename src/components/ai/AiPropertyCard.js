@@ -31,6 +31,9 @@ function AiPropertyCard({ property, onMapView, isMapOpen, onRemove, userPosition
   /* Current image index for the gallery carousel */
   const [currentImg, setCurrentImg] = useState(0);
 
+  /* Watchlist saved state — toggled by heart button on image */
+  const [watchlisted, setWatchlisted] = useState(false);
+
   /* Guard — don't render if no property data */
   if (!property) return null;
 
@@ -54,6 +57,16 @@ function AiPropertyCard({ property, onMapView, isMapOpen, onRemove, userPosition
 
   /* Navigate to full property detail page */
   const handleClick = () => navigate(`/property/${property.slug || property.id}`);
+
+  /* Toggle watchlist — saves property locally, fires optional callback */
+  const handleWatchlist = (e) => {
+    e.stopPropagation();
+    setWatchlisted(prev => {
+      const next = !prev;
+      console.log(`[AiPropertyCard] Watchlist ${next ? 'ADD' : 'REMOVE'} — id=${property.id} title="${property.title}"`);
+      return next;
+    });
+  };
 
   /* Open map panel on right side when location is clicked */
   const handleLocationClick = (e) => {
@@ -142,6 +155,26 @@ function AiPropertyCard({ property, onMapView, isMapOpen, onRemove, userPosition
             {property.soldOut && <span className="ptag sold">SOLD OUT</span>}
           </div>
 
+          {/* ── Heart / Favourite button ─────────────────────────────
+               White circle, top-right but left of counter to avoid overlap
+          ─────────────────────────────────────────────────────────── */}
+          <button
+              className={`pcard-fav${watchlisted ? " pcard-fav--saved" : ""}`}
+              onClick={handleWatchlist}
+              aria-label={watchlisted ? "Remove from watchlist" : "Save to watchlist"}
+              title={watchlisted ? "Saved" : "Save to watchlist"}
+          >
+            <svg
+                width="16" height="16" viewBox="0 0 24 24"
+                fill={watchlisted ? "#ef4444" : "none"}
+                stroke={watchlisted ? "#ef4444" : "#64748b"}
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                aria-hidden="true"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
+
         </div>
         {/* END IMAGE SECTION */}
 
@@ -197,7 +230,7 @@ function AiPropertyCard({ property, onMapView, isMapOpen, onRemove, userPosition
           >
             {/* Orange pin icon */}
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                 stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                 stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="10" r="3"/>
               <path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 12-8 12S4 15.25 4 10a8 8 0 0 1 8-8z"/>
             </svg>
@@ -216,45 +249,65 @@ function AiPropertyCard({ property, onMapView, isMapOpen, onRemove, userPosition
           {/* ── Spec Chips ──────────────────────────
             Beds · Baths · Sqft · Property Type
         ─────────────────────────────────────────── */}
+          {/* ── Premium Spec Chips ────────────────────────────────────────
+               Each chip: coloured icon box + bold number + muted label
+               Matches UI design reference exactly
+          ─────────────────────────────────────────────────────────── */}
           {specs.length > 0 && (
               <div className="pcard-specs">
-                {/* Beds */}
+
+                {/* Beds — orange icon box */}
                 {property.bedrooms && (
-                    <span className="pcard-chip">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                      {property.bedrooms} Beds
-              </span>
+                    <span className="pcard-chip pcard-chip-spec">
+                  <span className="pcard-spec-icon pcard-spec-icon--bed" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 9V19H22V9"/>
+                      <path d="M2 9C2 9 2 5 12 5C22 5 22 9 22 9"/>
+                      <path d="M12 5V9"/>
+                      <rect x="5" y="11" width="4" height="3" rx="1"/>
+                      <rect x="15" y="11" width="4" height="3" rx="1"/>
+                    </svg>
+                  </span>
+                  <span className="pcard-spec-value">{property.bedrooms}</span>
+                  <span className="pcard-spec-label">Beds</span>
+                </span>
                 )}
-                {/* Baths */}
+
+                {/* Baths — blue icon box */}
                 {property.bathrooms && (
-                    <span className="pcard-chip">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                  <path d="M4 12h16v3a8 8 0 0 1-16 0v-3z"/>
-                  <line x1="4" y1="12" x2="4" y2="6"/>
-                  <path d="M4 6a2 2 0 0 1 4 0v6"/>
-                </svg>
-                      {property.bathrooms} Baths
-              </span>
+                    <span className="pcard-chip pcard-chip-spec">
+                  <span className="pcard-spec-icon pcard-spec-icon--bath" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 6C9 4.34 7.66 3 6 3C4.34 3 3 4.34 3 6L3 12"/>
+                      <path d="M3 12L21 12L21 14C21 17.31 18.31 20 15 20L9 20C5.69 20 3 17.31 3 14Z"/>
+                      <line x1="9" y1="20" x2="9" y2="22"/>
+                      <line x1="15" y1="20" x2="15" y2="22"/>
+                    </svg>
+                  </span>
+                  <span className="pcard-spec-value">{property.bathrooms}</span>
+                  <span className="pcard-spec-label">Baths</span>
+                </span>
                 )}
-                {/* Sqft */}
+
+                {/* Sqft — green icon box */}
                 {property.sqft && (
-                    <span className="pcard-chip">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                </svg>
-                      {Number(property.sqft).toLocaleString("en-IN")} sqft
-              </span>
+                    <span className="pcard-chip pcard-chip-spec">
+                  <span className="pcard-spec-icon pcard-spec-icon--area" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <path d="M3 9L9 3M3 15L15 3"/>
+                    </svg>
+                  </span>
+                  <span className="pcard-spec-value">{Number(property.sqft).toLocaleString("en-IN")}</span>
+                  <span className="pcard-spec-label">sqft</span>
+                </span>
                 )}
-                {/* Property type pill */}
-                {cleanType && (
-                    <span className="pcard-chip pcard-chip-type">{cleanType}</span>
-                )}
+
+
+
               </div>
           )}
 
@@ -308,16 +361,35 @@ function AiPropertyCard({ property, onMapView, isMapOpen, onRemove, userPosition
               Live Video Tour
             </button>
 
-            {/* Watchlist — turns orange when map is open */}
+            {/* View on Map — opens map panel on right side */}
             <button
-                className={`pact pact-watchlist${isMapOpen ? " active" : ""}`}
+                className={`pact pact-mapview${isMapOpen ? " active" : ""}`}
                 onClick={(e) => { e.stopPropagation(); onMapView?.(); }}
+                aria-label="View on map"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"
-                   stroke="none" aria-hidden="true">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                   aria-hidden="true">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                <line x1="8" y1="2" x2="8" y2="18"/>
+                <line x1="16" y1="6" x2="16" y2="22"/>
               </svg>
-              Watchlist
+              View on Map
+            </button>
+
+            {/* Watchlist — saves property, heart turns red when saved */}
+            <button
+                className={`pact pact-watchlist-btn${watchlisted ? " watchlisted" : ""}`}
+                onClick={handleWatchlist}
+                aria-label={watchlisted ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24"
+                   fill={watchlisted ? "currentColor" : "none"}
+                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                   aria-hidden="true">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              {watchlisted ? "Saved ♥" : "Watchlist"}
             </button>
 
           </div>
@@ -377,18 +449,46 @@ function generateBulletPoints(p) {
   if (p.amenities?.length > 0 && points.length < 3)
     add(`Amenities: ${p.amenities.slice(0, 4).join(", ")}`);
 
-  /* 6. Generic fillers */
-  const fillers = [
-    "Well-connected via major roads and upcoming metro line",
-    "Gated community with 24/7 security and modern amenities",
-    "Strong rental potential and long-term appreciation",
-  ];
+  /* 5b. Possession status if available */
+  if (p.possessionStatus && points.length < 4)
+    add(`Possession: ${p.possessionStatus}`);
+
+  /* 6. Type-aware smart fillers — villa/studio/plot get different copy */
+  const type = (p.type || "").toLowerCase();
+  const fillers = type.includes("villa")
+      ? [
+        "Private garden, home theatre and landscaped terrace lounge",
+        "Gated villa community with clubhouse, pool and 24×7 security",
+        "Ideal for families — premium lifestyle with strong resale value",
+        "Well-connected to major tech corridors and expressways",
+      ]
+      : type.includes("studio")
+          ? [
+            "Compact smart studio — ideal for working professionals",
+            "High rental yield potential in this IT micro-market",
+            "Fully equipped with modern fixtures and efficient storage",
+            "Low maintenance cost with strong appreciation outlook",
+          ]
+          : type.includes("plot")
+              ? [
+                "Clear title plot — ready for immediate construction",
+                "Located in a fast-appreciating residential zone",
+                "Easy loan approval with all documents in order",
+                "Flexible layout — build your dream home to spec",
+              ]
+              : [
+                "Well-connected via metro, expressway and tech corridors",
+                "Gated community with 24×7 security and modern amenities",
+                "Strong rental demand — ideal for investment or end-use",
+                "Premium finishes with thoughtful space planning",
+              ];
+
   for (const f of fillers) {
-    if (points.length >= 3) break;
+    if (points.length >= 4) break; /* show up to 4 bullets to fill white space */
     add(f);
   }
 
-  return points.slice(0, 3);
+  return points.slice(0, 4);
 }
 
 /* Wrap in React.memo to prevent unnecessary re-renders */

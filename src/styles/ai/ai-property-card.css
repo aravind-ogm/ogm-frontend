@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════════════
+   OGM AI — PROPERTY CARD
+   Exact match to Image 2 design
+   ═══════════════════════════════════════════════ */
 
 .pcard {
   display: flex;
@@ -50,7 +54,7 @@
 }
 
 .pcard-counter {
-  position: absolute; top: 18px; right: 18px; z-index: 3;
+  position: absolute; bottom: 18px; right: 18px; z-index: 3;
   background: rgba(0,0,0,0.6); color: #fff;
   padding: 2px 8px; border-radius: 6px;
   font-size: 10px; font-weight: 700;
@@ -104,7 +108,7 @@
   flex: 1;
   padding: 12px 14px 11px;
   display: flex; flex-direction: column;
-  gap: 5px; min-width: 0;
+  gap: 3px; min-width: 0;
   position: relative;
   overflow: hidden;     /* clip content to card height */
   height: 100%;
@@ -176,6 +180,7 @@
   z-index: 1;
 }
 
+
 /* Location — CLICKABLE opens map */
 .pcard-loc {
   display: flex; align-items: center; gap: 5px;
@@ -239,40 +244,40 @@
   overflow: visible;
 }
 
-/* Base button — dark filled */
+/* Base button — light bg, dark text — matches UI design */
 .pact {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: 20px;
+  padding: 8px 18px; border-radius: 999px;
   font-family: var(--font-primary, 'DM Sans', sans-serif);
-  font-size: 12px; font-weight: 600;
+  font-size: 12px; font-weight: 900;
   cursor: pointer; transition: all 0.18s ease;
   white-space: nowrap; flex-shrink: 0;
-  /* Default: dark background, white text — matches Image 2 */
-  background: #1a1a1a;
-  color: #ffffff;
-  border: 1.5px solid #1a1a1a;
+  background: #eef0f8;
+  color: #000000;
+  border: none;
 }
 .pact:hover {
-  background: #000000;
-  border-color: #000000;
+  background: #e2e5e8;
+  border-color: #d0d3d8;
+  color: #000000;
   transform: translateY(-1px);
 }
 
 /* show Interest — stays dark with star icon */
-.pact-interest { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
-.pact-interest:hover { background: #000; border-color: #000; }
+.pact-interest { background: #f1f3f4; border-color: #e2e5e8; color: #000000; }
+.pact-interest:hover { background: #e2e5e8; color: #000000; }
 
 /* Call — stays dark */
-.pact-call { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
-.pact-call:hover { background: #000; border-color: #000; }
+.pact-call { background: #f1f3f4; border-color: #e2e5e8; color: #000000; }
+.pact-call:hover { background: #e2e5e8; color: #000000; }
 
 /* Live Video Tour — stays dark */
-.pact-tour { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
-.pact-tour:hover { background: #000; border-color: #000; }
+.pact-tour { background: #f1f3f4; border-color: #e2e5e8; color: #000000; }
+.pact-tour:hover { background: #e2e5e8; color: #000000; }
 
 /* Watchlist — stays dark, lighter when map is open */
-.pact-watchlist { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
-.pact-watchlist:hover { background: #000; border-color: #000; }
+.pact-watchlist { background: #f1f3f4; border-color: #e2e5e8; color: #000000; }
+.pact-watchlist:hover { background: #e2e5e8; color: #000000; }
 .pact-watchlist.active { background: #f97316; border-color: #f97316; }
 
 /* ═══════════════════════════════════════════════
@@ -280,7 +285,8 @@
    ═══════════════════════════════════════════════ */
 .ai-property-results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 0; }
 
-.ai-result-chips-wrap { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.ai-result-chips-wrap { display: none !important;
+  margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
 .ai-result-chips-label {
   font-size: 11px; font-weight: 700; color: #94a3b8;
   text-transform: uppercase; letter-spacing: 0.8px;
@@ -316,4 +322,175 @@
 }
 @media (max-width: 480px) {
   .pact { font-size: 10.5px; padding: 6px 10px; gap: 4px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ADD-ONS — appended without changing any existing rules
+   1. Heart/favourite button on image
+   2. Premium spec chips (bed/bath/sqft)
+   3. View on Map + real Watchlist buttons
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. HEART BUTTON on image — top-right ────────────────── */
+.pcard-fav {
+  position: absolute;
+  top: 18px; right: 18px;   /* top-right inside padding */
+  z-index: 4;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: transform 0.18s ease, box-shadow 0.18s;
+  padding: 0;
+}
+.pcard-fav:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 14px rgba(239,68,68,0.25);
+}
+/* Red glow when saved */
+.pcard-fav--saved {
+  background: #fff0f0;
+  box-shadow: 0 2px 8px rgba(239,68,68,0.2);
+}
+
+/* ── 2. PREMIUM SPEC CHIPS ───────────────────────────────── */
+
+/* Chip with coloured icon box */
+.pcard-chip-spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e8ecf0;
+  border-radius: 8px;
+  padding: 4px 10px 4px 5px;
+}
+
+/* Coloured icon box */
+.pcard-spec-icon {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Bed = orange */
+.pcard-spec-icon--bed  { background: #fff0e6; color: #f97316; }
+/* Bath = blue */
+.pcard-spec-icon--bath { background: #e6f4ff; color: #2563eb; }
+/* Area = green */
+.pcard-spec-icon--area { background: #e8faf0; color: #059669; }
+
+/* Bold number */
+.pcard-spec-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: #000000;
+  line-height: 1;
+}
+
+/* Muted label */
+.pcard-spec-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1;
+}
+
+/* ── 3a. VIEW ON MAP button ──────────────────────────────── */
+.pact-mapview {
+  background: #1a1a1a;
+  border: 1.5px solid #1a1a1a;
+  color: #ffffff;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s ease;
+  white-space: nowrap; flex-shrink: 0;
+}
+.pact-mapview:hover { background: #000; border-color: #000; transform: translateY(-1px); }
+/* Active = blue when map panel is open */
+.pact-mapview.active { background: #2563eb; border-color: #2563eb; }
+
+/* ── 3b. WATCHLIST HEART button ──────────────────────────── */
+.pact-watchlist-btn {
+  background: #1a1a1a;
+  border: 1.5px solid #1a1a1a;
+  color: #ffffff;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s ease;
+  white-space: nowrap; flex-shrink: 0;
+}
+.pact-watchlist-btn:hover { background: #000; border-color: #000; transform: translateY(-1px); }
+/* Saved state — red/pink */
+.pact-watchlist-btn.watchlisted {
+  background: #fff0f0;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.pact-watchlist-btn.watchlisted:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+/* ── Mobile adjustments for new elements ─────────────────── */
+@media (max-width: 768px) {
+  .pcard-fav { top: 16px; right: 16px; width: 28px; height: 28px; }
+  .pcard-spec-icon { width: 20px; height: 20px; }
+  .pcard-spec-value { font-size: 12px; }
+  .pcard-spec-label { font-size: 10px; }
+  .pact-mapview, .pact-watchlist-btn { font-size: 10.5px; padding: 5px 9px; }
+}
+
+.pcard-chip-type { display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e8ecf0; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:600; color:#374151; }
+
+/* ── OVERRIDE: View on Map + Watchlist — light grey like other buttons ── */
+.pact-mapview {
+  background: #f1f3f4 !important;
+  border: 1.5px solid #e2e5e8 !important;
+  color: #1a1a1a !important;
+}
+.pact-mapview:hover {
+  background: #e2e5e8 !important;
+  color: #000000 !important;
+}
+.pact-mapview.active {
+  background: #e8f0fe !important;
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+}
+
+.pact-watchlist-btn {
+  background: #f1f3f4 !important;
+  border: 1.5px solid #e2e5e8 !important;
+  color: #1a1a1a !important;
+}
+.pact-watchlist-btn:hover {
+  background: #e2e5e8 !important;
+  color: #000000 !important;
+}
+.pact-watchlist-btn.watchlisted {
+  background: #fff0f0 !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+.pact-watchlist-btn.watchlisted:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+  .pcard {
+    width: calc(100% - 8px);
+    margin: 0 auto;
+  }
+  .ai-property-results-list {
+    padding: 0 4px;
+  }
 }

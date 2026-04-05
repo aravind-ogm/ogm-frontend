@@ -299,7 +299,21 @@
 /* Mobile close button — hidden on desktop, shown on mobile via media query above */
 .sidebar-mobile-close { display: none; }
 
-/* Sidebar header — relative for close button positioning */
-@media (max-width: 768px) {
-  .sidebar-header { position: relative; }
+/* Messages container — add left padding so cards don't get cut */
+.chat-messages-container {
+  padding: 8px 12px 4px !important;  /* increase from 8px 8px */
+}
+
+/* Property cards — full width with side margins */
+.pcard {
+  width: calc(100% - 8px) !important;  /* add this */
+  margin: 0 4px !important;            /* add this */
+}
+
+/* WhatsApp button — push up above input bar */
+a[href*="wa.me"], a[href*="whatsapp"],
+.whatsapp-float, .whatsapp-btn,
+div[style*="position: fixed"][style*="bottom"][style*="right"] {
+  bottom: 80px !important;  /* already there — check if applied */
+  right: 12px !important;   /* add this */
 }
