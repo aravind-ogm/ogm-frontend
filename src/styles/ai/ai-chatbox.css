@@ -245,7 +245,7 @@
 .msg-route-btn:hover { background: #eef3ff; border-color: #c7d9f5; }
 
 /* Property results — no separator line */
-.ai-property-results-list { margin-top: 10px; display: flex; flex-direction: column; gap: 16px; border: none; }
+.ai-property-results-list { margin-top: 10px; display: flex; flex-direction: column; gap: 16px; border: none;padding: 0 4px; }
 
 /* ── Meta row: time · copy · retry · 👍👎 on ONE line, reactions far right ── */
 .msg-meta {

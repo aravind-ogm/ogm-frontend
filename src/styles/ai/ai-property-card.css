@@ -6,15 +6,15 @@
 .pcard {
   display: flex;
   width: 100%;
-  height: 260px;       /* fixed height — all cards same size */
+  height: 300px;       /* fixed height — all cards same size */
   min-height: 260px;
   border-radius: 16px;
   overflow: visible;
   background: #ffffff;
   border: 1px solid #e8e8e8;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
-  margin-bottom: 0;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  margin-bottom: 16px;
 }
 .pcard:hover {
   transform: translateY(-2px);
@@ -24,33 +24,37 @@
 /* ── IMAGE ───────────────────────────────────── */
 .pcard-img {
   position: relative;
-  width: 38%;
+  width: 28%;
   min-width: 160px;
-  height: 100%;         /* fill card height exactly */
+  height: 100%;
   cursor: pointer;
   overflow: hidden;
   flex-shrink: 0;
-  background: #f1f5f9;
+  background: #ffffff;
   border-radius: 15px 0 0 15px;
+  padding: 10px;          /* white gap on all 4 sides */
 }
 .pcard-img img {
   width: 100%; height: 100%;
   object-fit: cover; display: block;
-  object-position: center;   /* always show center of image */
+  object-position: center;
   transition: transform 0.4s ease;
+  border-radius: 12px;   /* rounded corners like Image reference */
 }
 .pcard:hover .pcard-img img { transform: scale(1.03); }
 
 .pcard-img::after {
   content: '';
-  position: absolute; bottom: 0; left: 0; right: 0;
+  position: absolute;
+  bottom: 10px; left: 10px; right: 10px;  /* match padding */
   height: 50%;
   background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
   pointer-events: none;
+  border-radius: 0 0 12px 12px;  /* match image border-radius bottom */
 }
 
 .pcard-counter {
-  position: absolute; top: 9px; right: 9px; z-index: 3;
+  position: absolute; top: 18px; right: 18px; z-index: 3;
   background: rgba(0,0,0,0.6); color: #fff;
   padding: 2px 8px; border-radius: 6px;
   font-size: 10px; font-weight: 700;
@@ -65,12 +69,12 @@
   opacity: 0; transition: opacity 0.2s;
 }
 .pcard:hover .pcard-arrow { opacity: 1; }
-.pcard-arrow.l { left: 6px; }
-.pcard-arrow.r { right: 6px; }
+.pcard-arrow.l { left: 16px; }
+.pcard-arrow.r { right: 16px; }
 
 /* Price — bottom-left, Playfair */
 .pcard-price {
-  position: absolute; bottom: 10px; left: 10px; z-index: 2;
+  position: absolute; bottom: 18px; left: 18px; z-index: 2;
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 17px; font-weight: 700; color: #ffffff;
   text-shadow: 0 1px 6px rgba(0,0,0,0.5);
@@ -78,7 +82,7 @@
 
 /* RERA — frosted glass, homepage style */
 .pcard-tags {
-  position: absolute; top: 9px; left: 9px; z-index: 3;
+  position: absolute; top: 18px; left: 18px; z-index: 3;
   display: flex; flex-direction: column; gap: 4px;
 }
 .ptag {
@@ -268,7 +272,7 @@
 /* ═══════════════════════════════════════════════
    RESULT CHIPS (below cards)
    ═══════════════════════════════════════════════ */
-.ai-property-results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 16px; }
+.ai-property-results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 0; }
 
 .ai-result-chips-wrap { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
 .ai-result-chips-label {
