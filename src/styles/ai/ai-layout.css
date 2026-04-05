@@ -144,7 +144,7 @@ body:has(.ai-layout) {
   border-top: none;
   display: flex; align-items: center; gap: 10px;
   flex-shrink: 0;
-  background: #ffffff;
+  background: #f4f4f4;
 }
 .sidebar-avatar {
   width: 32px; height: 32px; border-radius: 50%;
@@ -176,7 +176,7 @@ body:has(.ai-layout) {
   height: 56px;
   display: flex; align-items: center; gap: 4px;
   padding: 0 8px 0 4px;
-  background: #ffffff;
+  background: #f4f4f4;
   border-bottom: none;
   flex-shrink: 0;
 }

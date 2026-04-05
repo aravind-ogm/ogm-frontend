@@ -139,7 +139,7 @@
 /* User — Gemini style: light grey pill, compact, right side */
 .message-row.user .msg-bubble {
   max-width: 60%;
-  background: #e8f0fe;
+  background: #ffffff;
   color: #1f1f1f;
   border-radius: 18px 18px 4px 18px;
   border: none;
@@ -171,15 +171,15 @@
   margin-bottom: 8px;
 }
 
-/* AI — plain white, NO box, NO border — Gemini style */
+/* AI — f4f4f4 bg matching layout, no box */
 .message-row.ai .msg-bubble {
   max-width: 100%;
-  background: #ffffff;
+  background: #f4f4f4;
   color: #111827;
   border: none;
   border-radius: 0;
   box-shadow: none;
-  padding: 4px 0;   /* tight, flush left */
+  padding: 4px 0;
 }
 
 .msg-bubble.error {
@@ -245,7 +245,7 @@
 .msg-route-btn:hover { background: #eef3ff; border-color: #c7d9f5; }
 
 /* Property results — no separator line */
-.ai-property-results-list { margin-top: 10px; display: flex; flex-direction: column; gap: 0; border: none; }
+.ai-property-results-list { margin-top: 10px; display: flex; flex-direction: column; gap: 16px; border: none; }
 
 /* ── Meta row: time · copy · retry · 👍👎 on ONE line, reactions far right ── */
 .msg-meta {
@@ -331,7 +331,7 @@
 ══════════════════════════════ */
 .chat-input-bar {
   padding: 10px 16px 16px;
-  background: #ffffff;
+  background: #f4f4f4;
   border-top: none;
   flex-shrink: 0;
 }
