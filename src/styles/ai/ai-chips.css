@@ -63,24 +63,17 @@
 /* Follow-up chips (inside message) */
 .msg-followups { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
 .msg-followup-btn {
-  padding: 8px 18px;
-  border-radius: 999px;           /* full pill like reference */
-  border: 1.5px solid #f4d4bc;   /* soft orange border */
-  background: #fff5ef;            /* very light orange tint */
-  font-family: var(--font-primary);
-  font-size: 13px;
-  font-weight: 500;
-  color: #1f1f1f;                 /* dark text */
-  cursor: pointer;
-  transition: all 0.18s ease;
-  white-space: nowrap;
+  padding: 6px 14px; border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-primary);
+  background: var(--bg-surface);
+  font-family: var(--font-primary); font-size: 12.5px; font-weight: 600;
+  color: var(--navy); cursor: pointer;
+  transition: all var(--duration) var(--ease);
 }
 .msg-followup-btn:hover {
-  background: #f97316;            /* orange fill on hover */
-  border-color: #f97316;
-  color: #ffffff;
+  background: var(--navy-soft);
+  border-color: var(--navy);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(249,115,22,0.2);
 }
 /* ── Chip icon ── */
 .chip-icon {
@@ -169,4 +162,70 @@
   .suggestion-cards-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PER-CARD EXPLORE CHIPS
+   Each property card has its own chip row directly below it.
+   Label shows which property the chips refer to.
+───────────────────────────────────────────────────────────── */
+
+/* Wrapper: card + its chips as one visual unit */
+.pcard-with-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+/* Chips section directly below the card */
+.ai-result-chips-per-card {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-top: none;                     /* connects flush to card bottom */
+  border-radius: 0 0 14px 14px;        /* rounds at bottom only */
+  padding: 10px 14px 12px;
+  margin-top: 0;
+}
+
+/* Label: "Explore: Yelahanka Grand" */
+.ai-result-chips-per-card .ai-result-chips-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+  display: block;
+}
+.ai-result-chips-per-card .ai-result-chips-label strong {
+  color: #374151;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Chips scroll horizontally on narrow screens */
+.ai-result-chips-per-card .ai-result-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Make the card's border-radius match when chips are attached */
+.pcard-with-chips .pcard {
+  border-radius: 14px 14px 0 0;        /* flat bottom — chips attach here */
+  border-bottom: none;                  /* remove bottom border — chips provide it */
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .ai-result-chips-per-card .ai-result-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .ai-result-chips-per-card .ai-result-chips::-webkit-scrollbar { display: none; }
+  .ai-result-chip { flex-shrink: 0; }
 }

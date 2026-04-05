@@ -58,7 +58,8 @@ function AiMessage({
   const [editing,          setEditing]          = useState(false);
   const [editText,         setEditText]          = useState("");
   const [reaction,         setReaction]          = useState(null);
-  const [activeNearbyChip, setActiveNearbyChip]  = useState(null);
+  const [activeNearbyChip,     setActiveNearbyChip]     = useState(null);
+  const [activeChipPropertyId, setActiveChipPropertyId] = useState(null); /* which card's chips are open */
 
   const isUser = msg.role === "user";
   const isAi   = !isUser;
@@ -101,53 +102,14 @@ function AiMessage({
     return detectNearbyIntent(msg.text);
   }, [isUser, msg.text]);
 
-  /* ── Dynamic follow-up chips ────────────────────────────────
-     Priority 1: backend-generated questions (msg.followUps array)
-     Priority 2: auto-generated from search context
-     Priority 3: generic fallbacks
-  ─────────────────────────────────────────────────────────── */
+  /* Follow-ups for non-property AI replies */
   const followUps = useMemo(() => {
-    if (!isAi || msg.isError) return [];
-    if (!msg.hasResults || !msg.properties?.length) return [];
-
-    /* Use backend-provided followUps if available */
-    if (msg.followUps?.length) return msg.followUps;
-
-    /* Auto-generate from search context */
-    const props  = msg.properties || [];
-    const first  = props[0];
-    const loc    = first?.location?.split(",")[0] || "this area";
-    const type   = first?.type || "properties";
-    const beds   = first?.bedrooms;
-    const price  = first?.price;
-
-    const dynamic = [];
-
-    /* Location-based suggestions */
-    if (loc) {
-      dynamic.push(`Show more ${type} in ${loc}`);
-      dynamic.push(`What are schools and hospitals near ${loc}?`);
-    }
-
-    /* Budget suggestions */
-    if (price) {
-      const lower = Math.round(price * 0.8 / 100000) * 100000;
-      const higher = Math.round(price * 1.2 / 100000) * 100000;
-      const fmt = (n) => n >= 10000000
-          ? `₹${(n/10000000).toFixed(1)} Cr`
-          : `₹${(n/100000).toFixed(0)}L`;
-      dynamic.push(`Show options under ${fmt(lower)}`);
-      dynamic.push(`Any ${beds ? beds + " BHK" : "properties"} under ${fmt(higher)}?`);
-    }
-
-    /* Property type suggestions */
-    if (beds) dynamic.push(`Show ${beds + 1} BHK options nearby`);
-    dynamic.push("Compare these properties side by side");
-    dynamic.push("Which has the best ROI for investment?");
-    dynamic.push("Show RERA approved options only");
-
-    /* Return 4 unique suggestions */
-    return [...new Set(dynamic)].slice(0, 4);
+    if (!isAi || msg.isError || !msg.hasResults || !msg.properties?.length) return [];
+    return msg.followUps?.length ? msg.followUps : [
+      "Want to compare these properties?",
+      "Show similar options under budget",
+      "Add to watchlist and get a report",
+    ];
   }, [isAi, msg.isError, msg.hasResults, msg.properties, msg.followUps]);
 
   /* Resolve "__PROPERTY__" origin to actual coords or address */
@@ -251,74 +213,33 @@ function AiMessage({
                     </button>
                 )}
 
-                {/* Property cards + Explore Further chips */}
+                {/* ══════════════════════════════════════════════════════════
+                PROPERTY CARDS — each card has its OWN explore chips
+                so user knows exactly which property the chips refer to
+            ══════════════════════════════════════════════════════════ */}
                 {isAi && msg.hasResults && msg.properties?.length > 0 && (
-                    <>
-                      <div className="ai-property-results-list" role="list">
-                        {msg.properties.map((property) => (
-                            <AiPropertyCard
-                                key={property.id}
-                                property={property}
-                                onMapView={() => onMapView?.(msg.properties)}
-                                isMapOpen={isMapOpen}
-                                userPosition={userPosition}
-                            />
-                        ))}
-                      </div>
-
-                      <div className="ai-result-chips-wrap">
-                        <span className="ai-result-chips-label">Explore further</span>
-                        <div className="ai-result-chips" role="group">
-                          {EXPLORE_CHIPS.map(({ icon, label, action, query, nearbyType, nearbyLabel }) => (
-                              <button
-                                  key={label}
-                                  className={`ai-result-chip${activeNearbyChip?.nearbyType === nearbyType ? " active" : ""}`}
-                                  onClick={() => {
-                                    if (action === "map") {
-                                      onMapView?.(msg.properties);
-                                    } else if (action === "nearby") {
-                                      setActiveNearbyChip((prev) =>
-                                          prev?.nearbyType === nearbyType ? null : { nearbyType, nearbyLabel }
-                                      );
-                                    } else {
-                                      onFollowUp?.(query);
-                                    }
-                                  }}
-                                  aria-label={label}
-                              >
-                                <span className="ai-result-chip-icon" aria-hidden="true">{icon}</span>
-                                {label}
-                              </button>
-                          ))}
-                        </div>
-
-                        {/* Nearby panel — rendered when chip is active */}
-                        {activeNearbyChip && msg.properties?.length > 0 && (() => {
-                          const prop      = msg.properties[0];
-                          const pLat      = parseFloat(prop.latitude ?? prop.lat);
-                          const pLng      = parseFloat(prop.longitude ?? prop.lng ?? prop.lon);
-                          const hasCoords = !isNaN(pLat) && !isNaN(pLng) && pLat !== 0 && pLng !== 0;
-                          return (
-                              <div style={{ marginTop: 12 }}>
-                                <AiNearbyWrapper
-                                    placeType={activeNearbyChip.nearbyType}
-                                    placeLabel={activeNearbyChip.nearbyLabel}
-                                    propLat={hasCoords ? pLat : null}
-                                    propLng={hasCoords ? pLng : null}
-                                    locationName={hasCoords ? null : prop.location}
-                                    propertyName={prop.title}
-                                    userPosition={userPosition}
-                                />
-                              </div>
-                          );
-                        })()}
-                      </div>
-                    </>
+                    <div className="ai-property-results-list" role="list">
+                      {msg.properties.map((property) => (
+                          <PropertyCardWithChips
+                              key={property.id}
+                              property={property}
+                              onMapView={onMapView}
+                              onFollowUp={onFollowUp}
+                              isMapOpen={isMapOpen}
+                              userPosition={userPosition}
+                              allProperties={msg.properties}
+                              activeNearbyChip={activeNearbyChip}
+                              setActiveNearbyChip={setActiveNearbyChip}
+                              activeChipPropertyId={activeChipPropertyId}
+                              setActiveChipPropertyId={setActiveChipPropertyId}
+                          />
+                      ))}
+                    </div>
                 )}
 
-                {/* Dynamic follow-up chips — shown below property results */}
+                {/* Dynamic follow-up suggestion chips — shown below all property cards */}
                 {followUps.length > 0 && (
-                    <div className="msg-followups" role="group" aria-label="Suggested questions">
+                    <div className="msg-followups" role="group" aria-label="Suggested follow-up questions">
                       {followUps.map((s, i) => (
                           <button
                               key={i}
@@ -640,6 +561,118 @@ function AiNearbyWrapper({ placeType, placeLabel, propLat, propLng, locationName
               {error}
             </div>
         )}
+      </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PropertyCardWithChips
+   Wraps a single AiPropertyCard with its OWN "Explore Further" chips below.
+   Each card is fully independent — clicking chips on Card 2 only affects Card 2.
+
+   Props:
+     property              — single property object
+     activeChipPropertyId  — ID of which card currently has chips expanded
+     setActiveChipPropertyId — setter to track which card is active
+     activeNearbyChip      — { nearbyType, nearbyLabel } of active chip
+     setActiveNearbyChip   — setter for active nearby chip
+═══════════════════════════════════════════════════════════════════════════ */
+function PropertyCardWithChips({
+                                 property,
+                                 onMapView,
+                                 onFollowUp,
+                                 isMapOpen,
+                                 userPosition,
+                                 allProperties,
+                                 activeNearbyChip,
+                                 setActiveNearbyChip,
+                                 activeChipPropertyId,
+                                 setActiveChipPropertyId,
+                               }) {
+  /* Is this card the one with chips currently expanded? */
+  const isThisCardActive = activeChipPropertyId === property.id;
+
+  /* Get coords for this specific property */
+  const pLat = parseFloat(property.latitude ?? property.lat);
+  const pLng = parseFloat(property.longitude ?? property.lng ?? property.lon);
+  const hasCoords = !isNaN(pLat) && !isNaN(pLng) && pLat !== 0 && pLng !== 0;
+
+  /* Toggle this card's chips — close if already open, open if closed */
+  const handleChipClick = (action, nearbyType, nearbyLabel, query) => {
+    if (action === "map") {
+      /* Show on map — pass just this property */
+      onMapView?.([property]);
+      return;
+    }
+    if (action === "query") {
+      /* Send query with property name for context */
+      onFollowUp?.(`${query} for ${property.title}`);
+      return;
+    }
+    if (action === "nearby") {
+      /* If different card was active, switch to this one */
+      if (!isThisCardActive) {
+        setActiveChipPropertyId(property.id);
+        setActiveNearbyChip({ nearbyType, nearbyLabel });
+        return;
+      }
+      /* Same card — toggle the nearby chip */
+      setActiveNearbyChip((prev) =>
+          prev?.nearbyType === nearbyType ? null : { nearbyType, nearbyLabel }
+      );
+      /* If closing last chip, collapse this card */
+      if (activeNearbyChip?.nearbyType === nearbyType) {
+        setActiveChipPropertyId(null);
+      }
+    }
+  };
+
+  return (
+      <div className="pcard-with-chips">
+        {/* The property card itself */}
+        <AiPropertyCard
+            property={property}
+            onMapView={() => onMapView?.([property])}
+            isMapOpen={isMapOpen}
+            userPosition={userPosition}
+        />
+
+        {/* ── Explore Further chips for THIS property ── */}
+        <div className="ai-result-chips-wrap ai-result-chips-per-card">
+        <span className="ai-result-chips-label">
+          Explore: <strong>{property.title?.split("–")[0]?.trim() || property.location}</strong>
+        </span>
+          <div className="ai-result-chips" role="group" aria-label={`Explore options for ${property.title}`}>
+            {EXPLORE_CHIPS.map(({ icon, label, action, query, nearbyType, nearbyLabel }) => (
+                <button
+                    key={label}
+                    className={`ai-result-chip${
+                        isThisCardActive && activeNearbyChip?.nearbyType === nearbyType ? " active" : ""
+                    }`}
+                    onClick={() => handleChipClick(action, nearbyType, nearbyLabel, query)}
+                    aria-label={`${label} for ${property.title}`}
+                >
+                  <span className="ai-result-chip-icon" aria-hidden="true">{icon}</span>
+                  {label}
+                </button>
+            ))}
+          </div>
+
+          {/* Nearby panel — only renders for THIS card when its chip is active */}
+          {isThisCardActive && activeNearbyChip && (
+              <div style={{ marginTop: 12 }}>
+                <AiNearbyWrapper
+                    placeType={activeNearbyChip.nearbyType}
+                    placeLabel={activeNearbyChip.nearbyLabel}
+                    propLat={hasCoords ? pLat : null}
+                    propLng={hasCoords ? pLng : null}
+                    locationName={hasCoords ? null : property.location}
+                    propertyName={property.title}
+                    userPosition={userPosition}
+                />
+              </div>
+          )}
+        </div>
       </div>
   );
 }
