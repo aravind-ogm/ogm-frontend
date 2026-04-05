@@ -1,7 +1,3 @@
-/* ═══════════════════════════════════════════════
-   OGM AI — PROPERTY CARD
-   Exact match to Image 2 design
-   ═══════════════════════════════════════════════ */
 
 .pcard {
   display: flex;
@@ -139,36 +135,45 @@
 }
 .pcard-title:hover { color: #f97316; }
 
-/* AI MATCH BADGE — exact Image 3 pixel match */
+/* AI MATCH BADGE
+   Structure: [○ circle with %] [rectangle "AI Match"]
+   Circle sits on top (z-index:2), rectangle tucks behind it
+   Matches reference: large circle + connected rounded rect
+*/
 .pcard-ai-match {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;                       /* parts are joined, no gap */
   flex-shrink: 0;
-  /* Light blue pill background matching Image 3 */
-  background: #cce8ff;
-  border: none;
-  border-radius: 999px;
-  padding: 4px 16px 4px 4px;
   white-space: nowrap;
+  position: relative;
 }
 
-/* Circle: light blue fill + slightly darker blue ring — Image 3 */
+/* Large white circle — prominent, sits above rectangle */
 .pcard-ai-circle {
-  width: 38px; height: 38px; border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid #a8d8f8;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #ffffff;          /* white fill */
+  border: 2.5px solid #a8d8f8;  /* light blue ring */
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 800; color: #1a5fa8;
   flex-shrink: 0; line-height: 1;
+  position: relative;
+  z-index: 2;                   /* renders on top of rectangle */
+  box-shadow: 0 0 0 3px #cce8ff; /* blue halo connects to rectangle bg */
 }
 
-/* "AI Match" — bold, near-black, matches Image 3 */
+/* Rectangle label — flat left edge connects to circle */
 .pcard-ai-label {
-  font-size: 14px;
+  background: #cce8ff;          /* light blue */
+  border-radius: 0 999px 999px 0; /* flat left, rounded right */
+  padding: 8px 14px 8px 18px;   /* extra left padding hidden under circle */
+  margin-left: -12px;           /* tuck behind circle */
+  font-size: 13px;
   font-weight: 800;
-  color: #0d1f3c;
+  color: #0d1f3c;               /* dark navy text */
   letter-spacing: -0.2px;
+  z-index: 1;
 }
 
 /* Location — CLICKABLE opens map */
