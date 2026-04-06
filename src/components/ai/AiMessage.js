@@ -636,43 +636,6 @@ function PropertyCardWithChips({
             isMapOpen={isMapOpen}
             userPosition={userPosition}
         />
-
-        {/* ── Explore Further chips for THIS property ── */}
-        <div className="ai-result-chips-wrap ai-result-chips-per-card">
-        <span className="ai-result-chips-label">
-          Explore: <strong>{property.title?.split("–")[0]?.trim() || property.location}</strong>
-        </span>
-          <div className="ai-result-chips" role="group" aria-label={`Explore options for ${property.title}`}>
-            {EXPLORE_CHIPS.map(({ icon, label, action, query, nearbyType, nearbyLabel }) => (
-                <button
-                    key={label}
-                    className={`ai-result-chip${
-                        isThisCardActive && activeNearbyChip?.nearbyType === nearbyType ? " active" : ""
-                    }`}
-                    onClick={() => handleChipClick(action, nearbyType, nearbyLabel, query)}
-                    aria-label={`${label} for ${property.title}`}
-                >
-                  <span className="ai-result-chip-icon" aria-hidden="true">{icon}</span>
-                  {label}
-                </button>
-            ))}
-          </div>
-
-          {/* Nearby panel — only renders for THIS card when its chip is active */}
-          {isThisCardActive && activeNearbyChip && (
-              <div style={{ marginTop: 12 }}>
-                <AiNearbyWrapper
-                    placeType={activeNearbyChip.nearbyType}
-                    placeLabel={activeNearbyChip.nearbyLabel}
-                    propLat={hasCoords ? pLat : null}
-                    propLng={hasCoords ? pLng : null}
-                    locationName={hasCoords ? null : property.location}
-                    propertyName={property.title}
-                    userPosition={userPosition}
-                />
-              </div>
-          )}
-        </div>
       </div>
   );
 }
