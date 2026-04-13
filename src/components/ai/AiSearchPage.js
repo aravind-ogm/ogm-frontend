@@ -1,26 +1,23 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 
-/* ── Components ── */
 import AiSidebar     from "./AiSidebar";
 import AiChatBox     from "./AiChatBox";
 import ConfirmDialog from "./Confirmdialog";
+import CompareBar    from "./CompareBar";
+import CompareModal  from "./CompareModal";
 import Icon          from "./Icon";
 
-/* ── Hooks ── */
 import useTheme             from "./Usetheme";
 import useKeyboardShortcuts from "./Usekeyboardshortcuts";
 import useGeolocation, { detectNearMeIntent } from "./Usegeolocation";
 
-/* ── Location modal ── */
 import LocationPermissionModal from "./LocationPermissionModal";
 
-/* ── Utils ── */
 import { uid, truncateWords }            from "./Helpers";
 import { detectRouteIntent }             from "./RouteHelper";
 import { ENDPOINTS, KEYBOARD_SHORTCUTS } from "./Constants";
 
-/* ── Styles ── */
 import "../../styles/ai/ai-variables.css";
 import "../../styles/ai/ai-layout.css";
 
@@ -33,10 +30,12 @@ export default function AiSearchPage() {
     const [loading,      setLoading]      = useState(false);
     const [sidebarOpen,  setSidebarOpen]  = useState(() => window.innerWidth > 640);
 
-    /* ── Read logged-in user from localStorage (JWT stored by broker login flow) ── */
+    // ── Compare state ──────────────────────────────────────────────────────
+    const [compareList,  setCompareList]  = useState([]);  // max 4 properties
+    const [compareOpen,  setCompareOpen]  = useState(false);
+
     const currentUser = useMemo(() => {
         try {
-            // Try common storage keys used in Spring Boot JWT + Google OAuth flows
             const raw =
                 localStorage.getItem("user") ||
                 localStorage.getItem("ogm_user") ||
@@ -45,15 +44,13 @@ export default function AiSearchPage() {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 return {
-                    name:   parsed.name  || parsed.fullName  || parsed.displayName || parsed.email?.split("@")[0] || "User",
-                    email:  parsed.email || "",
-                    role:   parsed.role  || parsed.plan       || parsed.subscription || "Member",
-                    avatar: parsed.avatar || parsed.photoUrl  || parsed.picture || null,
+                    name:     parsed.name  || parsed.fullName  || parsed.displayName || parsed.email?.split("@")[0] || "User",
+                    email:    parsed.email || "",
+                    role:     parsed.role  || parsed.plan       || parsed.subscription || "Member",
+                    avatar:   parsed.avatar || parsed.photoUrl  || parsed.picture || null,
                     initials: (parsed.name || parsed.email || "U").charAt(0).toUpperCase(),
                 };
             }
-
-            // Try JWT token decode (without library — just base64 the payload)
             const token = localStorage.getItem("token") || localStorage.getItem("jwt") || localStorage.getItem("authToken");
             if (token) {
                 const payload = JSON.parse(atob(token.split(".")[1]));
@@ -65,27 +62,24 @@ export default function AiSearchPage() {
                     initials: (payload.name || payload.sub || "U").charAt(0).toUpperCase(),
                 };
             }
-        } catch { /* silent fail */ }
-        // Fallback — anonymous
+        } catch { /* silent */ }
         return { name: "Guest", email: "", role: "Free Plan", avatar: null, initials: "G" };
     }, []);
-    const [deleteTarget, setDeleteTarget] = useState(null);
-    const [toast,        setToast]        = useState({ visible: false, text: "" });
 
+    const [deleteTarget,      setDeleteTarget]      = useState(null);
+    const [toast,             setToast]             = useState({ visible: false, text: "" });
     const [locationModalOpen, setLocationModalOpen] = useState(false);
     const [pendingQuery,      setPendingQuery]       = useState("");
 
     const {
-        position,
-        locationName,
-        permissionStatus,
-        requestLocation,
-        isGranted,
-        isDenied,
+        position, locationName, isGranted, isDenied,
     } = useGeolocation();
 
-    const hasSentInitial        = useRef(false);
+    const hasSentInitial         = useRef(false);
+    const chatsRef               = useRef([]);
     const { theme, toggleTheme } = useTheme();
+
+    useEffect(() => { chatsRef.current = chats; }, [chats]);
 
     const activeChat = useMemo(
         () => chats.find((c) => c.id === activeChatId) || null,
@@ -98,10 +92,37 @@ export default function AiSearchPage() {
 
     const showToast = useCallback((text) => {
         setToast({ visible: true, text });
-        setTimeout(() => setToast({ visible: false, text: "" }), 2000);
+        setTimeout(() => setToast({ visible: false, text: "" }), 2500);
     }, []);
 
-    /* ── Chat CRUD ── */
+    // ── Compare handlers ───────────────────────────────────────────────────
+
+    /**
+     * Toggle a property in/out of the compare list.
+     * Max 4 properties — shows toast if user tries to add a 5th.
+     */
+    const toggleCompare = useCallback((property) => {
+        setCompareList((prev) => {
+            const exists = prev.find((p) => p.id === property.id);
+            if (exists) {
+                showToast(`"${property.title}" removed from compare`);
+                return prev.filter((p) => p.id !== property.id);
+            }
+            if (prev.length >= 4) {
+                showToast("You can compare up to 4 properties at a time");
+                return prev;
+            }
+            showToast(`"${property.title}" added to compare`);
+            return [...prev, property];
+        });
+    }, [showToast]);
+
+    const clearCompare = useCallback(() => {
+        setCompareList([]);
+        setCompareOpen(false);
+    }, []);
+
+    // ── Chat CRUD ──────────────────────────────────────────────────────────
 
     const createNewChat = useCallback(() => {
         const chat = makeChat();
@@ -109,9 +130,7 @@ export default function AiSearchPage() {
         setActiveChatId(chat.id);
     }, [makeChat]);
 
-    const requestDeleteChat = useCallback((chatId) => {
-        setDeleteTarget(chatId);
-    }, []);
+    const requestDeleteChat = useCallback((chatId) => setDeleteTarget(chatId), []);
 
     const confirmDeleteChat = useCallback(() => {
         if (!deleteTarget) return;
@@ -131,8 +150,6 @@ export default function AiSearchPage() {
         setDeleteTarget(null);
     }, [deleteTarget, activeChatId, makeChat]);
 
-    /* ── Message operations ── */
-
     const appendMessage = useCallback((chatId, msg) => {
         setChats((prev) =>
             prev.map((chat) =>
@@ -147,12 +164,8 @@ export default function AiSearchPage() {
         setChats((prev) =>
             prev.map((chat) =>
                 chat.id === chatId
-                    ? {
-                        ...chat,
-                        messages: chat.messages.map((m) =>
-                            m.id === msgId ? { ...m, text: newText, edited: true } : m
-                        ),
-                    }
+                    ? { ...chat, messages: chat.messages.map((m) =>
+                            m.id === msgId ? { ...m, text: newText, edited: true } : m) }
                     : chat
             )
         );
@@ -163,13 +176,7 @@ export default function AiSearchPage() {
         showToast("Copied to clipboard");
     }, [showToast]);
 
-    /* ── Send message ── */
-
-    // Helper to get current active chat messages for context lookups
-    const activeChatMessages = useCallback(() => {
-        const chat = chats.find(c => c.id === activeChatId);
-        return chat?.messages || [];
-    }, [chats, activeChatId]);
+    // ── Send message ───────────────────────────────────────────────────────
 
     const sendMessage = useCallback(
         async (input) => {
@@ -183,11 +190,11 @@ export default function AiSearchPage() {
 
             const needsLocation = detectNearMeIntent(text);
 
-            if (needsLocation && !isDenied) {
-                if (isGranted && position) {
+            if (needsLocation && !userLat) {
+                if (!isDenied && isGranted && position) {
                     userLat = position.latitude;
                     userLng = position.longitude;
-                } else {
+                } else if (!isDenied) {
                     setPendingQuery(text);
                     setLocationModalOpen(true);
                     return;
@@ -201,7 +208,6 @@ export default function AiSearchPage() {
             }
 
             const chatId = activeChatId;
-
             appendMessage(chatId, { id: uid(), role: "user", text });
 
             setChats((prev) =>
@@ -215,21 +221,20 @@ export default function AiSearchPage() {
             const isRouteQuery = !!detectRouteIntent(text);
             const routeInfo    = isRouteQuery ? detectRouteIntent(text) : null;
 
-            // Resolve "__PROPERTY__" to the last seen property's location
             if (routeInfo?.usePropAsOrigin) {
-                const msgs = activeChatMessages();
+                const msgs = chatsRef.current.find(c => c.id === chatId)?.messages || [];
                 for (let i = msgs.length - 1; i >= 0; i--) {
                     const m = msgs[i];
                     if (m.role === "ai" && m.properties?.length > 0) {
-                        const p = m.properties[0];
+                        const p    = m.properties[0];
                         const pLat = parseFloat(p.latitude ?? p.lat);
                         const pLng = parseFloat(p.longitude ?? p.lng);
                         if (!isNaN(pLat) && !isNaN(pLng)) {
-                            routeInfo.origin        = { lat: pLat, lng: pLng };
-                            routeInfo.originLabel   = p.title || p.location;
+                            routeInfo.origin      = { lat: pLat, lng: pLng };
+                            routeInfo.originLabel = p.title || p.location;
                         } else if (p.location) {
-                            routeInfo.origin        = p.location;
-                            routeInfo.originLabel   = p.title || p.location;
+                            routeInfo.origin      = p.location;
+                            routeInfo.originLabel = p.title || p.location;
                         }
                         break;
                     }
@@ -244,44 +249,39 @@ export default function AiSearchPage() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         question:         text,
-                        chatId:           chatId,
+                        chatId,
                         userLatitude:     userLat  ?? null,
                         userLongitude:    userLng  ?? null,
-                        userLocationName: userLat  != null ? userLocName : null,
-                        isRouteQuery:     isRouteQuery,
+                        userLocationName: userLat != null ? userLocName : null,
+                        isRouteQuery,
                     }),
                 });
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                 const data = await response.json();
 
                 const routeOriginLabel = routeInfo?.originLabel || (
-                    typeof routeInfo?.origin === "object"
-                        ? "This Property"
-                        : routeInfo?.origin || "Unknown"
+                    typeof routeInfo?.origin === "object" ? "This Property" : routeInfo?.origin || "Unknown"
                 );
                 const routeText = isRouteQuery
-                    ? `🗺️ Showing route from **${routeOriginLabel}** to **${routeInfo.destination}** on the map.\n\nUse the travel mode tabs (Drive / Transit / Walk / Cycle) on the right to switch modes.`
-                    : (data.message || data.summary || data.reply || "No response received.");
+                    ? `🗺️ Showing route from **${routeOriginLabel}** to **${routeInfo.destination}** on the map.\n\nUse the travel mode tabs to switch modes.`
+                    : (data.message || "No response received.");
 
                 appendMessage(chatId, {
                     id:           uid(),
                     role:         "ai",
                     text:         routeText,
-                    isRouteQuery: isRouteQuery,
+                    isRouteQuery,
                     hasResults:   isRouteQuery ? false : (data.hasResults  || false),
                     properties:   isRouteQuery ? []    : (data.properties  || []),
                     followUps:    isRouteQuery ? []    : (data.followUps   || []),
                 });
             } catch (err) {
+                console.error("[AiSearchPage] sendMessage error:", err.message);
                 appendMessage(chatId, {
-                    id:         uid(),
-                    role:       "ai",
-                    text:       "Something went wrong. Please try again.",
-                    hasResults: false,
-                    properties: [],
-                    isError:    true,
+                    id: uid(), role: "ai",
+                    text: "Something went wrong. Please try again.",
+                    hasResults: false, properties: [], isError: true,
                 });
             } finally {
                 setLoading(false);
@@ -302,51 +302,38 @@ export default function AiSearchPage() {
         }
     }, [pendingQuery, sendMessage]);
 
-    const retryMessage = useCallback(
-        (chatId, msgIndex) => {
-            const chat = chats.find((c) => c.id === chatId);
-            if (!chat) return;
-            const userMsg = chat.messages
-                .slice(0, msgIndex)
-                .reverse()
-                .find((m) => m.role === "user");
-            if (userMsg) {
-                setChats((prev) =>
-                    prev.map((c) =>
-                        c.id === chatId ? { ...c, messages: c.messages.slice(0, msgIndex) } : c
-                    )
-                );
-                setTimeout(() => sendMessage(userMsg.text), 80);
-            }
-        },
-        [chats, sendMessage]
-    );
+    const retryMessage = useCallback((chatId, msgIndex) => {
+        const chat = chatsRef.current.find((c) => c.id === chatId);
+        if (!chat) return;
+        const userMsg = chat.messages.slice(0, msgIndex).reverse().find((m) => m.role === "user");
+        if (userMsg) {
+            setChats((prev) =>
+                prev.map((c) =>
+                    c.id === chatId ? { ...c, messages: c.messages.slice(0, msgIndex) } : c
+                )
+            );
+            setTimeout(() => sendMessage(userMsg.text), 80);
+        }
+    }, [sendMessage]);
 
-    /* ── Initialization ── */
-
+    // ── Init ───────────────────────────────────────────────────────────────
+    const didInit = useRef(false);
     useEffect(() => {
-        if (chats.length === 0) createNewChat();
-    }, []);
+        if (!didInit.current) { didInit.current = true; createNewChat(); }
+    }, []); // eslint-disable-line
 
     useEffect(() => {
         if (initialQuestion && activeChatId && !hasSentInitial.current) {
             hasSentInitial.current = true;
             sendMessage(initialQuestion);
         }
-    }, [initialQuestion, activeChatId]);
+    }, [initialQuestion, activeChatId, sendMessage]);
 
-    /* ── Keyboard shortcuts ── */
-
-    useKeyboardShortcuts(
-        useMemo(
-            () => ({
-                [KEYBOARD_SHORTCUTS.NEW_CHAT]:       createNewChat,
-                [KEYBOARD_SHORTCUTS.TOGGLE_SIDEBAR]: () => setSidebarOpen((v) => !v),
-                [KEYBOARD_SHORTCUTS.TOGGLE_THEME]:   toggleTheme,
-            }),
-            [createNewChat, toggleTheme]
-        )
-    );
+    useKeyboardShortcuts(useMemo(() => ({
+        [KEYBOARD_SHORTCUTS.NEW_CHAT]:       createNewChat,
+        [KEYBOARD_SHORTCUTS.TOGGLE_SIDEBAR]: () => setSidebarOpen((v) => !v),
+        [KEYBOARD_SHORTCUTS.TOGGLE_THEME]:   toggleTheme,
+    }), [createNewChat, toggleTheme]));
 
     return (
         <div className="ai-layout">
@@ -370,24 +357,16 @@ export default function AiSearchPage() {
 
             <main className="ai-main">
                 <div className="ai-topbar">
-                    <button
-                        className="topbar-btn"
-                        onClick={() => setSidebarOpen((v) => !v)}
-                        title={sidebarOpen ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"}
-                        aria-label="Toggle sidebar"
-                    >
+                    <button className="topbar-btn"
+                            onClick={() => setSidebarOpen((v) => !v)}
+                            title={sidebarOpen ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"}
+                            aria-label="Toggle sidebar">
                         <Icon name="sidebar" size={16} />
                     </button>
-
                     <span className="topbar-title">{activeChat?.title || "New Chat"}</span>
                     <div className="topbar-spacer" />
-
-                    <button
-                        className="topbar-btn"
-                        onClick={toggleTheme}
-                        title="Toggle theme (Ctrl+J)"
-                        aria-label="Toggle theme"
-                    >
+                    <button className="topbar-btn" onClick={toggleTheme}
+                            title="Toggle theme (Ctrl+J)" aria-label="Toggle theme">
                         <Icon name={theme === "dark" ? "sun" : "moon"} size={16} />
                     </button>
                 </div>
@@ -400,13 +379,35 @@ export default function AiSearchPage() {
                     onRetry={retryMessage}
                     onCopy={copyMessageText}
                     userPosition={position}
+                    compareList={compareList}
+                    onCompare={toggleCompare}
                 />
             </main>
 
-            <div className={`toast ${toast.visible ? "visible" : ""}`} role="status" aria-live="polite">
+            {/* ── Toast ── */}
+            <div className={`toast ${toast.visible ? "visible" : ""}`}
+                 role="status" aria-live="polite">
                 {toast.text}
             </div>
 
+            {/* ── Compare Bar — floats above bottom input ── */}
+            <CompareBar
+                count={compareList.length}
+                properties={compareList}
+                onClick={() => setCompareOpen(true)}
+                onClear={clearCompare}
+            />
+
+            {/* ── Compare Modal ── */}
+            {compareOpen && (
+                <CompareModal
+                    properties={compareList}
+                    onClose={() => setCompareOpen(false)}
+                    onRemove={(id) => setCompareList((prev) => prev.filter((p) => p.id !== id))}
+                />
+            )}
+
+            {/* ── Delete chat confirm ── */}
             {deleteTarget && (
                 <ConfirmDialog
                     title="Delete Chat"

@@ -1,32 +1,46 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 /**
- * useGeolocation
+ * useGeolocation — Full browser Geolocation lifecycle manager
  *
- * Manages the full browser Geolocation lifecycle:
- *  - Tracks permission state (unknown → granted / denied / prompt)
- *  - Caches last known position so we don't re-request unnecessarily
- *  - Exposes requestLocation() for on-demand triggering
- *  - Detects "near me" intent in any text string
+ * Improvements over original:
+ *  1. Reads cached position from localStorage on mount (set by LocationPermissionModal)
+ *     so `isGranted + position` are immediately available after first grant.
+ *  2. Proper debug logging via LOG_PREFIX.
+ *  3. Longer timeout (15s) + better error messages.
+ *  4. `detectNearMeIntent` patterns fixed — does NOT trigger for named-location
+ *     radius queries like "within 10 km from Whitefield".
  */
 
-const CACHE_KEY   = "ogm_user_location";
-const CACHE_TTL   = 10 * 60 * 1000; // 10 minutes
+const SESSION_KEY = "ogm_user_location";   // sessionStorage — used by hook
+const PERM_KEY    = "ogm_location_granted"; // localStorage  — set by LocationPermissionModal
+const CACHE_TTL   = 10 * 60 * 1000;        // 10 minutes
+const LOG_PREFIX  = "[OGM Location]";
 
-// Keywords that signal the user wants proximity-based search
+// ─────────────────────────────────────────────────────────────────────────────
+//  detectNearMeIntent
+//  Returns true ONLY when the user is asking to use THEIR OWN GPS location.
+//  Does NOT fire for named-location radius queries like "within 10 km from Whitefield".
+// ─────────────────────────────────────────────────────────────────────────────
+
 const NEAR_ME_PATTERNS = [
-  // "near me" variants
+  // "near me" / "nearby" / "near by"
   /near\s+me/i,
-  /near\s+by/i,          // "near by" with space
+  /near\s+by/i,
   /nearby/i,
 
-  // "my location" variants — catches typos like "locatin", "locatoin"
-  /my\s+(current\s+)?loc\w*/i,   // "my location", "my current locatin", "my loc"
-  /what\s+is\s+my\s+loc\w*/i,    // "what is my location" / "what is my locatin"
+  // "my location" variants — catches common typos
+  /my\s+(current\s+)?loc\w*/i,
+  /what\s+is\s+my\s+loc\w*/i,
+  /where\s+am\s+i/i,
 
-  // distance radius
-  /within\s+\d+\s*km/i,
-  /\d+\s*km\s+(from|near|around)/i,
+  // "within X km from ME / from HERE / from MY location"
+  // ✅ "within 15 km from my current location"
+  // ❌ "within 10 km from Whitefield"  ← does NOT match
+  /within\s+\d+\s*km\s+(from\s+(me|here|my)|near\s+me|of\s+me)/i,
+
+  // "X km from me / from here / from my location"
+  /\d+\s*km\s+(from\s+(me|here|my\s+\w*)|near\s+me|around\s+me)/i,
 
   // explicit proximity language
   /from\s+here/i,
@@ -34,93 +48,79 @@ const NEAR_ME_PATTERNS = [
   /around\s+me/i,
   /properties\s+(here|around|close)/i,
   /find\s+.*(here|this\s+area)/i,
-
-  // "show me what's around" phrasing
-  /what(\'s|\s+is)\s+(around|nearby|near\s+me)/i,
+  /what('s|\s+is)\s+(around|nearby|near\s+me)/i,
   /show\s+.*(near(by)?|around\s+me)/i,
 ];
 
 export function detectNearMeIntent(text) {
   if (!text) return false;
-  return NEAR_ME_PATTERNS.some((p) => p.test(text));
+  const result = NEAR_ME_PATTERNS.some((p) => p.test(text));
+  if (result) console.debug(LOG_PREFIX, "Near-me intent detected for:", text);
+  return result;
 }
 
-/**
- * reverseGeocode
- * Converts GPS coordinates into a human-readable location name
- * using the Google Maps Geocoding API.
- *
- * Setup — add to your .env file:
- *   REACT_APP_GOOGLE_MAPS_API_KEY=your_key_here
- *
- * Enable "Geocoding API" in Google Cloud Console → APIs & Services.
- *
- * Returns the most specific useful address string, e.g.:
- *   "Koramangala 5th Block, Bengaluru, Karnataka, India"
- * or null on failure.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+//  reverseGeocode — lat/lng → human-readable location name
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function reverseGeocode(latitude, longitude) {
   const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-
   if (!apiKey) {
-    console.warn("[OGM] REACT_APP_GOOGLE_MAPS_API_KEY is not set. Location name unavailable.");
+    console.warn(LOG_PREFIX, "REACT_APP_GOOGLE_MAPS_API_KEY not set — location name unavailable.");
     return null;
   }
-
   try {
     const url =
-      `https://maps.googleapis.com/maps/api/geocode/json` +
-      `?latlng=${latitude},${longitude}` +
-      `&key=${apiKey}` +
-      `&result_type=sublocality|locality|administrative_area_level_2`;
+        `https://maps.googleapis.com/maps/api/geocode/json` +
+        `?latlng=${latitude},${longitude}` +
+        `&key=${apiKey}` +
+        `&result_type=sublocality|locality|administrative_area_level_2`;
 
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok) { console.warn(LOG_PREFIX, "Geocode HTTP error:", res.status); return null; }
 
     const data = await res.json();
-
     if (data.status !== "OK" || !data.results?.length) {
-      console.warn("[OGM] Geocoding returned status:", data.status);
+      console.warn(LOG_PREFIX, "Geocoding status:", data.status);
       return null;
     }
 
-    // Google returns results from most-specific to least-specific.
-    // Walk through until we find a clean sublocality + city combination.
-    const best = data.results[0];
-    const components = best.address_components || [];
+    const components = data.results[0].address_components || [];
+    const get = (type) => components.find((c) => c.types.includes(type))?.long_name ?? null;
 
-    const get = (type) =>
-      components.find((c) => c.types.includes(type))?.long_name ?? null;
+    const sublocality = get("sublocality_level_1") || get("sublocality") || get("neighborhood");
+    const city        = get("locality") || get("administrative_area_level_2");
+    const state       = get("administrative_area_level_1");
+    const country     = get("country");
 
-    const sublocality  = get("sublocality_level_1") || get("sublocality") || get("neighborhood");
-    const city         = get("locality") || get("administrative_area_level_2");
-    const state        = get("administrative_area_level_1");
-    const country      = get("country");
+    const name = [sublocality, city, state, country].filter(Boolean).join(", ")
+        || data.results[0].formatted_address;
 
-    const parts = [sublocality, city, state, country].filter(Boolean);
-    return parts.length > 0 ? parts.join(", ") : best.formatted_address;
-
+    console.info(LOG_PREFIX, "Reverse geocoded to:", name);
+    return name;
   } catch (err) {
-    console.error("[OGM] Reverse geocoding failed:", err.message);
+    console.error(LOG_PREFIX, "Reverse geocoding failed:", err.message);
     return null;
   }
 }
 
-/** Haversine formula — returns distance in km between two lat/lng pairs */
+// ─────────────────────────────────────────────────────────────────────────────
+//  haversineDistance / formatDistance
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function haversineDistance(lat1, lng1, lat2, lng2) {
   if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) return null;
-  const R   = 6371;
+  const R    = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Format a distance number into a readable string */
 export function formatDistance(km) {
   if (km == null) return null;
   if (km < 1)   return `${Math.round(km * 1000)} m away`;
@@ -129,38 +129,79 @@ export function formatDistance(km) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  useGeolocation hook
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function useGeolocation() {
-  const [position,         setPosition]         = useState(null);   // {latitude, longitude, accuracy, locationName}
-  const [locationName,     setLocationName]     = useState(null);   // reverse-geocoded place name
-  const [permissionStatus, setPermissionStatus] = useState("unknown"); // unknown | prompt | granted | denied
+  const [position,         setPosition]         = useState(null);
+  const [locationName,     setLocationName]     = useState(null);
+  const [permissionStatus, setPermissionStatus] = useState("unknown");
   const [isRequesting,     setIsRequesting]     = useState(false);
   const [error,            setError]            = useState(null);
   const watchIdRef = useRef(null);
 
-  // ── Restore cached position on mount ────────────────────────────────────
+  // ── On mount: restore cached position ──────────────────────────────────────
   useEffect(() => {
+    // Priority 1: sessionStorage cache (most recent session position)
     try {
-      const raw = sessionStorage.getItem(CACHE_KEY);
+      const raw = sessionStorage.getItem(SESSION_KEY);
       if (raw) {
         const { data, ts } = JSON.parse(raw);
-        if (Date.now() - ts < CACHE_TTL) {
+        if (Date.now() - ts < CACHE_TTL && data?.latitude && data?.longitude) {
+          console.info(LOG_PREFIX, "Restored from sessionStorage cache:", data.locationName || "no name");
           setPosition(data);
           if (data.locationName) setLocationName(data.locationName);
           setPermissionStatus("granted");
+          return; // no need to check localStorage
+        } else {
+          sessionStorage.removeItem(SESSION_KEY);
         }
       }
     } catch { /* ignore */ }
 
-    // Check existing permission without prompting
+    // Priority 2: localStorage persistent grant (set by LocationPermissionModal)
+    // This is the KEY fix — after first grant, subsequent queries don't need the modal.
+    try {
+      const raw = localStorage.getItem(PERM_KEY);
+      if (raw) {
+        const pos = JSON.parse(raw);
+        if (pos?.latitude && pos?.longitude) {
+          console.info(LOG_PREFIX, "Restored from localStorage grant:", pos.locationName || "no name");
+          const data = { ...pos, accuracy: null };
+          setPosition(data);
+          if (pos.locationName) setLocationName(pos.locationName);
+          setPermissionStatus("granted");
+          // Also write to sessionStorage for faster access
+          try {
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({ data, ts: Date.now() }));
+          } catch { /* ignore */ }
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Check browser permission state without prompting
     if ("permissions" in navigator) {
       navigator.permissions
-        .query({ name: "geolocation" })
-        .then((result) => {
-          setPermissionStatus(result.state); // granted | denied | prompt
-          result.onchange = () => setPermissionStatus(result.state);
-        })
-        .catch(() => {});
+          .query({ name: "geolocation" })
+          .then((result) => {
+            console.debug(LOG_PREFIX, "Browser permission state:", result.state);
+            // Only set if we don't already have a cached granted state
+            if (result.state !== "granted") {
+              setPermissionStatus(result.state);
+            }
+            result.onchange = () => {
+              console.info(LOG_PREFIX, "Permission changed to:", result.state);
+              setPermissionStatus(result.state);
+              // If revoked, clear cache
+              if (result.state === "denied") {
+                try { localStorage.removeItem(PERM_KEY); } catch { /* ignore */ }
+                try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+                setPosition(null);
+                setLocationName(null);
+              }
+            };
+          })
+          .catch(() => {});
     }
 
     return () => {
@@ -170,60 +211,76 @@ export default function useGeolocation() {
     };
   }, []);
 
-  // ── Request location on demand ───────────────────────────────────────────
+  // ── requestLocation — request GPS on demand ─────────────────────────────────
   const requestLocation = useCallback(() => {
     if (!("geolocation" in navigator)) {
-      setError("Your browser does not support geolocation.");
+      const msg = "Your browser does not support geolocation.";
+      console.error(LOG_PREFIX, msg);
+      setError(msg);
       setPermissionStatus("denied");
       return Promise.reject(new Error("Geolocation not supported"));
     }
 
     setIsRequesting(true);
     setError(null);
+    console.info(LOG_PREFIX, "Requesting GPS location from browser...");
 
     return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const data = {
-            latitude:  pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy:  pos.coords.accuracy,
-          };
+          async (pos) => {
+            console.info(LOG_PREFIX, "GPS obtained — accuracy:", pos.coords.accuracy?.toFixed(0), "m");
 
-          // Reverse geocode to get a human-readable location name.
-          // Done here so every subsequent message has the name ready.
-          const name = await reverseGeocode(data.latitude, data.longitude);
-          const dataWithName = { ...data, locationName: name };
+            const data = {
+              latitude:  pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy:  pos.coords.accuracy,
+            };
 
-          setPosition(dataWithName);
-          setLocationName(name);
-          setPermissionStatus("granted");
-          setIsRequesting(false);
+            // Reverse geocode to get human-readable name
+            const name = await reverseGeocode(data.latitude, data.longitude);
+            const dataWithName = { ...data, locationName: name };
 
-          // Cache position + name together
-          try {
-            sessionStorage.setItem(
-              CACHE_KEY,
-              JSON.stringify({ data: dataWithName, ts: Date.now() })
-            );
-          } catch { /* storage full — ignore */ }
+            setPosition(dataWithName);
+            setLocationName(name);
+            setPermissionStatus("granted");
+            setIsRequesting(false);
 
-          resolve(dataWithName);
-        },
-        (err) => {
-          setIsRequesting(false);
-          if (err.code === 1) {
-            // PERMISSION_DENIED
-            setPermissionStatus("denied");
-            setError("Location access was denied.");
-          } else if (err.code === 2) {
-            setError("Unable to determine your location. Please try again.");
-          } else {
-            setError("Location request timed out. Please try again.");
+            // Cache in sessionStorage (10 min TTL)
+            try {
+              sessionStorage.setItem(SESSION_KEY, JSON.stringify({ data: dataWithName, ts: Date.now() }));
+            } catch { /* storage full */ }
+
+            console.info(LOG_PREFIX, "Location ready:", name || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`);
+            resolve(dataWithName);
+          },
+          (err) => {
+            setIsRequesting(false);
+            let msg;
+            switch (err.code) {
+              case 1: // PERMISSION_DENIED
+                msg = "Location access was denied. Please enable it in browser settings.";
+                setPermissionStatus("denied");
+                // Clear cached grant since user denied
+                try { localStorage.removeItem(PERM_KEY); } catch { /* ignore */ }
+                break;
+              case 2: // POSITION_UNAVAILABLE
+                msg = "Unable to determine your location. Check GPS signal and try again.";
+                break;
+              case 3: // TIMEOUT
+                msg = "Location request timed out. Please try again.";
+                break;
+              default:
+                msg = "Location request failed. Please try again.";
+            }
+            console.warn(LOG_PREFIX, "GPS error code", err.code, "—", msg);
+            setError(msg);
+            reject(err);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout:    15000,   // 15s (up from 10s — mobile GPS can be slow)
+            maximumAge: CACHE_TTL,
           }
-          reject(err);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: CACHE_TTL }
       );
     });
   }, []);
@@ -232,17 +289,19 @@ export default function useGeolocation() {
     setPosition(null);
     setLocationName(null);
     setError(null);
-    try { sessionStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+    try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+    try { localStorage.removeItem(PERM_KEY); } catch { /* ignore */ }
+    console.info(LOG_PREFIX, "Location cache cleared.");
   }, []);
 
   return {
     position,           // {latitude, longitude, accuracy, locationName} | null
     locationName,       // "Koramangala, Bengaluru, Karnataka, India" | null
     permissionStatus,   // "unknown" | "prompt" | "granted" | "denied"
-    isRequesting,       // true while waiting for browser response
+    isRequesting,       // true while waiting for browser GPS response
     error,              // string | null
     requestLocation,    // () => Promise<position>
-    clearLocation,      // clear cached position
+    clearLocation,      // clears all cached location data
     isGranted: permissionStatus === "granted",
     isDenied:  permissionStatus === "denied",
   };

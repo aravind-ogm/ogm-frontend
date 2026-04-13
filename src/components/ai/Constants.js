@@ -12,19 +12,8 @@ export const ENDPOINTS = {
   AGENT_ASK:`${API_BASE}/agent/ask`,
 };
 
-export const FALLBACK_IMAGE = "/images/placeholder.jpg";
+export const FALLBACK_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f1f3f4'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%23aab4c4'%3ENo Image%3C/text%3E%3C/svg%3E";
 
-/* ─────────────────────────────────────────────
-   SUGGESTION CHIPS
-   Based on actual DB properties:
-   - 20 properties across Bengaluru + Tamil Nadu
-   - Price range: ₹32L – ₹6.3 Cr
-   - Types: Apartment (9), Villa (5), Plot (2),
-            Rowhouse (1), Studio (1), Penthouse (1)
-   - Hot areas: Whitefield, Koramangala, Sarjapur,
-                Electronic City, Hebbal, MG Road
-   - 18/20 RERA approved
-   ───────────────────────────────────────────── */
 
 export const DEFAULT_SUGGESTIONS = [
   // ── Affordable entry points (most searched) ──

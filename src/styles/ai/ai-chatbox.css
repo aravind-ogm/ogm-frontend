@@ -610,3 +610,67 @@
 @keyframes ai-spin {
   to { transform: rotate(360deg); }
 }
+
+/* Follow-up section wrapper */
+.msg-followups {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* "Explore further" label */
+.msg-followups-label {
+  width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 2px;
+}
+
+/* Chip button */
+.msg-followup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e3a5f;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.msg-followup-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37,99,235,0.12);
+}
+
+.msg-followup-btn:active {
+  transform: translateY(0);
+}
+
+/* Icon inside chip */
+.msg-followup-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Dark theme */
+.light-theme .msg-followup-btn {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #1e3a5f;
+}

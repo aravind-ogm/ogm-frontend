@@ -8,12 +8,6 @@ import { detectRouteIntent } from "./RouteHelper";
 import "../../styles/ai/ai-chatbox.css";
 import "../../styles/ai/ai-search.css";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   FIX 1: Removed hardcoded API key fallback.
-   The key "AIzaSyAMOnmpGRW9d36CNRQTjAavV4EjHGlXzO4" was visible to every user
-   in browser DevTools. Rotate that key immediately in Google Cloud Console.
-   Add to your .env:  REACT_APP_GOOGLE_MAPS_API_KEY=your_new_key
-   ───────────────────────────────────────────────────────────────────────────── */
 const GMAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 function loadGoogleMaps() {
@@ -61,6 +55,8 @@ export default function AiChatBox({
                                     onRetry,
                                     onCopy,
                                     userPosition,
+                                    compareList = [],   // ← NEW: array of compared properties from AiSearchPage
+                                    onCompare,          // ← NEW: toggleCompare callback from AiSearchPage
                                   }) {
   const [input,          setInput]          = useState("");
   const [mapProperties,  setMapProperties]  = useState(null);
@@ -110,9 +106,7 @@ export default function AiChatBox({
         .catch((err) => console.error("[AiChatBox] Maps SDK:", err.message));
   }, [mapsReady]);
 
-  /* ── Auto-detect route intent from last user message ──
-     Resolves __PROPERTY__ token to actual property coords/name before storing.
-  ── */
+  /* ── Auto-detect route intent from last user message ── */
   useEffect(() => {
     if (!chat?.messages?.length) return;
     const msgs     = chat.messages;
@@ -122,7 +116,6 @@ export default function AiChatBox({
     const route = detectRouteIntent(lastUser.text);
     if (!route) return;
 
-    // Resolve __PROPERTY__ to actual coords or name from the last AI result
     if (route.usePropAsOrigin) {
       const lastAi = [...msgs].reverse().find((m) => m.role === "ai" && m.properties?.length);
       if (lastAi?.properties?.length) {
@@ -130,24 +123,19 @@ export default function AiChatBox({
         const pLat = parseFloat(prop.latitude ?? prop.lat);
         const pLng = parseFloat(prop.longitude ?? prop.lng ?? prop.lon);
         if (!isNaN(pLat) && !isNaN(pLng) && pLat !== 0 && pLng !== 0) {
-          // Use lat/lng object — DirectionsService handles it without geocoding
           route.origin      = { lat: pLat, lng: pLng };
           route.originLabel = prop.title || prop.location || "This Property";
         } else if (prop.location) {
-          // Append city to avoid NOT_FOUND errors (e.g. "Bannerghatta Road, Bengaluru")
           route.origin      = prop.location;
           route.originLabel = prop.title || prop.location;
         }
       }
     }
 
-    // Append ", Bengaluru" to single-word destinations to help geocoding
     if (route.destination && !route.destination.includes(",") && typeof route.destination === "string") {
       const lower = route.destination.toLowerCase();
       const isCityAlready = ["bengaluru","bangalore","mumbai","delhi","hyderabad","chennai","pune"].some(c => lower.includes(c));
-      if (!isCityAlready) {
-        route.destination = route.destination + ", Bengaluru";
-      }
+      if (!isCityAlready) route.destination = route.destination + ", Bengaluru";
     }
 
     setRouteRequest(route);
@@ -174,7 +162,7 @@ export default function AiChatBox({
     setActiveListItem(null);
   }, []);
 
-  /* ── Render route on map — uses DirectionsService (still functional despite deprecation warning) ── */
+  /* ── Render route on map ── */
   const renderRoute = useCallback((map, originArg, destinationArg, mode = "DRIVING") => {
     if (!map || !originArg || !destinationArg) return;
     const G = window.google.maps;
@@ -194,13 +182,12 @@ export default function AiChatBox({
     renderer.setMap(map);
     dirRendererRef.current = renderer;
 
-    // Build origin — handle {lat, lng} object or string address
     const buildLatLng = (val) => {
       if (!val) return null;
       if (typeof val === "object" && val.lat != null && val.lng != null) {
         return new G.LatLng(parseFloat(val.lat), parseFloat(val.lng));
       }
-      return String(val); // address string — DirectionsService geocodes it
+      return String(val);
     };
 
     const origin      = buildLatLng(originArg);
@@ -232,7 +219,7 @@ export default function AiChatBox({
             setRouteError(null);
           } else {
             setRouteError(
-                status === "NOT_FOUND"    ? "Could not find one of the locations. Please be more specific (e.g. \"Whitefield, Bengaluru\" instead of \"Whitefield\")" :
+                status === "NOT_FOUND"    ? "Could not find one of the locations. Please be more specific." :
                     status === "ZERO_RESULTS" ? "No route found between these locations." :
                         `Directions unavailable (${status}). Try different locations.`
             );
@@ -242,17 +229,10 @@ export default function AiChatBox({
     );
   }, []);
 
-  /* ── Re-render route when travel mode changes ──
-     FIX 3: Proper deps — routeRequest and renderRoute now included
-  ── */
+  /* ── Re-render route when travel mode changes ── */
   useEffect(() => {
     if (!routeRequest || !mapInstanceRef.current || !mapsReady) return;
-    renderRoute(
-        mapInstanceRef.current,
-        routeRequest.origin,
-        routeRequest.destination,
-        routeMode
-    );
+    renderRoute(mapInstanceRef.current, routeRequest.origin, routeRequest.destination, routeMode);
   }, [routeMode, routeRequest, mapsReady, renderRoute]);
 
   /* ── Focus marker in map list ── */
@@ -286,10 +266,7 @@ export default function AiChatBox({
     setActiveListItem(index);
   }, [mapProperties]);
 
-  /* ── Build / rebuild map ──
-     FIX 4: Split into two effects — one for building the map, one for the route.
-     Original had both in one effect with eslint-disable hiding stale closure bugs.
-  ── */
+  /* ── Build / rebuild map ── */
   useEffect(() => {
     if (mapProperties === null) { destroyMap(); return; }
     if (!mapsReady) return;
@@ -420,13 +397,8 @@ export default function AiChatBox({
   /* ── Route effect (separate from map build) ── */
   useEffect(() => {
     if (!routeRequest || !mapInstanceRef.current || !mapsReady) return;
-    renderRoute(
-        mapInstanceRef.current,
-        routeRequest.origin,
-        routeRequest.destination,
-        routeMode
-    );
-  }, [routeRequest, mapsReady, renderRoute]); // routeMode handled separately above
+    renderRoute(mapInstanceRef.current, routeRequest.origin, routeRequest.destination, routeMode);
+  }, [routeRequest, mapsReady, renderRoute]);
 
   /* ── Input handlers ── */
   const handleInputChange = useCallback((e) => {
@@ -457,7 +429,6 @@ export default function AiChatBox({
   }, []);
 
   const handleRouteView = useCallback((origin, destination) => {
-    // origin may be a string address or {lat, lng} object from property coords
     setRouteRequest({ origin, destination });
     setRouteResult(null);
     setRouteError(null);
@@ -501,7 +472,7 @@ export default function AiChatBox({
                   <div className="chat-empty-state">
                     <div className="chat-empty-icon"><Icon name="sparkle" size={28} /></div>
                     <h2>What can I help you find?</h2>
-                    <p>“Discover Properties. Ask Anything. Explore Smarter.”</p>
+                    <p>"Discover Properties. Ask Anything. Explore Smarter."</p>
                     <SuggestionCards onSelect={handleSend} />
                     <SuggestionChips onSelect={handleSend} />
                     <div className="chat-empty-bar">
@@ -525,6 +496,8 @@ export default function AiChatBox({
                             isMapOpen={isMapOpen}
                             userPosition={userPosition}
                             prevMessages={messages.slice(0, i)}
+                            compareList={compareList}   // ← NEW
+                            onCompare={onCompare}       // ← NEW
                         />
                     ))}
                     {loading && (
@@ -552,9 +525,9 @@ export default function AiChatBox({
           {isMapOpen && (
               <div className="ai-map-panel">
                 <div className="ai-map-header">
-              <span className="ai-map-title">
-                {isRouteActive ? "🗺 Route & Directions" : "📍 Properties on Map"}
-              </span>
+                  <span className="ai-map-title">
+                    {isRouteActive ? "🗺 Route & Directions" : "📍 Properties on Map"}
+                  </span>
                   {hasProperties && !isRouteActive && (
                       <span className="ai-map-count">{mapProperties.length} properties</span>
                   )}
@@ -569,31 +542,29 @@ export default function AiChatBox({
                         <div className="ai-route-od-row">
                           <span className="ai-route-dot origin" />
                           <span className="ai-route-od-label">
-                      {routeResult?.origin || routeRequest.originLabel ||
-                          (typeof routeRequest.origin === "object" ? "This Property" : routeRequest.origin)}
-                    </span>
+                            {routeResult?.origin || routeRequest.originLabel ||
+                                (typeof routeRequest.origin === "object" ? "This Property" : routeRequest.origin)}
+                          </span>
                         </div>
                         <div className="ai-route-od-line" />
                         <div className="ai-route-od-row">
                           <span className="ai-route-dot dest" />
                           <span className="ai-route-od-label">
-                      {routeResult?.destination ||
-                          (typeof routeRequest.destination === "string"
-                              ? routeRequest.destination.replace(/, Bengaluru$/i, "").replace(/, Bangalore$/i, "")
-                              : routeRequest.destination)}
-                    </span>
+                            {routeResult?.destination ||
+                                (typeof routeRequest.destination === "string"
+                                    ? routeRequest.destination.replace(/, Bengaluru$/i, "").replace(/, Bangalore$/i, "")
+                                    : routeRequest.destination)}
+                          </span>
                         </div>
                       </div>
 
                       <div className="ai-route-modes" role="group" aria-label="Travel mode">
                         {TRAVEL_MODES.map(({ key, label, icon }) => (
-                            <button
-                                key={key}
-                                className={`ai-route-mode-btn${routeMode === key ? " active" : ""}`}
-                                onClick={() => setRouteMode(key)}
-                                aria-pressed={routeMode === key}
-                                title={label}
-                            >
+                            <button key={key}
+                                    className={`ai-route-mode-btn${routeMode === key ? " active" : ""}`}
+                                    onClick={() => setRouteMode(key)}
+                                    aria-pressed={routeMode === key}
+                                    title={label}>
                               <span>{icon}</span>
                               <span>{label}</span>
                             </button>
@@ -652,13 +623,9 @@ export default function AiChatBox({
                        fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
                   </svg>
-                  <input
-                      ref={searchInputRef}
-                      className="ai-map-search-input"
-                      type="text"
-                      placeholder="Search any location on map…"
-                      aria-label="Search location on map"
-                  />
+                  <input ref={searchInputRef} className="ai-map-search-input"
+                         type="text" placeholder="Search any location on map…"
+                         aria-label="Search location on map" />
                 </div>
 
                 <div className="ai-map-frame-wrap" ref={mapContainerRef} />
@@ -666,15 +633,12 @@ export default function AiChatBox({
                 {hasProperties && (
                     <div className="ai-map-list" role="list">
                       {mapProperties.map((p, i) => (
-                          <div
-                              key={p.id || i}
-                              className={`ai-map-item${activeListItem === i ? " active" : ""}`}
-                              onClick={() => focusMarker(i)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => e.key === "Enter" && focusMarker(i)}
-                              aria-label={`${p.title} - ${p.location}`}
-                          >
+                          <div key={p.id || i}
+                               className={`ai-map-item${activeListItem === i ? " active" : ""}`}
+                               onClick={() => focusMarker(i)}
+                               role="button" tabIndex={0}
+                               onKeyDown={(e) => e.key === "Enter" && focusMarker(i)}
+                               aria-label={`${p.title} - ${p.location}`}>
                             <div className="ai-map-item-marker">{i + 1}</div>
                             <div className="ai-map-item-info">
                               <div className="ai-map-item-title">{p.title}</div>
